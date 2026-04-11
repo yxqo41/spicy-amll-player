@@ -21,18 +21,12 @@ A premium, high-performance web-based lyrics player that replicates the "Spicy L
 
 Spicy Lyrics Web is a standalone static application. No complex build steps are required.
 
-1.  **Serve Locally**:
-    ```bash
-    npx serve .
-    ```
-    Or use any static file server (VS Code Live Server, Python http.server, etc.)
-2.  **Open in Browser**: Navigate to `http://localhost:3000`.
-3.  **Play Music**: Drag and drop your audio file (MP3/FLAC) and an optional TTML/LRC file into the upload zone.
+1.  **Open in Browser**: Navigate to `https://yxqo41.github.io/spicy-lyrics-web/`.
+2.  **Play Music**: Drag and drop your audio file (MP3/FLAC) and an optional TTML/LRC file into the upload zone.
 
 ## 🛠️ Configuration
 
 The application includes a comprehensive settings menu (accessible via the 3-dots in the player) where you can:
-- Hardcode your **Musixmatch Token**.
 - Toggle **Simple Mode** for a lightweight animation path.
 - Enable/Disable **Syllable Rendering** (Merge Words).
 - Adjust **Release Year Position** in the metadata view.

@@ -2,7 +2,7 @@
 
 A premium, high-performance web-based lyrics player that replicates the "Spicy Lyrics" experience with stunning aesthetics and advanced features. Inspired by the Apple Music lyrics interface, this player provides a feature-rich experience for synchronized lyrics with word-level precision.
 
-![Vibrant UI](https://img.shields.io/badge/Aesthetics-Premium-ff4500) ![License](https://img.shields.io/badge/License-AGPL--3.0-blue)
+![Vibrant UI](https://img.shields.io/badge/Aesthetics-shit-ff4500) ![License](https://img.shields.io/badge/License-AGPL--3.0-blue)
 
 ## ✨ Features
 

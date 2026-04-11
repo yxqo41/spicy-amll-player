@@ -36,4 +36,4 @@ The application includes a comprehensive settings menu (accessible via the 3-dot
 This project is licensed under the **GNU Affero General Public License v3**. See the [LICENSE](LICENSE) file for more details.
 
 ---
-*Created with Html and css and js basicly by yxqo41*
+*Created with Html and css and js basicly by models of antigravity but ideas are mine*

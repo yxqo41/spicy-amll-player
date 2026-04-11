@@ -103,5 +103,5 @@ export async function clearPlayerData() {
  */
 export async function goToUpload() {
   await clearPlayerData();
-  window.location.href = '/';
+  window.location.href = 'index.html';
 }

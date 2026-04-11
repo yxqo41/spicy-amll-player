@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await storeFileInDB('spicy_audio', audioBuffer);
 
       // Navigate to player
-      window.location.href = '/player';
+      window.location.href = 'player.html';
     } catch (err) {
       console.error('Error storing files:', err);
       showError('Failed to process files: ' + err.message);

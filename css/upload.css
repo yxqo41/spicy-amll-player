@@ -1,0 +1,289 @@
+/* ═══════════════════════════════════════════════
+   Spicy Lyrics Web — Upload Page
+   ═══════════════════════════════════════════════ */
+
+.upload-page {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle animated background */
+.upload-page::before {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 20% 50%, rgba(29, 185, 84, 0.06) 0%, transparent 50%),
+              radial-gradient(circle at 80% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+  animation: bgAnim 45s linear infinite;
+  pointer-events: none;
+}
+
+.upload-header {
+  text-align: center;
+  margin-bottom: 48px;
+  z-index: 1;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.upload-header h1 {
+  font-size: 2.8rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.upload-header p {
+  font-size: 1rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.02em;
+}
+
+.upload-header .upload-credit {
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.upload-header .upload-credit a {
+  color: rgba(29, 185, 84, 0.6);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s;
+}
+
+.upload-header .upload-credit a:hover {
+  color: rgba(29, 185, 84, 0.9);
+}
+
+.upload-zones {
+  display: flex;
+  gap: 32px;
+  z-index: 1;
+  animation: fadeInUp 0.8s ease-out 0.1s both;
+}
+
+.upload-zone {
+  width: 320px;
+  height: 240px;
+  border: 2px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+}
+
+.upload-zone::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(29, 185, 84, 0), rgba(255, 255, 255, 0));
+  z-index: -1;
+  transition: all 0.3s;
+}
+
+.upload-zone:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateY(-2px);
+}
+
+.upload-zone:hover::before {
+  background: linear-gradient(135deg, rgba(29, 185, 84, 0.15), rgba(255, 255, 255, 0.05));
+}
+
+.upload-zone.dragover {
+  border-color: rgba(29, 185, 84, 0.6);
+  background: rgba(29, 185, 84, 0.08);
+  transform: scale(1.02);
+}
+
+.upload-zone.has-file {
+  border-color: rgba(29, 185, 84, 0.5);
+  border-style: solid;
+  background: rgba(29, 185, 84, 0.06);
+}
+
+.upload-zone .zone-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.upload-zone:hover .zone-icon {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+.upload-zone.has-file .zone-icon {
+  background: rgba(29, 185, 84, 0.15);
+}
+
+.upload-zone .zone-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: rgba(255, 255, 255, 0.5);
+  transition: fill 0.3s;
+}
+
+.upload-zone.has-file .zone-icon svg {
+  fill: rgba(29, 185, 84, 0.9);
+}
+
+.upload-zone .zone-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+}
+
+.upload-zone .zone-hint {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.upload-zone .zone-filename {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: rgba(29, 185, 84, 0.9);
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-zone input[type="file"] {
+  display: none;
+}
+
+/* Start button */
+.upload-actions {
+  margin-top: 40px;
+  z-index: 1;
+  animation: fadeInUp 1s ease-out 0.2s both;
+}
+
+.start-button {
+  padding: 14px 48px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: not-allowed;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.02em;
+}
+
+.start-button.enabled {
+  background: rgba(29, 185, 84, 0.9);
+  color: #ffffff;
+  border-color: rgba(29, 185, 84, 0.9);
+  cursor: pointer;
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+.start-button.enabled:hover {
+  background: rgba(29, 185, 84, 1);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 32px rgba(29, 185, 84, 0.4);
+}
+
+.start-button.enabled:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Error message */
+.upload-error {
+  margin-top: 16px;
+  font-size: 0.85rem;
+  color: rgba(220, 80, 60, 0.9);
+  z-index: 1;
+  min-height: 24px;
+}
+
+/* Responsive */
+@media (max-width: 740px) {
+  .upload-zones {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .upload-zone {
+    width: 300px;
+    height: 200px;
+  }
+  .upload-zone.optional {
+    height: 160px;
+  }
+  .upload-header h1 {
+    font-size: 2rem;
+  }
+}
+
+/* Primary zone (Audio) — larger & more prominent */
+.upload-zone.primary {
+  width: 340px;
+  height: 260px;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.upload-zone.primary:hover {
+  border-color: rgba(29, 185, 84, 0.4);
+}
+
+/* Optional zone (TTML) — smaller & dimmer */
+.upload-zone.optional {
+  width: 300px;
+  height: 200px;
+  opacity: 0.7;
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.upload-zone.optional:hover {
+  opacity: 1;
+}
+
+.upload-zone.optional .zone-hint {
+  color: rgba(29, 185, 84, 0.5);
+  font-style: italic;
+}
+
+/* Auto-fetch note */
+.auto-fetch-note {
+  margin-top: 14px;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.25);
+  text-align: center;
+  letter-spacing: 0.01em;
+}

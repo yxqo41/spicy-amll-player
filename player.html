@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spicy Lyrics — Player</title>
+  <meta name="description" content="Spicy Lyrics Player — Synchronized lyrics with beautiful animations.">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/dynamic-bg.css">
+  <link rel="stylesheet" href="css/player.css">
+  <link rel="stylesheet" href="css/lyrics.css">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌶️</text></svg>">
+</head>
+
+<body>
+  <div id="SpicyLyricsPage">
+    <!-- Dynamic Background -->
+    <div class="spicy-dynamic-bg" id="dynamic-bg"></div>
+
+    <!-- Back Button -->
+    <button class="back-button" id="back-button" title="Back to upload">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+      </svg>
+    </button>
+
+    <!-- Content Box -->
+    <div class="ContentBox">
+      <!-- NowBar (Album Art + Metadata + Controls) — Apple Music Style -->
+      <div class="NowBar Active LeftSide" id="now-bar">
+        <div class="Grabber"></div>
+        <div class="Header">
+          <div class="MediaBox" id="media-box">
+            <div class="MediaImageContainer" id="album-art"></div>
+          </div>
+
+          <div class="MetadataRow">
+            <div class="Metadata" id="metadata">
+              <div class="SongName" id="song-name"><span>Loading...</span></div>
+              <div class="Artists" id="artists">—</div>
+            </div>
+            <button class="options-button" id="btn-options">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Integrated Progress Bar -->
+          <div class="NowBarProgress">
+            <div class="progress-bar-wrapper" id="progress-bar">
+              <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-times">
+              <span class="progress-time" id="time-current">0:00</span>
+              <span class="progress-time" id="time-total">-0:00</span>
+            </div>
+          </div>
+
+          <!-- Quality Badge -->
+          <div class="quality-badge-container">
+            <div class="quality-badge" id="quality-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 4px;">
+                <path
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+                <circle cx="12" cy="12" r="5" />
+              </svg>
+              Lossless
+            </div>
+          </div>
+
+          <!-- Integrated Playback Controls -->
+          <div class="NowBarControls">
+            <div class="playback-control shuffle" id="btn-shuffle" title="Shuffle">
+              <img src="icons/suffled.svg" alt="Shuffle" id="shuffle-icon">
+            </div>
+            <div class="playback-control skip-back" id="btn-backward" title="Previous">
+              <img src="icons/backwards.svg" alt="Previous">
+            </div>
+            <div class="playback-control play-pause" id="btn-play-pause" title="Play/Pause">
+              <img src="icons/paused.svg" alt="Play" id="play-pause-icon">
+            </div>
+            <div class="playback-control skip-forward" id="skip-forward" title="Next">
+              <img src="icons/forwards.svg" alt="Next">
+            </div>
+            <div class="playback-control repeat" id="btn-repeat" title="Repeat">
+              <img src="icons/repeat.svg" alt="Repeat" id="repeat-icon">
+            </div>
+          </div>
+
+          <!-- Volume Area -->
+          <div class="VolumeArea">
+            <img src="icons/lower-volume.svg" class="volume-side-icon" alt="Volume Low">
+            <div class="volume-slider-wrapper">
+              <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.01" value="1">
+            </div>
+            <img src="icons/higher-volume.svg" class="volume-side-icon" alt="Volume High">
+          </div>
+        </div>
+      </div>
+
+      <!-- Lyrics Area -->
+      <div class="LyricsContainer" id="lyrics-container">
+        <div class="LyricsContent" id="lyrics-content">
+          <div class="LyricsNotice" id="lyrics-notice">
+            <span class="notice-descriptor">Loading lyrics...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lyrics Source Badge -->
+    <div class="lyrics-source-badge" id="lyrics-source-badge"></div>
+  </div>
+
+  <script type="module">
+    import { hasPlayerData, getTTMLContent, getAudioBlobUrl, getAudioBuffer, getAudioName, isAutoFetchMode, goToUpload } from './js/router.js';
+    import parseTTMLToLyrics from './js/ttml-parser.js';
+    import { applySyllableLyrics, applyLineLyrics, applyStaticLyrics, LyricsObject } from './js/lyrics-applyer.js';
+    import { setLyricsTime } from './js/lyrics-setter.js';
+    import { animateLyrics } from './js/lyrics-animator.js';
+    import { initScrollManager, scrollToActiveLine, resetScrollManager, queueForceScroll } from './js/scroll-manager.js';
+    import AudioPlayer from './js/audio-player.js';
+    import { applyDefaultBackground, applyLegacyBackground, extractColors } from './js/dynamic-bg.js';
+    import { parseAudioMetadata } from './js/metadata-parser.js';
+    import { retrieveTTML } from './js/ttml-retriever.js';
+    import { settingsManager } from './js/settings-manager.js';
+    import { settingsUI } from './js/settings-ui.js';
+    import { getAnimatedArtwork, applyAnimatedArt } from './js/animated-art.js';
+
+    // ── Redirect if no data ──
+    if (!hasPlayerData()) {
+      window.location.href = '/';
+    }
+
+    // ── Elements ──
+    const lyricsContent = document.getElementById('lyrics-content');
+    const lyricsNotice = document.getElementById('lyrics-notice');
+    const songNameEl = document.getElementById('song-name');
+    const artistsEl = document.getElementById('artists');
+    const albumArt = document.getElementById('album-art');
+    const dynamicBg = document.getElementById('dynamic-bg');
+
+    const btnPlayPause = document.getElementById('btn-play-pause');
+    const playPauseIcon = document.getElementById('play-pause-icon');
+    const btnBackward = document.getElementById('btn-backward');
+    const btnForward = document.getElementById('skip-forward');
+    const btnShuffle = document.getElementById('btn-shuffle');
+    const btnRepeat = document.getElementById('btn-repeat');
+    const btnOptions = document.getElementById('btn-options');
+    const shuffleIcon = document.getElementById('shuffle-icon');
+    const repeatIcon = document.getElementById('repeat-icon');
+
+    const backButton = document.getElementById('back-button');
+    const progressBar = document.getElementById('progress-bar');
+    const progressFill = document.getElementById('progress-fill');
+    const timeCurrent = document.getElementById('time-current');
+    const timeTotal = document.getElementById('time-total');
+    const volumeSlider = document.getElementById('volume-slider');
+    const sourceBadge = document.getElementById('lyrics-source-badge');
+
+    // ── State ──
+    settingsManager.apply(); // Apply saved settings immediately
+    const player = new AudioPlayer();
+    let lyricsType = 'None';
+    let parsedLyrics = null;
+    let animationFrameId = null;
+    let songMetadata = { title: '', artist: '', album: '' };
+    const autoFetchMode = isAutoFetchMode();
+
+    // ── Parse TTML (if provided) ──
+    const ttmlContent = getTTMLContent();
+
+    if (ttmlContent) {
+      try {
+        parsedLyrics = parseTTMLToLyrics(ttmlContent);
+        console.log('Parsed TTML:', parsedLyrics);
+        applyLyricsToUI(parsedLyrics);
+      } catch (err) {
+        console.error('TTML parse error:', err);
+        showNotice('Failed to parse TTML file');
+      }
+    } else if (autoFetchMode) {
+      showNotice('⏳ Waiting for audio metadata to fetch lyrics...');
+    }
+
+    function applyLyricsToUI(lyrics) {
+      if (!lyrics) return;
+      lyricsType = lyrics.Type;
+
+      // Hide notice
+      if (lyricsNotice) lyricsNotice.style.display = 'none';
+
+      if (lyricsType === 'Syllable') {
+        applySyllableLyrics(lyrics, lyricsContent);
+      } else if (lyricsType === 'Line') {
+        applyLineLyrics(lyrics, lyricsContent);
+      } else if (lyricsType === 'Static') {
+        applyStaticLyrics(lyrics, lyricsContent);
+      }
+
+      initScrollManager(lyricsContent);
+    }
+
+    function showNotice(text) {
+      if (lyricsNotice) {
+        lyricsNotice.style.display = '';
+        lyricsNotice.querySelector('.notice-descriptor').textContent = text;
+      }
+    }
+
+    // ── Load Audio ──
+    const audioName = getAudioName() || 'Unknown';
+    const nameWithoutExt = audioName.replace(/\.[^.]+$/, '');
+    songNameEl.querySelector('span').textContent = nameWithoutExt;
+
+    applyDefaultBackground(dynamicBg);
+
+    async function initAudio() {
+      try {
+        const audioBlobUrl = await getAudioBlobUrl();
+        if (!audioBlobUrl) {
+          console.error('No audio data found');
+          return;
+        }
+
+        player.audio.src = audioBlobUrl;
+        player.audio.load();
+
+        // Parse metadata
+        const audioBuffer = await getAudioBuffer();
+        if (audioBuffer) {
+          const metadata = await parseAudioMetadata(audioBuffer, audioName);
+          console.log('Audio metadata:', metadata);
+          songMetadata = metadata;
+
+          // Update UI
+          if (metadata.title) {
+            songNameEl.querySelector('span').textContent = metadata.title;
+            document.title = `Spicy Lyrics — ${metadata.title}`;
+          }
+          if (metadata.artist) {
+            const yearStr = (metadata.year && settingsManager.get("releaseYearPosition") !== "Off") ? metadata.year : "";
+            const yearPos = settingsManager.get("releaseYearPosition");
+            
+            if (yearStr) {
+               if (yearPos === "Before Artist") {
+                 artistsEl.textContent = `${yearStr} • ${metadata.artist}`;
+               } else if (yearPos === "After Artist") {
+                 artistsEl.textContent = `${metadata.artist} • ${yearStr}`;
+               } else {
+                 artistsEl.textContent = metadata.artist;
+               }
+            } else {
+              artistsEl.textContent = metadata.artist;
+            }
+          }
+
+          // Album art + dynamic background
+          if (metadata.artUrl) {
+            albumArt.style.backgroundImage = `url(${metadata.artUrl})`;
+            try {
+              const colors = await extractColors(metadata.artUrl);
+              dynamicBg.innerHTML = '';
+              dynamicBg.className = 'spicy-dynamic-bg';
+              applyLegacyBackground(dynamicBg, colors);
+            } catch (e) {
+              console.warn('Color extraction failed:', e);
+            }
+          }
+
+          // Animated cover art
+          if (metadata.artist && metadata.album) {
+            fetchAnimatedArt(metadata.artist, metadata.album);
+          }
+
+          // Auto-fetch lyrics if in auto-fetch mode
+          if (autoFetchMode && !parsedLyrics) {
+            autoFetchLyrics(metadata);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load audio:', err);
+      }
+    }
+
+    // ── Auto-Fetch Lyrics ──
+    async function autoFetchLyrics(metadata) {
+      showNotice('🔍 Searching for lyrics...');
+
+      try {
+        // Wait for audio duration to be available
+        let durationSec = player.duration ? player.duration / 1000 : 0;
+        if (!durationSec) {
+          // Wait a bit for duration
+          await new Promise(resolve => {
+            const check = () => {
+              if (player.audio.duration && !isNaN(player.audio.duration)) {
+                resolve();
+              } else {
+                setTimeout(check, 200);
+              }
+            };
+            check();
+            setTimeout(resolve, 5000); // timeout after 5s
+          });
+          durationSec = player.audio.duration || 0;
+        }
+
+        const result = await retrieveTTML(
+          metadata.title,
+          metadata.artist,
+          metadata.album,
+          durationSec
+        );
+
+        if (result && result.lyricsData) {
+          parsedLyrics = result.lyricsData;
+          applyLyricsToUI(parsedLyrics);
+          queueForceScroll();
+
+          // Show source badge
+          if (sourceBadge && result.sourceDisplayName) {
+            sourceBadge.textContent = `Lyrics: ${result.sourceDisplayName}`;
+          }
+
+          console.log(`✓ Auto-fetched lyrics from ${result.sourceDisplayName}`);
+        } else {
+          showNotice('No lyrics found for this track');
+        }
+      } catch (err) {
+        console.warn('Auto-fetch failed:', err);
+        showNotice('Could not fetch lyrics automatically');
+      }
+    }
+
+    // ── Animated Art ──
+    async function fetchAnimatedArt(artist, album) {
+      try {
+        const videoUrl = await getAnimatedArtwork(artist, album);
+        if (videoUrl) {
+          applyAnimatedArt(albumArt, videoUrl);
+
+          // Also use as blurred background
+          const bgVideo = document.createElement('video');
+          bgVideo.src = videoUrl;
+          bgVideo.autoplay = true;
+          bgVideo.loop = true;
+          bgVideo.muted = true;
+          bgVideo.playsInline = true;
+          bgVideo.style.cssText = 'position:absolute;top:-10%;left:-10%;width:120%;height:120%;object-fit:cover;';
+
+          bgVideo.addEventListener('loadeddata', () => {
+            dynamicBg.innerHTML = '';
+            dynamicBg.className = 'spicy-dynamic-bg AnimatedArtBackground';
+            dynamicBg.appendChild(bgVideo);
+          });
+        }
+      } catch (err) {
+        console.warn('Animated art fetch failed:', err);
+      }
+    }
+
+    initAudio();
+
+    // ── Audio Events ──
+    player.onLoadedMetadata = (duration) => {
+      timeTotal.textContent = AudioPlayer.formatTime(duration, true);
+    };
+
+    player.onEnded = () => {
+      updatePlayPauseIcon(false);
+    };
+
+    // ── Controls ──
+    btnPlayPause.addEventListener('click', () => {
+      const playing = player.togglePlay();
+      updatePlayPauseIcon(playing);
+      if (playing && !animationFrameId) startAnimationLoop();
+    });
+
+    btnBackward.addEventListener('click', () => {
+      player.seek(0);
+      queueForceScroll();
+    });
+
+    btnForward.addEventListener('click', () => {
+      player.seek(player.duration);
+    });
+
+    btnShuffle.addEventListener('click', () => {
+      const active = player.toggleShuffle();
+      btnShuffle.classList.toggle('active', active);
+      shuffleIcon.src = active ? 'icons/being-suffled.svg' : 'icons/suffled.svg';
+    });
+
+    btnRepeat.addEventListener('click', () => {
+      const mode = player.toggleRepeat();
+      btnRepeat.classList.toggle('active', mode !== 0);
+      if (mode === 0) repeatIcon.src = 'icons/repeat.svg';
+      else if (mode === 1) repeatIcon.src = 'icons/being-repeat.svg';
+      else if (mode === 2) repeatIcon.src = 'icons/being-repeat1.svg';
+    });
+
+    backButton.addEventListener('click', async () => {
+      stopAnimationLoop();
+      player.pause();
+      await goToUpload();
+    });
+
+    volumeSlider.addEventListener('input', (e) => {
+      player.setVolume(parseFloat(e.target.value));
+    });
+
+    progressBar.addEventListener('click', (e) => {
+      const rect = progressBar.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      const seekMs = pct * player.duration;
+      player.seek(seekMs);
+      queueForceScroll();
+    });
+
+    // Line click → seek
+    lyricsContent.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!target.classList.contains('line') && !target.classList.contains('word')) return;
+      const lineEl = target.classList.contains('line') ? target : target.closest('.line');
+      if (!lineEl || lineEl.classList.contains('musical-line')) return;
+
+      const lines = lyricsType === 'Syllable'
+        ? LyricsObject.Types.Syllable.Lines
+        : LyricsObject.Types.Line.Lines;
+
+      for (const line of lines) {
+        if (line.HTMLElement === lineEl) {
+          let seekTime = line.StartTime;
+          if (line.Syllables?.Lead?.length > 0) {
+            seekTime = line.Syllables.Lead[0].StartTime;
+          }
+          player.seek(seekTime);
+          queueForceScroll();
+          break;
+        }
+      }
+    });
+
+    // ── Play/Pause Icon ──
+    function updatePlayPauseIcon(playing) {
+      playPauseIcon.src = playing ? 'icons/play.svg' : 'icons/paused.svg';
+    }
+
+    // ── Animation Loop ──
+    function startAnimationLoop() {
+      function loop() {
+        const pos = player.getPosition();
+        setLyricsTime(pos, lyricsType);
+        animateLyrics(pos, lyricsType);
+
+        if (player.duration > 0) {
+          const pct = (pos / player.duration) * 100;
+          progressFill.style.width = `${Math.min(pct, 100)}%`;
+          timeTotal.textContent = AudioPlayer.formatTime(player.duration - pos, true);
+        }
+        timeCurrent.textContent = AudioPlayer.formatTime(pos);
+        scrollToActiveLine(lyricsContent);
+        animationFrameId = requestAnimationFrame(loop);
+      }
+      animationFrameId = requestAnimationFrame(loop);
+    }
+
+    function stopAnimationLoop() {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    }
+
+    startAnimationLoop();
+
+    // ── Options Menu ──
+    btnOptions.onclick = () => settingsUI.show();
+
+    // ── Keyboard Shortcuts ──
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        const playing = player.togglePlay();
+        updatePlayPauseIcon(playing);
+        if (playing && !animationFrameId) startAnimationLoop();
+      }
+      if (e.code === 'ArrowLeft') {
+        player.seek(Math.max(0, player.getPosition() - 5000));
+        queueForceScroll();
+      }
+      if (e.code === 'ArrowRight') {
+        player.seek(Math.min(player.duration, player.getPosition() + 5000));
+        queueForceScroll();
+      }
+    });
+  </script>
+</body>
+
+</html>

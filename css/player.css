@@ -1,0 +1,701 @@
+/* ═══════════════════════════════════════════════
+   Spicy Lyrics Web — Player Page
+   Ported from ContentBox.css + default.css
+   ═══════════════════════════════════════════════ */
+
+/* ── Page Container ── */
+#SpicyLyricsPage {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  container-type: size;
+  position: relative;
+  left: 0;
+  top: 0;
+  font-weight: 700;
+  user-select: none;
+  -webkit-user-drag: none;
+  opacity: 1;
+  font-family: Inter, "Noto Sans Georgian", "Vazirmatn", sans-serif;
+}
+
+/* ── Content Box ── */
+#SpicyLyricsPage .ContentBox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  --default-font-size: clamp(0.5rem, calc(1cqw * 3), 2.4rem);
+  --Compact_NowBarHeight: 15cqh;
+  transition: opacity 0.34s;
+}
+
+/* ── NowBar ── */
+#SpicyLyricsPage .ContentBox .NowBar {
+  scale: 0.8;
+  --NowBarVPadding: 4cqh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: var(--NowBarLeftSpacing);
+  top: 0;
+  height: 100cqh;
+  z-index: 10;
+  container-type: size;
+  width: var(--NowBarWidth);
+  flex-shrink: 0;
+  padding: var(--NowBarVPadding) 0;
+}
+
+.Grabber {
+  width: 40px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  margin-bottom: 1.5cqh;
+  flex-shrink: 0;
+}
+
+#SpicyLyricsPage .ContentBox .NowBar .Header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: center;
+}
+
+/* ── MediaBox (Album Art) ── */
+#SpicyLyricsPage .ContentBox .NowBar .Header .MediaBox {
+  --ArtworkBrightness: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  margin-bottom: 2.5cqh;
+}
+
+#SpicyLyricsPage .ContentBox .NowBar .Header .MediaBox .MediaImageContainer {
+  border-radius: 1.5cqh;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.animated-art-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+  z-index: 2;
+}
+
+.animated-art-video.loaded {
+  opacity: 1;
+}
+
+/* ── Metadata Row ── */
+.MetadataRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 1.5cqh;
+  gap: 15px;
+}
+
+#SpicyLyricsPage .ContentBox .NowBar .Header .Metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  flex: 1;
+}
+
+#SpicyLyricsPage .ContentBox .NowBar .Header .Metadata .SongName {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#SpicyLyricsPage .ContentBox .NowBar .Header .Metadata .Artists {
+  font-weight: 500;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.options-button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.options-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.options-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Progress Bar ── */
+.NowBarProgress {
+  width: 100%;
+  margin-bottom: 1.2cqh;
+}
+
+.progress-bar-wrapper {
+  width: 100%;
+  height: 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.4);
+  width: 0%;
+  position: relative;
+}
+
+.progress-bar-fill::after {
+  content: "";
+  position: absolute;
+  right: -5px;
+  top: 50%;
+  transform: translateY(-50%) scale(0);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.progress-bar-wrapper:hover .progress-bar-fill::after {
+  transform: translateY(-50%) scale(1);
+}
+
+.progress-times {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.progress-time {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Quality Badge ── */
+.quality-badge-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 2cqh;
+}
+
+.quality-badge {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Controls Area ── */
+.NowBarControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 3cqh;
+}
+
+.playback-control {
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.playback-control:hover {
+  transform: scale(1.1);
+}
+
+.playback-control:active {
+  transform: scale(0.9);
+}
+
+.playback-control img {
+  width: 33px;
+  height: 33px;
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+}
+
+.playback-control.play-pause img {
+  width: 52px;
+  height: 52px;
+  opacity: 1;
+}
+
+.playback-control.shuffle img,
+.playback-control.repeat img {
+  width: 24px;
+  height: 24px;
+  opacity: 0.6;
+}
+
+.playback-control.active img {
+  opacity: 1;
+}
+
+/* ── Volume Area ── */
+.VolumeArea {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.volume-side-icon {
+  width: 16px;
+  height: 16px;
+  filter: brightness(0) invert(1);
+  opacity: 0.5;
+}
+
+.volume-slider-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.volume-slider {
+  width: 100%;
+  height: 5px;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  outline: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  transform: scale(0);
+  transition: transform 0.2s;
+}
+
+.volume-slider:hover::-webkit-slider-thumb {
+  transform: scale(1);
+}
+
+/* ── Loader ── */
+.SpicyLoader {
+  --bg-color: #000;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: z-index 0.34s;
+  background-color: var(--bg-color);
+  animation: SpicyLoader_FadeOut 0.34s forwards;
+  z-index: -1;
+}
+
+.SpicyLoader.active {
+  z-index: 105;
+  animation: SpicyLoader_FadeIn 0.34s forwards;
+}
+
+/* ── Back button ── */
+.back-button {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 200;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(21, 22, 23, 0.72);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.back-button svg {
+  width: 18px;
+  height: 18px;
+  fill: rgba(255, 255, 255, 0.7);
+}
+
+#SpicyLyricsPage:hover .back-button {
+  opacity: 0.6;
+}
+
+.back-button:hover {
+  opacity: 1 !important;
+  transform: scale(1.1);
+  background: rgba(21, 22, 23, 0.88);
+}
+
+/* ── Lyrics Loading Indicator ── */
+.lyrics-loading-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.lyrics-loading-indicator.active {
+  opacity: 1;
+}
+
+.lyrics-loading-indicator .loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2.5px solid rgba(255, 255, 255, 0.15);
+  border-top-color: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  animation: SL_spin 0.8s linear infinite;
+}
+
+.lyrics-loading-indicator .loading-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.02em;
+}
+
+/* ── Settings Modal ── */
+.SpicyLyricsSettingsOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(15px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.SpicyLyricsSettingsOverlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.SpicyLyricsSettingsContainer {
+  background: rgba(30, 30, 30, 0.85);
+  width: 85%;
+  max-width: 600px;
+  max-height: 80%;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.95) translateY(20px);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.SpicyLyricsSettingsContainer.active {
+  transform: scale(1) translateY(0);
+}
+
+.SpicyLyricsSettingsHeader {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.SpicyLyricsSettingsHeader span {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.SpicyLyricsSettingsHeaderClose {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.SpicyLyricsSettingsHeaderClose:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.SpicyLyricsSettingsScroll {
+  flex: 1;
+  padding: 10px 24px 30px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.SpicyLyricsSettingsScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.sl-settings-group {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 25px 0 10px;
+  padding-left: 4px;
+}
+
+.sl-settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.sl-settings-label {
+  font-size: 0.95rem;
+  color: #fff;
+  font-weight: 500;
+}
+
+/* ── UI Components ── */
+.sl-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.sl-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.sl-toggle span {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.sl-toggle span:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.sl-toggle input:checked + span {
+  background-color: #30d158;
+}
+
+.sl-toggle input:checked + span:before {
+  transform: translateX(20px);
+}
+
+.sl-select {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.sl-input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.sl-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.sl-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Alignment Support */
+.sl-right-aligned #lyrics-container {
+  text-align: right;
+}
+
+/* --- Simple Lyrics Mode --- */
+.sl-simple-mode .line {
+  filter: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.sl-simple-mode .word {
+  opacity: 0.3;
+  transition: opacity 0.3s ease, color 0.3s ease;
+  scale: 1 !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  color: #fff !important;
+  text-shadow: none !important;
+}
+
+.sl-simple-mode .word.active {
+  opacity: 1;
+  color: #fff !important;
+}
+
+.sl-simple-mode .line.past .word {
+  opacity: 0.3;
+}
+
+/* --- Provider Manager --- */
+.sl-btn-small {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  padding: 2px 6px;
+  min-width: 24px;
+  font-family: inherit;
+}
+
+.sl-btn-small:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sl-btn-small:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.sl-btn-small.off {
+  background: rgba(255, 50, 50, 0.2);
+  color: #ff9999;
+}
+
+/* --- Lyrics Source Badge --- */
+.lyrics-source-badge {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  z-index: 100;
+  pointer-events: none;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}

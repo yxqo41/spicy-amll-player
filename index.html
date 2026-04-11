@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spicy Lyrics — Upload</title>
+  <meta name="description" content="Upload your audio files to experience Spicy Lyrics in the browser. Lyrics are fetched automatically.">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/upload.css">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌶️</text></svg>">
+</head>
+
+<body>
+  <div class="upload-page" id="upload-page">
+
+    <div class="upload-header">
+      <h1>🌶️ Spicy Lyrics</h1>
+      <p>Upload your audio to get started</p>
+      <p class="upload-credit">A web remake of the original <a href="https://github.com/Spikerko/spicy-lyrics"
+          target="_blank" rel="noopener">Spicy Lyrics</a> extension</p>
+    </div>
+
+    <div class="upload-zones">
+      <!-- Audio Zone (Required) -->
+      <div class="upload-zone primary" id="audio-zone">
+        <div class="zone-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6zM10 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
+          </svg>
+        </div>
+        <span class="zone-label">Drop audio file</span>
+        <span class="zone-hint">MP3, FLAC, WAV, OGG, M4A</span>
+        <span class="zone-filename" style="display:none;"></span>
+        <input type="file" id="audio-input" accept=".mp3,.flac,.wav,.ogg,.m4a,.aac,audio/*">
+      </div>
+
+      <!-- TTML Zone (Optional) -->
+      <div class="upload-zone optional" id="ttml-zone">
+        <div class="zone-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6zm2-6h8v1.5H8V14zm0 3h6v1.5H8V17zm0-6h8v1.5H8V11z" />
+          </svg>
+        </div>
+        <span class="zone-label">Drop TTML lyrics file</span>
+        <span class="zone-hint">Optional — auto-fetched if not provided</span>
+        <span class="zone-filename" style="display:none;"></span>
+        <input type="file" id="ttml-input" accept=".ttml,.xml">
+      </div>
+    </div>
+
+    <div class="upload-actions">
+      <button class="start-button" id="start-button" disabled>Start Playback</button>
+      <p class="auto-fetch-note">Lyrics are automatically fetched from Apple Music & Spicy Lyrics when no TTML is provided</p>
+    </div>
+
+    <div class="upload-error" id="upload-error"></div>
+  </div>
+
+  <script src="js/upload.js"></script>
+</body>
+
+</html>

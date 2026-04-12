@@ -42,14 +42,15 @@ function parseTimestamp(value) {
     const minutes = parseInt(hmsMatch[2], 10);
     const seconds = parseInt(hmsMatch[3], 10);
     const fraction = hmsMatch[4] ? parseFloat(`0.${hmsMatch[4]}`) : 0;
-    return (hours * 60 + minutes) * 60 + seconds + fraction;
+    const parsedTime = (hours * 60 + minutes) * 60 + seconds + fraction;
+    return Math.max(0, parsedTime - 0.2);
   }
 
   const secondsMatch = time.match(/^(\d+(?:\.\d+)?)(s)?$/);
-  if (secondsMatch) return parseFloat(secondsMatch[1]);
+  if (secondsMatch) return Math.max(0, parseFloat(secondsMatch[1]) - 0.2);
 
   const msMatch = time.match(/^(\d+(?:\.\d+)?)ms$/);
-  if (msMatch) return parseFloat(msMatch[1]) / 1000;
+  if (msMatch) return Math.max(0, (parseFloat(msMatch[1]) / 1000) - 0.2);
 
   return null;
 }

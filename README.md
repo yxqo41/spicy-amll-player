@@ -21,7 +21,7 @@ A premium, high-performance web-based lyrics player that replicates the "Spicy L
 
 Spicy Lyrics Web is a standalone static application. No complex build steps are required.
 
-1.  **Open in Browser**: Navigate to `https://yxqo41.github.io/spicy-lyrics-web/`.
+1.  **Open in Browser**: Navigate to `https://yxqo41.github.io/spicy-lyrics-web/` or `https://spicy-lyrics-web.netlify.app`.
 2.  **Play Music**: Drag and drop your audio file (MP3/FLAC) and an optional TTML/LRC file into the upload zone.
 
 ## 🛠️ Configuration

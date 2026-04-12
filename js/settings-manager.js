@@ -5,12 +5,12 @@
 
 export const LYRICS_SOURCE_PROVIDER_DEFINITIONS = {
   spicy: {
-    label: "Spicy Lyrics API",
+    label: "Spicy Lyrics API (currently unavailable due to the original developer not giving us access)",
     description: "Our high-quality TTML repository.",
     id: "spicy"
   },
   apple: {
-    label: "Apple Music",
+    label: "Apple Music (currently unavailable due to the original developer not giving us access)",
     description: "Premium animated and time-synced lyrics.",
     id: "apple"
   },
@@ -36,7 +36,7 @@ export const LYRICS_SOURCE_PROVIDER_DEFINITIONS = {
   }
 };
 
-export const DEFAULT_LYRICS_SOURCE_ORDER = ["spicy", "apple", "musixmatch", "netease", "lrclib", "genius"];
+export const DEFAULT_LYRICS_SOURCE_ORDER = ["spicy", "apple", "musixmatch", "lrclib", "genius", "netease"];
 
 const HARDCODED_MUSIXMATCH_TOKEN = "260407cedd74339c647cfc2ad6fac02ab1f32910a5a18725c97acc";
 

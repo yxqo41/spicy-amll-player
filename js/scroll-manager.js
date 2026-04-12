@@ -146,6 +146,7 @@ export function scrollToActiveLine(lyricsContent) {
 
   if (userIsScrolling) return;
 
+
   const activeLine = lyricsContent.querySelector('.line.Active:not(.bg-line)');
   if (!activeLine || activeLine === lastActiveElement) return;
 
@@ -190,3 +191,12 @@ export function resetScrollManager() {
   forceScrollQueued = false;
   clearTimeout(userScrollTimeout);
 }
+
+/**
+ * Check if the user is currently scrolling.
+ * @returns {boolean}
+ */
+export function isUserScrolling() {
+  return userIsScrolling;
+}
+

@@ -14,9 +14,12 @@
   <link rel="stylesheet" href="css/player.css">
   <link rel="stylesheet" href="css/lyrics.css">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml"
-    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌶️</text></svg>">
+  <!-- Favicon & Icons -->
+  <link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon/favicon-96x96.png">
+  <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg">
+  <link rel="apple-touch-icon" href="favicon/icon.png">
+
 </head>
 
 <body>
@@ -127,7 +130,8 @@
     import { applySyllableLyrics, applyLineLyrics, applyStaticLyrics, LyricsObject } from './js/lyrics-applyer.js';
     import { setLyricsTime } from './js/lyrics-setter.js';
     import { animateLyrics } from './js/lyrics-animator.js';
-    import { initScrollManager, scrollToActiveLine, resetScrollManager, queueForceScroll } from './js/scroll-manager.js';
+    import { initScrollManager, scrollToActiveLine, resetScrollManager, queueForceScroll, isUserScrolling } from './js/scroll-manager.js';
+
     import AudioPlayer from './js/audio-player.js';
     import { applyDefaultBackground, applyLegacyBackground, extractColors } from './js/dynamic-bg.js';
     import { parseAudioMetadata } from './js/metadata-parser.js';
@@ -460,21 +464,39 @@
     // ── Animation Loop ──
     function startAnimationLoop() {
       function loop() {
+        const isScrolling = isUserScrolling();
         const pos = player.getPosition();
-        setLyricsTime(pos, lyricsType);
-        animateLyrics(pos, lyricsType);
 
-        if (player.duration > 0) {
-          const pct = (pos / player.duration) * 100;
-          progressFill.style.width = `${Math.min(pct, 100)}%`;
-          timeTotal.textContent = AudioPlayer.formatTime(player.duration - pos, true);
+        // 1. Core State Updates (Always update time status)
+        setLyricsTime(pos, lyricsType);
+
+        // 2. UI Updates (Time & Progress)
+        if (!document.hidden) {
+          if (player.duration > 0) {
+            const pct = (pos / player.duration) * 100;
+            progressFill.style.width = `${Math.min(pct, 100)}%`;
+            timeTotal.textContent = AudioPlayer.formatTime(player.duration - pos, true);
+          }
+          timeCurrent.textContent = AudioPlayer.formatTime(pos);
         }
-        timeCurrent.textContent = AudioPlayer.formatTime(pos);
-        scrollToActiveLine(lyricsContent);
+
+        // 3. Heavy Physics/Animation Updates (Skip if hidden or scrolling)
+        if (!document.hidden && !isScrolling) {
+          animateLyrics(pos, lyricsType, false);
+          scrollToActiveLine(lyricsContent);
+        } else if (isScrolling) {
+          // Still call with 'true' to keep animator.js time-delta correct
+          animateLyrics(pos, lyricsType, true);
+        } else if (document.hidden) {
+           // Skip everything heavy when hidden to save MAX performance
+           animateLyrics(pos, lyricsType, true);
+        }
+
         animationFrameId = requestAnimationFrame(loop);
       }
       animationFrameId = requestAnimationFrame(loop);
     }
+
 
     function stopAnimationLoop() {
       if (animationFrameId) {

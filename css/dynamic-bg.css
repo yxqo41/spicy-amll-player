@@ -15,7 +15,10 @@
   filter: saturate(2.5) brightness(0.65);
   z-index: 0;
   transition: filter 1s ease;
+  will-change: transform, filter;
+  backface-visibility: hidden;
 }
+
 
 .spicy-dynamic-bg.LegacyBackground {
   filter: saturate(1.8) brightness(0.7);
@@ -32,7 +35,9 @@
   height: 100%;
   filter: blur(15px);
   transition: background 1.5s ease;
+  will-change: transform;
 }
+
 
 .spicy-dynamic-bg.LegacyBackground .Back:not(.NoEffect),
 .spicy-dynamic-bg.LegacyBackground .BackCenter:not(.NoEffect),
@@ -108,10 +113,12 @@
 
 /* ── Animated Art Background (blurred behind) ── */
 #SpicyLyricsPage .spicy-dynamic-bg.AnimatedArtBackground {
-  filter: saturate(1.6) brightness(0.45) blur(60px);
+  filter: saturate(1.6) brightness(0.45) blur(40px);
   transition: filter 1s ease, opacity 1s ease;
-  transform: scale(1.2);
+  transform: scale(1.1);
+  will-change: transform, filter;
 }
+
 
 #SpicyLyricsPage .spicy-dynamic-bg.AnimatedArtBackground video {
   position: absolute;

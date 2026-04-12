@@ -37,3 +37,7 @@ This project is licensed under the **GNU Affero General Public License v3**. See
 
 ---
 *Created with Html and css and js basicly by models of antigravity but ideas are mine*
+<<<<<<< HEAD
+=======
+
+>>>>>>> be27d43 (feat: performance optimizations and branding integration)

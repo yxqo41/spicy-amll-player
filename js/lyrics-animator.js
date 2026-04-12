@@ -113,13 +113,14 @@ function applyBlur(arr, activeIndex) {
  * Main animation function — called every frame.
  * @param {number} position - Current audio position in milliseconds
  * @param {string} lyricsType - "Syllable", "Line", or "Static"
+ * @param {boolean} skip - If true, only update time delta and return
  */
-export function animateLyrics(position, lyricsType) {
-  if (!lyricsType || lyricsType === "None" || lyricsType === "Static") return;
-
+export function animateLyrics(position, lyricsType, skip = false) {
   const now = performance.now();
   const deltaTime = (now - lastFrameTime) / 1000;
   lastFrameTime = now;
+
+  if (skip || !lyricsType || lyricsType === "None" || lyricsType === "Static") return;
 
   if (lyricsType === "Syllable") {
     animateSyllable(position, deltaTime);
@@ -130,8 +131,35 @@ export function animateLyrics(position, lyricsType) {
 
 function animateSyllable(position, deltaTime) {
   const arr = LyricsObject.Types.Syllable.Lines;
+  if (!arr.length) return;
 
-  for (let index = 0; index < arr.length; index++) {
+  // Pass 1: Update status classes for ALL lines (Always Visible logic)
+  // This is fast because we use a status cache to avoid redundant DOM touches.
+  let activeIdx = -1;
+  for (let i = 0; i < arr.length; i++) {
+    const line = arr[i];
+    const isAct = position >= line.StartTime && position <= line.EndTime;
+    const isSung = position > line.EndTime;
+    const isNot = position < line.StartTime;
+    const status = isAct ? "Active" : (isSung ? "Sung" : "NotSung");
+
+    if (line._lastAppliedStatus !== status) {
+      line.HTMLElement.classList.remove("Active", "Sung", "NotSung");
+      line.HTMLElement.classList.add(status);
+      line._lastAppliedStatus = status;
+    }
+    if (isAct) activeIdx = i;
+  }
+
+  // Pass 2: Heavy Animations (Windowed Optimization)
+  // Only process physics and complex CSS updates for lines near the current position.
+  const searchIdx = activeIdx !== -1 ? activeIdx : (blurringLastLine || 0);
+  const startIdx = Math.max(0, searchIdx - 5);
+  const endIdx = Math.min(arr.length, searchIdx + 10);
+
+  for (let index = startIdx; index < endIdx; index++) {
+
+
     const line = arr[index];
     const lineActive = position >= line.StartTime && position <= line.EndTime;
     const lineSung = position > line.EndTime;
@@ -143,10 +171,8 @@ function animateSyllable(position, deltaTime) {
         blurringLastLine = index;
       }
 
-      line.HTMLElement.classList.add("Active");
-      line.HTMLElement.classList.remove("NotSung", "Sung");
-
       if (!line.Syllables?.Lead) continue;
+
 
       for (let wi = 0; wi < line.Syllables.Lead.length; wi++) {
         const word = line.Syllables.Lead[wi];
@@ -238,20 +264,42 @@ function animateSyllable(position, deltaTime) {
         setStyleIfChanged(word.HTMLElement, "--text-shadow-opacity",
           `${curGlow * 185}%`);
       }
-    } else if (lineNotSung) {
-      line.HTMLElement.classList.add("NotSung");
-      line.HTMLElement.classList.remove("Active", "Sung");
-    } else if (lineSung) {
-      line.HTMLElement.classList.add("Sung");
-      line.HTMLElement.classList.remove("Active", "NotSung");
+      // Class updates are already handled in Pass 1
+
     }
   }
 }
 
 function animateLine(position, deltaTime) {
-  const arr = LyricsObject.Types.Line.Lines;
 
-  for (let index = 0; index < arr.length; index++) {
+
+  const arr = LyricsObject.Types.Line.Lines;
+  if (!arr.length) return;
+
+  // Pass 1: Global Status Classes
+  let activeIdx = -1;
+  for (let i = 0; i < arr.length; i++) {
+    const line = arr[i];
+    const isAct = position >= line.StartTime && position <= line.EndTime;
+    const isSung = position > line.EndTime;
+    const status = isAct ? "Active" : (isSung ? "Sung" : "NotSung");
+
+    if (line._lastAppliedStatus !== status) {
+      line.HTMLElement.classList.remove("Active", "Sung", "NotSung");
+      line.HTMLElement.classList.add(status);
+      line._lastAppliedStatus = status;
+    }
+    if (isAct) activeIdx = i;
+  }
+
+  // Pass 2: Animations (Windowed)
+  const searchIdx = activeIdx !== -1 ? activeIdx : (blurringLastLine || 0);
+  const startIdx = Math.max(0, searchIdx - 5);
+  const endIdx = Math.min(arr.length, searchIdx + 10);
+
+  for (let index = startIdx; index < endIdx; index++) {
+
+
     const line = arr[index];
     const lineActive = position >= line.StartTime && position <= line.EndTime;
     const lineSung = position > line.EndTime;
@@ -301,15 +349,11 @@ function animateLine(position, deltaTime) {
           setStyleIfChanged(dot.HTMLElement, "opacity", `${dot.AnimatorStore.Opacity.Step(deltaTime)}`);
         }
       }
-    } else if (lineNotSung) {
-      line.HTMLElement.classList.add("NotSung");
-      line.HTMLElement.classList.remove("Active", "Sung");
-    } else if (lineSung) {
-      line.HTMLElement.classList.add("Sung");
-      line.HTMLElement.classList.remove("Active", "NotSung");
+      // Class updates already handled
     }
   }
 }
+
 
 /**
  * Reset animator state (call when loading new lyrics).

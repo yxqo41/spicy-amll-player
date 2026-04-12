@@ -536,3 +536,10 @@
 #SpicyLyricsPage .LyricsContainer .LyricsContent.HideLineBlur .line {
   --BlurAmount: 0px !important;
 }
+
+/* Spacer for centering last line */
+.lyrics-spacer {
+  height: 50vh;
+  width: 100%;
+  pointer-events: none;
+}

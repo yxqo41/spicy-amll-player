@@ -128,3 +128,24 @@ input {
 .WaitingForHeight {
   opacity: 0 !important;
 }
+
+/* ── Branding ── */
+.logo-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.logo-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.back-button .logo-icon {
+  width: 20px;
+  height: 20px;
+}

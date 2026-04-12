@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Spicy Lyrics — Upload</title>
-  <meta name="description" content="Upload your audio files to experience Spicy Lyrics in the browser. Lyrics are fetched automatically.">
+  <meta name="description" content="Premium web-based lyrics player. Upload your audio to get started.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/global.css">
@@ -13,62 +17,76 @@
   <link rel="stylesheet" href="css/upload.css">
 
   <!-- Favicon & Icons -->
-  <link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
-  <link rel="icon" type="image/png" sizes="96x96" href="favicon/favicon-96x96.png">
-  <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg">
-  <link rel="apple-touch-icon" href="favicon/icon.png">
-
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="icon.png">
 </head>
-
 <body>
-  <div class="upload-page" id="upload-page">
-
-    <div class="upload-header">
-      <h1>🌶️ Spicy Lyrics</h1>
-      <p>Upload your audio to get started</p>
-      <p class="upload-credit">A web remake of the original <a href="https://github.com/Spikerko/spicy-lyrics"
-          target="_blank" rel="noopener">Spicy Lyrics</a> extension</p>
+  <div class="upload-page">
+    <!-- Animated Background Blobs -->
+    <div class="bg-blobs">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
     </div>
 
-    <div class="upload-zones">
-      <!-- Audio Zone (Required) -->
-      <div class="upload-zone primary" id="audio-zone">
-        <div class="zone-icon">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6zM10 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
-          </svg>
+    <!-- Main Glass UI -->
+    <main class="glass-container">
+      <header class="upload-header">
+        <div class="brand">
+          <img src="favicon.svg" class="logo-icon" alt="🌶️">
+          <h1>Spicy Lyrics</h1>
         </div>
-        <span class="zone-label">Drop audio file</span>
-        <span class="zone-hint">MP3, FLAC, WAV, OGG, M4A</span>
-        <span class="zone-filename" style="display:none;"></span>
-        <input type="file" id="audio-input" accept=".mp3,.flac,.wav,.ogg,.m4a,.aac,audio/*">
-      </div>
+        <p>Experience your music with stunning synchronized lyrics.</p>
+      </header>
 
-      <!-- TTML Zone (Optional) -->
-      <div class="upload-zone optional" id="ttml-zone">
-        <div class="zone-icon">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6zm2-6h8v1.5H8V14zm0 3h6v1.5H8V17zm0-6h8v1.5H8V11z" />
-          </svg>
+      <section class="upload-section">
+        <div class="upload-zones">
+          <!-- Primary: Audio -->
+          <div class="upload-zone primary" id="audio-zone" title="Drop or click to upload audio">
+            <div class="zone-content">
+              <div class="zone-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+              </div>
+              <div class="zone-info">
+                <h3>Audio File</h3>
+                <p class="zone-hint">MP3, FLAC, WAV, M4A</p>
+                <p class="zone-filename"></p>
+              </div>
+            </div>
+            <input type="file" id="audio-input" accept="audio/*,.mp3,.flac,.wav,.ogg,.m4a,.aac">
+          </div>
+
+          <!-- Optional: TTML -->
+          <div class="upload-zone optional" id="ttml-zone" title="Drop or click to upload lyrics (Optional)">
+            <div class="zone-content">
+              <div class="zone-icon">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6zm2-6h8v1.5H8V14zm0 3h6v1.5H8V17zm0-6h8v1.5H8V11z" /></svg>
+              </div>
+              <div class="zone-info">
+                <h3>TTML Lyrics</h3>
+                <p class="zone-hint">Optional — auto-fetched</p>
+                <p class="zone-filename"></p>
+              </div>
+            </div>
+            <input type="file" id="ttml-input" accept=".ttml,.xml">
+          </div>
         </div>
-        <span class="zone-label">Drop TTML lyrics file</span>
-        <span class="zone-hint">Optional — auto-fetched if not provided</span>
-        <span class="zone-filename" style="display:none;"></span>
-        <input type="file" id="ttml-input" accept=".ttml,.xml">
-      </div>
-    </div>
 
-    <div class="upload-actions">
-      <button class="start-button" id="start-button" disabled>Start Playback</button>
-      <p class="auto-fetch-note">Lyrics are automatically fetched from Apple Music & Spicy Lyrics when no TTML is provided</p>
-    </div>
+        <div class="actions">
+          <button id="start-button" class="start-btn" disabled>Start Playback</button>
+          <div id="upload-error" class="error-msg"></div>
+        </div>
+      </section>
 
-    <div class="upload-error" id="upload-error"></div>
+      <footer class="upload-footer">
+        <p>A premium remake of <a href="https://github.com/Spikerko/spicy-lyrics" target="_blank">Spicy Lyrics</a></p>
+        <p class="attribution">Created with basicly by models of antigravity but ideas are mine</p>
+      </footer>
+    </main>
   </div>
 
   <script src="js/upload.js"></script>
 </body>
-
 </html>

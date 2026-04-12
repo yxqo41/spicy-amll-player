@@ -71,6 +71,23 @@
   justify-content: center;
 }
 
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2.5cqh;
+  opacity: 0.6;
+  font-weight: 900;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+
+.brand-header .logo-icon {
+  width: 20px;
+  height: 20px;
+}
+
+
 /* ── MediaBox (Album Art) ── */
 #SpicyLyricsPage .ContentBox .NowBar .Header .MediaBox {
   --ArtworkBrightness: 1;

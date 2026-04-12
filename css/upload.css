@@ -1,136 +1,196 @@
 /* ═══════════════════════════════════════════════
-   Spicy Lyrics Web — Upload Page
+   Spicy Lyrics Web — Apple Music Style Upload
    ═══════════════════════════════════════════════ */
 
+:root {
+  --apple-red: #fa243c;
+  --apple-pink: #fd2458;
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.55);
+  --text-dim: rgba(255, 255, 255, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #000;
+  color: var(--text-primary);
+  line-height: 1.5;
+  overflow: hidden;
+}
+
 .upload-page {
+  position: relative;
   width: 100vw;
   height: 100vh;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%);
-  position: relative;
-  overflow: hidden;
+  z-index: 1;
 }
 
-/* Subtle animated background */
-.upload-page::before {
-  content: "";
+/* ── Animated Background Blobs ── */
+.bg-blobs {
   position: absolute;
-  inset: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 20% 50%, rgba(29, 185, 84, 0.06) 0%, transparent 50%),
-              radial-gradient(circle at 80% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
-  animation: bgAnim 45s linear infinite;
-  pointer-events: none;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  filter: blur(80px);
+  opacity: 0.6;
 }
 
-.upload-header {
-  text-align: center;
-  margin-bottom: 48px;
-  z-index: 1;
-  animation: fadeInUp 0.6s ease-out;
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  animation: moveBlob 25s infinite alternate ease-in-out;
 }
 
-.upload-header h1 {
-  font-size: 2.8rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  margin-bottom: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.blob-1 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, var(--apple-red) 0%, transparent 70%);
+  top: -100px;
+  left: -100px;
 }
 
-.upload-header p {
-  font-size: 1rem;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.45);
-  letter-spacing: 0.02em;
+.blob-2 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #5e11ff 0%, transparent 70%);
+  bottom: -50px;
+  right: -50px;
+  animation-duration: 30s;
+  animation-delay: -5s;
 }
 
-.upload-header .upload-credit {
-  margin-top: 10px;
-  font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.25);
+.blob-3 {
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, var(--apple-pink) 0%, transparent 70%);
+  top: 40%;
+  left: 30%;
+  animation-duration: 20s;
+  animation-delay: -2s;
 }
 
-.upload-header .upload-credit a {
-  color: rgba(29, 185, 84, 0.6);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: color 0.2s;
+@keyframes moveBlob {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(100px, 50px) scale(1.1); }
+  66% { transform: translate(-50px, 120px) scale(0.9); }
+  100% { transform: translate(0, 0) scale(1); }
 }
 
-.upload-header .upload-credit a:hover {
-  color: rgba(29, 185, 84, 0.9);
-}
-
-.upload-zones {
-  display: flex;
-  gap: 32px;
-  z-index: 1;
-  animation: fadeInUp 0.8s ease-out 0.1s both;
-}
-
-.upload-zone {
-  width: 320px;
-  height: 240px;
-  border: 2px dashed rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
+/* ── Main Container ── */
+.glass-container {
+  width: 90%;
+  max-width: 800px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(50px) saturate(180%);
+  -webkit-backdrop-filter: blur(50px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: 40px;
+  padding: 60px 40px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: cardFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
+  gap: 48px;
+}
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(30px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Header ── */
+.upload-header {
+  text-align: center;
+}
+
+.brand {
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 12px;
+}
+
+.logo-icon {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(254, 36, 60, 0.4));
+}
+
+.upload-header h1 {
+  font-size: 3.5rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.upload-header p {
+  color: var(--text-secondary);
+  font-size: 1.15rem;
+  font-weight: 400;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* ── Upload Section ── */
+.upload-zones {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+}
+
+.upload-zone {
   position: relative;
-  background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 28px;
+  padding: 32px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
 
-.upload-zone::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(29, 185, 84, 0), rgba(255, 255, 255, 0));
-  z-index: -1;
-  transition: all 0.3s;
-}
-
 .upload-zone:hover {
-  border-color: rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.04);
-  transform: translateY(-2px);
-}
-
-.upload-zone:hover::before {
-  background: linear-gradient(135deg, rgba(29, 185, 84, 0.15), rgba(255, 255, 255, 0.05));
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .upload-zone.dragover {
-  border-color: rgba(29, 185, 84, 0.6);
-  background: rgba(29, 185, 84, 0.08);
+  background: rgba(250, 36, 60, 0.15);
+  border-color: var(--apple-red);
   transform: scale(1.02);
 }
 
 .upload-zone.has-file {
-  border-color: rgba(29, 185, 84, 0.5);
-  border-style: solid;
-  background: rgba(29, 185, 84, 0.06);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(250, 36, 60, 0.4);
 }
 
-.upload-zone .zone-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
+.zone-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.zone-icon {
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,152 +198,115 @@
 }
 
 .upload-zone:hover .zone-icon {
-  background: rgba(255, 255, 255, 0.1);
-  transform: scale(1.05);
+  background: var(--apple-red);
 }
 
-.upload-zone.has-file .zone-icon {
-  background: rgba(29, 185, 84, 0.15);
+.zone-icon svg {
+  width: 28px;
+  height: 28px;
+  fill: #fff;
 }
 
-.upload-zone .zone-icon svg {
-  width: 24px;
-  height: 24px;
-  fill: rgba(255, 255, 255, 0.5);
-  transition: fill 0.3s;
+.zone-info h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 4px;
 }
 
-.upload-zone.has-file .zone-icon svg {
-  fill: rgba(29, 185, 84, 0.9);
+.zone-hint {
+  font-size: 0.9rem;
+  color: var(--text-dim);
 }
 
-.upload-zone .zone-label {
-  font-size: 0.95rem;
+.zone-filename {
+  font-size: 0.9rem;
+  color: var(--apple-pink);
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
-  text-align: center;
-}
-
-.upload-zone .zone-hint {
-  font-size: 0.8rem;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.upload-zone .zone-filename {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: rgba(29, 185, 84, 0.9);
-  max-width: 90%;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.upload-zone input[type="file"] {
+  margin-top: 8px;
   display: none;
 }
 
-/* Start button */
-.upload-actions {
-  margin-top: 40px;
-  z-index: 1;
-  animation: fadeInUp 1s ease-out 0.2s both;
+.upload-zone input { display: none; }
+
+/* ── Actions ── */
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
-.start-button {
-  padding: 14px 48px;
-  font-size: 1.05rem;
-  font-weight: 700;
+.start-btn {
+  padding: 16px 64px;
+  font-size: 1.1rem;
+  font-weight: 800;
   border-radius: 100px;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  cursor: not-allowed;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  letter-spacing: 0.02em;
-}
-
-.start-button.enabled {
-  background: rgba(29, 185, 84, 0.9);
-  color: #ffffff;
-  border-color: rgba(29, 185, 84, 0.9);
+  border: none;
+  background: #fff;
+  color: #000;
   cursor: pointer;
-  animation: pulseGlow 2.5s ease-in-out infinite;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
 }
 
-.start-button.enabled:hover {
-  background: rgba(29, 185, 84, 1);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 32px rgba(29, 185, 84, 0.4);
+.start-btn:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
-.start-button.enabled:active {
-  transform: translateY(0) scale(0.98);
+.start-btn:not(:disabled):hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 15px 30px rgba(255, 255, 255, 0.2);
 }
 
-/* Error message */
-.upload-error {
-  margin-top: 16px;
-  font-size: 0.85rem;
-  color: rgba(220, 80, 60, 0.9);
-  z-index: 1;
-  min-height: 24px;
+.error-msg {
+  font-size: 0.9rem;
+  color: var(--apple-red);
+  min-height: 20px;
 }
 
-/* Responsive */
-@media (max-width: 740px) {
-  .upload-zones {
-    flex-direction: column;
-    gap: 20px;
-  }
-  .upload-zone {
-    width: 300px;
-    height: 200px;
-  }
-  .upload-zone.optional {
-    height: 160px;
-  }
-  .upload-header h1 {
-    font-size: 2rem;
-  }
-}
-
-/* Primary zone (Audio) — larger & more prominent */
-.upload-zone.primary {
-  width: 340px;
-  height: 260px;
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-.upload-zone.primary:hover {
-  border-color: rgba(29, 185, 84, 0.4);
-}
-
-/* Optional zone (TTML) — smaller & dimmer */
-.upload-zone.optional {
-  width: 300px;
-  height: 200px;
-  opacity: 0.7;
-  border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.upload-zone.optional:hover {
-  opacity: 1;
-}
-
-.upload-zone.optional .zone-hint {
-  color: rgba(29, 185, 84, 0.5);
-  font-style: italic;
-}
-
-/* Auto-fetch note */
-.auto-fetch-note {
-  margin-top: 14px;
-  font-size: 0.78rem;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.25);
+/* ── Footer ── */
+.upload-footer {
   text-align: center;
-  letter-spacing: 0.01em;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upload-footer p {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.upload-footer a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.upload-footer a:hover { text-decoration: underline; }
+
+.attribution { font-style: italic; opacity: 0.7; }
+
+/* ── Responsive ── */
+@media (max-width: 650px) {
+  .glass-container {
+    padding: 40px 24px;
+    width: 95%;
+  }
+
+  .upload-header h1 { font-size: 2.5rem; }
+
+  .upload-zones {
+    grid-template-columns: 1fr;
+  }
+  
+  .upload-zone.primary, .upload-zone.optional {
+    padding: 24px;
+  }
 }

@@ -79,14 +79,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateZoneState(zone, filename) {
     zone.classList.add('has-file');
     const filenameEl = zone.querySelector('.zone-filename');
-    const labelEl = zone.querySelector('.zone-label');
     const hintEl = zone.querySelector('.zone-hint');
+    const h3El = zone.querySelector('h3');
 
-    if (filenameEl) filenameEl.textContent = filename;
-    if (labelEl) labelEl.style.display = 'none';
+    if (filenameEl) {
+      filenameEl.textContent = filename;
+      filenameEl.style.display = 'block';
+    }
     if (hintEl) hintEl.style.display = 'none';
-    if (filenameEl) filenameEl.style.display = 'block';
+    if (h3El) h3El.style.color = 'var(--apple-pink)'; // Feedback color
   }
+
 
   function checkReady() {
     // Only audio is required now — TTML is optional

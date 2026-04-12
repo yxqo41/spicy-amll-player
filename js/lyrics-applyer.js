@@ -245,12 +245,17 @@ export function applySyllableLyrics(data, lyricsContentEl) {
     container.appendChild(credits);
   }
 
-  // Clear and append
+  // Add spacer for centering
+  const spacer = document.createElement("div");
+  spacer.classList.add("lyrics-spacer");
+  container.appendChild(spacer);
+
   lyricsContentEl.innerHTML = "";
   lyricsContentEl.appendChild(container);
 
   return container;
 }
+
 
 /**
  * Apply Line-synced lyrics to the DOM.
@@ -309,10 +314,16 @@ export function applyLineLyrics(data, lyricsContentEl) {
     container.appendChild(credits);
   }
 
+  // Add spacer for centering
+  const spacer = document.createElement("div");
+  spacer.classList.add("lyrics-spacer");
+  container.appendChild(spacer);
+
   lyricsContentEl.innerHTML = "";
   lyricsContentEl.appendChild(container);
   return container;
 }
+
 
 /**
  * Apply Static lyrics to the DOM.
@@ -344,6 +355,11 @@ export function applyStaticLyrics(data, lyricsContentEl) {
     credits.textContent = "Written by: " + data.SongWriters.join(", ");
     container.appendChild(credits);
   }
+
+  // Add spacer for centering
+  const spacer = document.createElement("div");
+  spacer.classList.add("lyrics-spacer");
+  container.appendChild(spacer);
 
   lyricsContentEl.innerHTML = "";
   lyricsContentEl.appendChild(container);

@@ -147,8 +147,8 @@
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.Active .letter,
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.static {
   background-image: linear-gradient(var(--gradient-degrees),
-      rgba(255, 255, 255, var(--gradient-alpha)) var(--gradient-position),
-      rgba(255, 255, 255, var(--gradient-alpha-end)) calc(var(--gradient-position) + 20% + var(--gradient-offset)));
+      rgba(var(--ArtworkGlowColor, 255, 255, 255), var(--gradient-alpha)) var(--gradient-position),
+      rgba(var(--ArtworkGlowColor, 255, 255, 255), var(--gradient-alpha-end)) calc(var(--gradient-position) + 20% + var(--gradient-offset)));
 }
 
 /* ── NotSung State ── */
@@ -219,7 +219,7 @@
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.Active .word,
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.Active .letter,
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.Active .letterGroup {
-  text-shadow: 0 0 var(--text-shadow-blur-radius) rgba(255, 255, 255, var(--text-shadow-opacity));
+  text-shadow: 0 0 var(--text-shadow-blur-radius) rgba(var(--ArtworkGlowColor, 255, 255, 255), var(--text-shadow-opacity));
 }
 
 /* ── Word Display ── */

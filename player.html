@@ -116,6 +116,7 @@
       <div class="LyricsContainer" id="lyrics-container">
         <div class="LyricsContent" id="lyrics-content">
           <div class="LyricsNotice" id="lyrics-notice">
+            <div class="SlBounceLoader"></div>
             <span class="notice-descriptor">Loading lyrics...</span>
           </div>
         </div>
@@ -148,6 +149,17 @@
     if (!hasPlayerData()) {
       window.location.href = 'index.html';
     }
+
+    // ── Global Loader ──
+    const globalLoader = document.createElement('div');
+    globalLoader.className = 'SpicyLoader active';
+    globalLoader.innerHTML = '<div class="SlBounceLoader"></div>';
+    document.body.appendChild(globalLoader);
+
+    setTimeout(() => {
+      globalLoader.classList.remove('active');
+      setTimeout(() => globalLoader.remove(), 400);
+    }, 1500);
 
     // ── Elements ──
     const lyricsContent = document.getElementById('lyrics-content');
@@ -297,6 +309,11 @@
               dynamicBg.innerHTML = '';
               dynamicBg.className = 'spicy-dynamic-bg';
               applyLegacyBackground(dynamicBg, colors);
+
+              // Apply artwork tint to lyrics glow
+              if (colors.vibrant) {
+                document.documentElement.style.setProperty('--ArtworkGlowColor', colors.vibrant.join(', '));
+              }
             } catch (e) {
               console.warn('Color extraction failed:', e);
             }

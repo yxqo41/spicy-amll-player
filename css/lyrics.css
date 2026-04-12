@@ -74,11 +74,11 @@
   transition: padding-right 0.4s, padding-left 0.4s;
   display: flex;
   flex-direction: column;
-  margin-bottom: 85cqh;
+  margin-bottom: 0;
   margin-top: 25cqh;
-
-  padding-bottom: 120px;
+  padding-bottom: 75vh;
 }
+
 
 /* ═══════════════════════════════════════════════
    Lines — Base

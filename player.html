@@ -41,10 +41,6 @@
       <div class="NowBar Active LeftSide" id="now-bar">
         <div class="Grabber"></div>
         <div class="Header">
-          <div class="brand-header">
-            <img src="favicon.svg" class="logo-icon" alt="🌶️">
-            <span>Spicy Lyrics</span>
-          </div>
 
           <div class="MediaBox" id="media-box">
             <div class="MediaImageContainer" id="album-art"></div>
@@ -260,15 +256,15 @@
           if (metadata.artist) {
             const yearStr = (metadata.year && settingsManager.get("releaseYearPosition") !== "Off") ? metadata.year : "";
             const yearPos = settingsManager.get("releaseYearPosition");
-            
+
             if (yearStr) {
-               if (yearPos === "Before Artist") {
-                 artistsEl.textContent = `${yearStr} • ${metadata.artist}`;
-               } else if (yearPos === "After Artist") {
-                 artistsEl.textContent = `${metadata.artist} • ${yearStr}`;
-               } else {
-                 artistsEl.textContent = metadata.artist;
-               }
+              if (yearPos === "Before Artist") {
+                artistsEl.textContent = `${yearStr} • ${metadata.artist}`;
+              } else if (yearPos === "After Artist") {
+                artistsEl.textContent = `${metadata.artist} • ${yearStr}`;
+              } else {
+                artistsEl.textContent = metadata.artist;
+              }
             } else {
               artistsEl.textContent = metadata.artist;
             }
@@ -494,8 +490,8 @@
           // Still call with 'true' to keep animator.js time-delta correct
           animateLyrics(pos, lyricsType, true);
         } else if (document.hidden) {
-           // Skip everything heavy when hidden to save MAX performance
-           animateLyrics(pos, lyricsType, true);
+          // Skip everything heavy when hidden to save MAX performance
+          animateLyrics(pos, lyricsType, true);
         }
 
         animationFrameId = requestAnimationFrame(loop);

@@ -71,21 +71,7 @@
   justify-content: center;
 }
 
-.brand-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 2.5cqh;
-  opacity: 0.6;
-  font-weight: 900;
-  font-size: 1.1rem;
-  letter-spacing: -0.02em;
-}
 
-.brand-header .logo-icon {
-  width: 20px;
-  height: 20px;
-}
 
 
 /* ── MediaBox (Album Art) ── */
@@ -597,14 +583,14 @@
   background-color: white;
   transition: .4s;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.sl-toggle input:checked + span {
+.sl-toggle input:checked+span {
   background-color: #30d158;
 }
 
-.sl-toggle input:checked + span:before {
+.sl-toggle input:checked+span:before {
   transform: translateX(20px);
 }
 
@@ -714,5 +700,5 @@
   text-transform: uppercase;
   z-index: 100;
   pointer-events: none;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }

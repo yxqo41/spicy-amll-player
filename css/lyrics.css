@@ -74,8 +74,9 @@
   transition: padding-right 0.4s, padding-left 0.4s;
   display: flex;
   flex-direction: column;
-  margin-bottom: 60cqh;
+  margin-bottom: 85cqh;
   margin-top: 25cqh;
+
   padding-bottom: 120px;
 }
 

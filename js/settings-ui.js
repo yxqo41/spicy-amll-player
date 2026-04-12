@@ -91,8 +91,27 @@ class SettingsUI {
     this.addDropdown(container, "Static Background Type", "staticBackgroundType", ["Auto", "Album Art", "Blurred Video"]);
     this.addToggle(container, "Animated Art Video", "coverArtAnimation");
 
+    // --- Video Export ---
+    this.addGroup(container, "Video Export (Beta)");
+    this.addDropdown(container, "Orientation", "videoExportOrientation", ["Vertical", "Horizontal"]);
+    this.addDropdown(container, "Resolution", "videoExportResolution", ["720p", "1080p"]);
+    
+    const exportBtn = document.createElement("button");
+    exportBtn.className = "sl-btn";
+    exportBtn.textContent = "Start Video Render";
+    exportBtn.style.marginTop = "10px";
+    exportBtn.style.background = "#30d15833";
+    exportBtn.style.borderColor = "#30d15866";
+    exportBtn.onclick = () => {
+        this.hide();
+        window.dispatchEvent(new CustomEvent("spicy-export-video"));
+    };
+    
+    this.addRow(container, "Export Movie", exportBtn);
+
     // --- Lyrics & Providers ---
     this.addGroup(container, "Lyrics Providers");
+
     this.addDropdown(container, "Preferred Language", "language", ["en-US", "zh-CN", "ja-JP", "es-ES", "ko-KR", "fr-FR"]);
     
     const providerBtn = document.createElement("button");

@@ -64,7 +64,9 @@ class SettingsManager {
       prioritizeAppleMusicQuality: true,
       language: "en-US",
       memeFormat: "Off", // Off, Gibberish, Weeb
-      releaseYearPosition: "After Artist" // Off, Before Artist, After Artist
+      releaseYearPosition: "After Artist", // Off, Before Artist, After Artist
+      videoExportOrientation: "Vertical", // Vertical, Horizontal
+      videoExportResolution: "1080p" // 720p, 1080p
     };
 
     this.settings = { ...this.defaults };

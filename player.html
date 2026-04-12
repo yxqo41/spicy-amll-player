@@ -141,6 +141,8 @@
     import { settingsManager } from './js/settings-manager.js';
     import { settingsUI } from './js/settings-ui.js';
     import { getAnimatedArtwork, applyAnimatedArt } from './js/animated-art.js';
+    import VideoExporter from './js/video-exporter.js';
+
 
     // ── Redirect if no data ──
     if (!hasPlayerData()) {
@@ -179,8 +181,25 @@
     let lyricsType = 'None';
     let parsedLyrics = null;
     let animationFrameId = null;
-    let songMetadata = { title: '', artist: '', album: '' };
+    let songMetadata = { title: '', artist: '', album: '', artUrl: null };
     const autoFetchMode = isAutoFetchMode();
+
+    const videoExporter = new VideoExporter(player);
+
+    window.addEventListener('spicy-export-video', () => {
+      if (!parsedLyrics) {
+        alert('Please wait for lyrics to load before exporting.');
+        return;
+      }
+      
+      videoExporter.startExport({
+        title: songMetadata.title || getAudioName().replace(/\.[^.]+$/, ''),
+        artist: songMetadata.artist || 'Unknown Artist',
+        album: songMetadata.album || 'Unknown Album',
+        albumArtUrl: songMetadata.artUrl
+      });
+    });
+
 
     // ── Parse TTML (if provided) ──
     const ttmlContent = getTTMLContent();

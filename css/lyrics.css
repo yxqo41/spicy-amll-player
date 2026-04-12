@@ -92,9 +92,12 @@
   --font-size: var(--DefaultLyricsSize);
   display: flex;
   flex-wrap: wrap;
-  transition: opacity 0.2s cubic-bezier(0.61, 1, 0.88, 1);
+  transition: 
+    opacity 0.2s cubic-bezier(0.61, 1, 0.88, 1),
+    margin-top 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    margin-bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: var(--font-size) !important;
-  will-change: transform, opacity;
+  will-change: transform, opacity, margin-top, margin-bottom;
 }
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line .word,
@@ -194,6 +197,8 @@
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.Active {
   opacity: 1;
   --BlurAmount: 0px !important;
+  margin-top: 2.5cqw !important;
+  margin-bottom: 2.5cqw !important;
 }
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.Active .word,
@@ -485,13 +490,17 @@
    ═══════════════════════════════════════════════ */
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .Credits {
-  --font-size: calc(var(--DefaultLyricsSize) * 0.47);
-  font-weight: 600 !important;
+  --font-size: calc(var(--DefaultLyricsSize) * 0.42);
+  font-weight: 500 !important;
   font-size: var(--font-size) !important;
-  opacity: 0.6;
-  margin: 1cqw 0 0 !important;
+  opacity: 0.45;
+  margin: 4cqw 0 0 !important;
   scale: 1;
   color: white;
+  text-align: center;
+  width: 100%;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 2cqw;
 }
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .SongInfo {

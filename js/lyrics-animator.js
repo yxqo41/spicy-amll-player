@@ -7,7 +7,7 @@
 import Spring from './spring.js';
 import Spline from './spline.js';
 import { LyricsObject } from './lyrics-applyer.js';
-
+import { isUserScrolling } from './scroll-manager.js';
 import { settingsManager } from './settings-manager.js';
 
 // ── Spline Ranges ──
@@ -225,24 +225,29 @@ function animateSyllable(position, deltaTime) {
           word.AnimatorStore.Scale.SetGoal(ScaleSpline.at(0), true);
           word.AnimatorStore.YOffset.SetGoal(YOffsetSpline.at(0), true);
           word.AnimatorStore.Glow.SetGoal(GlowSpline.at(0), true);
+          // GPU Promotion
+          word.HTMLElement.style.willChange = "transform, opacity, scale";
+          word.HTMLElement.style.backfaceVisibility = "hidden";
         }
 
         const pct = getProgressPercentage(position, word.StartTime, word.EndTime);
         let targetScale, targetYOffset, targetGlow, targetGradientPos;
 
+        const isScrolling = isUserScrolling();
+
         if (wordActive) {
           targetScale = ScaleSpline.at(pct);
-          targetYOffset = YOffsetSpline.at(pct);
+          targetYOffset = isScrolling ? 0 : YOffsetSpline.at(pct);
           targetGlow = GlowSpline.at(pct);
           targetGradientPos = -20 + 120 * pct;
         } else if (wordSung) {
           targetScale = ScaleSpline.at(1);
-          targetYOffset = YOffsetSpline.at(1);
+          targetYOffset = isScrolling ? 0 : YOffsetSpline.at(1);
           targetGlow = GlowSpline.at(1);
           targetGradientPos = 100;
         } else {
           targetScale = ScaleSpline.at(0);
-          targetYOffset = YOffsetSpline.at(0);
+          targetYOffset = isScrolling ? 0 : YOffsetSpline.at(0);
           targetGlow = GlowSpline.at(0);
           targetGradientPos = -20;
         }
@@ -255,14 +260,15 @@ function animateSyllable(position, deltaTime) {
         const curYOffset = word.AnimatorStore.YOffset.Step(deltaTime);
         const curGlow = word.AnimatorStore.Glow.Step(deltaTime);
 
-        setStyleIfChanged(word.HTMLElement, "scale", `${curScale}`);
+        // Batch writes with precision thresholds
+        setStyleIfChanged(word.HTMLElement, "scale", `${curScale.toFixed(4)}`);
         setStyleIfChanged(word.HTMLElement, "transform",
-          `translate3d(0, calc(var(--DefaultLyricsSize) * ${curYOffset}), 0)`);
-        word.HTMLElement.style.setProperty("--gradient-position", `${targetGradientPos}%`);
+          `translate3d(0, calc(var(--DefaultLyricsSize) * ${curYOffset.toFixed(4)}), 0)`);
+        word.HTMLElement.style.setProperty("--gradient-position", `${targetGradientPos.toFixed(2)}%`);
         setStyleIfChanged(word.HTMLElement, "--text-shadow-blur-radius",
-          `${4 + 2 * curGlow}px`);
+          `${(4 + 2 * curGlow).toFixed(2)}px`);
         setStyleIfChanged(word.HTMLElement, "--text-shadow-opacity",
-          `${curGlow * 185}%`);
+          `${(curGlow * 185).toFixed(2)}%`);
       }
       // Class updates are already handled in Pass 1
 

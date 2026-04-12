@@ -501,15 +501,12 @@
           timeCurrent.textContent = AudioPlayer.formatTime(pos);
         }
 
-        // 3. Heavy Physics/Animation Updates (Skip if hidden or scrolling)
-        if (!document.hidden && !isScrolling) {
+        // 3. Heavy Physics/Animation Updates (Always run if visible)
+        if (!document.hidden) {
           animateLyrics(pos, lyricsType, false);
           scrollToActiveLine(lyricsContent);
-        } else if (isScrolling) {
-          // Still call with 'true' to keep animator.js time-delta correct
-          animateLyrics(pos, lyricsType, true);
-        } else if (document.hidden) {
-          // Skip everything heavy when hidden to save MAX performance
+        } else {
+          // Skip heavy work when hidden but keep time delta for physics
           animateLyrics(pos, lyricsType, true);
         }
 

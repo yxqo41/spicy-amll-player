@@ -62,6 +62,7 @@ typings/
 
 # Project specific
 scratch-test.js
+git.bat
 .gemini/
 .DS_Store
 Thumbs.db

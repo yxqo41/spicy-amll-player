@@ -97,49 +97,72 @@ export default class VideoRenderer {
   }
 
   drawVerticalLayout(ctx, time, width, height, metadata) {
-    const centerX = width / 2;
-    const artSize = width * 0.75;
-    const artY = height * 0.1;
+    const margin = 50;
+    const headerY = height * 0.08;
+    const artSize = 120;
 
-    // Album Art
-    this.drawRoundedImage(ctx, this.albumArt, centerX - artSize / 2, artY, artSize, artSize, 20);
+    // Album Art (Side by side with metadata)
+    this.drawRoundedImage(ctx, this.albumArt, margin, headerY, artSize, artSize, 12);
 
-    // Metadata
+    // Metadata (Title & Artist)
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    
+    // Title
     ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.font = 'bold 32px Outfit, sans-serif';
-    ctx.fillText(metadata.title || 'Unknown Title', centerX, artY + artSize + 50);
+    ctx.font = 'bold 42px Outfit, sans-serif';
+    ctx.fillText(metadata.title || 'Unknown Title', margin + artSize + 30, headerY + artSize / 2 - 15);
+    
+    // Artist
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = '500 32px Outfit, sans-serif';
+    ctx.fillText(metadata.artist || 'Unknown Artist', margin + artSize + 30, headerY + artSize / 2 + 25);
+
+    // Lyrics Area (Left aligned, matching image)
+    const lyricsY = headerY + artSize + 80;
+    this.drawLyrics(ctx, time, margin, lyricsY, width - 2 * margin, height - lyricsY - 200, 'left');
+    
+    // Progress Bar (Slim line)
+    this.drawProgressBar(ctx, time, margin, height - 120, width - 2 * margin);
+  }
+
+  drawProgressBar(ctx, time, x, y, width) {
+    const duration = this.audioPlayer?.duration || 1;
+    const pct = Math.min(1, time / duration);
+    
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.roundRect(x, y, width, 4, 2);
+    ctx.fill();
     
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = '500 24px Outfit, sans-serif';
-    ctx.fillText(metadata.artist || 'Unknown Artist', centerX, artY + artSize + 85);
-
-    // Lyrics Area (Bottom 50%)
-    this.drawLyrics(ctx, time, 40, artY + artSize + 150, width - 80, height - (artY + artSize + 150), 'center');
+    ctx.roundRect(x, y, width * pct, 4, 2);
+    ctx.fill();
+    ctx.restore();
   }
 
   drawHorizontalLayout(ctx, time, width, height, metadata) {
-    const artSize = height * 0.6;
+    // Keep sidebar-ish for horizontal or adapt as needed
+    // Mirroring mobile design for horizontal too but wider
+    const artSize = height * 0.4;
     const margin = 80;
     const artX = margin;
-    const artY = height / 2 - artSize / 2;
+    const artY = margin;
 
-    // Album Art
     this.drawRoundedImage(ctx, this.albumArt, artX, artY, artSize, artSize, 20);
 
-    // Metadata (below art)
-    ctx.fillStyle = '#fff';
     ctx.textAlign = 'left';
-    ctx.font = 'bold 28px Outfit, sans-serif';
-    ctx.fillText(metadata.title || 'Unknown Title', artX, artY + artSize + 40);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 36px Outfit, sans-serif';
+    ctx.fillText(metadata.title || 'Unknown Title', artX + artSize + 40, artY + artSize / 2 - 10);
     
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = '500 20px Outfit, sans-serif';
-    ctx.fillText(metadata.artist || 'Unknown Artist', artX, artY + artSize + 70);
+    ctx.font = '500 24px Outfit, sans-serif';
+    ctx.fillText(metadata.artist || 'Unknown Artist', artX + artSize + 40, artY + artSize / 2 + 30);
 
-    // Lyrics Area (Right 60%)
-    const lyricsX = artX + artSize + 80;
-    this.drawLyrics(ctx, time, lyricsX, margin, width - lyricsX - margin, height - 2 * margin, 'left');
+    const lyricsX = artX;
+    const lyricsY = artY + artSize + 60;
+    this.drawLyrics(ctx, time, lyricsX, lyricsY, width - 2 * margin, height - lyricsY - 100, 'left');
   }
 
   drawRoundedImage(ctx, img, x, y, w, h, radius) {

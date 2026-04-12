@@ -134,6 +134,7 @@ export function applySyllableLyrics(data, lyricsContentEl) {
       if (LyricsObject.Types.Syllable.Lines[ci]?.Syllables?.Lead) {
         LyricsObject.Types.Syllable.Lines[ci].Syllables.Lead.push({
           HTMLElement: word,
+          Text: lead.Text,
           StartTime: convertTime(lead.StartTime),
           EndTime: convertTime(lead.EndTime),
           TotalTime: totalDuration,
@@ -195,6 +196,7 @@ export function applySyllableLyrics(data, lyricsContentEl) {
           if (LyricsObject.Types.Syllable.Lines[ci]?.Syllables?.Lead) {
             LyricsObject.Types.Syllable.Lines[ci].Syllables.Lead.push({
               HTMLElement: bwE,
+              Text: bw.Text,
               StartTime: convertTime(bw.StartTime),
               EndTime: convertTime(bw.EndTime),
               TotalTime: convertTime(bw.EndTime) - convertTime(bw.StartTime),

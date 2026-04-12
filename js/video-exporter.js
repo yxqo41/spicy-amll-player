@@ -37,6 +37,9 @@ export default class VideoExporter {
 
     await this.renderer.init(metadata.albumArtUrl);
     
+    // Ensure fonts are loaded
+    await document.fonts.ready;
+    
     // Show Overlay
     this.showOverlay();
     

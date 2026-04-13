@@ -711,6 +711,24 @@
   }
 }
 
+/* Rendering State: Hide interactive clutter for picture-perfect export */
+body.is-rendering .back-button,
+body.is-rendering .MetadataActions,
+body.is-rendering .VolumeArea,
+body.is-rendering .NowBarControls,
+body.is-rendering .playback-control.shuffle,
+body.is-rendering .playback-control.repeat {
+  display: none !important;
+}
+
+body.is-rendering {
+  cursor: none !important;
+}
+
+body.is-rendering .NowBar {
+  padding-bottom: 20px; /* Reduced since controls are gone */
+}
+
 .lyrics-loading-indicator .loading-text {
   font-size: 0.85rem;
   font-weight: 500;

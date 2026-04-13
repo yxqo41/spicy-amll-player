@@ -211,6 +211,9 @@
     let currentQueue = [];
     
     const videoExporter = new VideoExporter(player);
+    window.addEventListener('spicy-export-video', () => {
+      videoExporter.startExport(songMetadata);
+    });
 
     // ── Init ──
     async function init() {

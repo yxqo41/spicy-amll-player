@@ -57,10 +57,11 @@ export default class VideoRenderer {
     this.drawBackground(ctx, width, height);
 
     // 2. Draw Album Art & Metadata
+    const align = options.align || 'left';
     if (isVertical) {
-      this.drawVerticalLayout(ctx, time, width, height, metadata);
+      this.drawVerticalLayout(ctx, time, width, height, metadata, align);
     } else {
-      this.drawHorizontalLayout(ctx, time, width, height, metadata);
+      this.drawHorizontalLayout(ctx, time, width, height, metadata, align);
     }
   }
 
@@ -96,7 +97,7 @@ export default class VideoRenderer {
     ctx.fillRect(0, 0, width, height);
   }
 
-  drawVerticalLayout(ctx, time, width, height, metadata) {
+  drawVerticalLayout(ctx, time, width, height, metadata, align) {
     const margin = 50;
     const headerY = height * 0.08;
     const artSize = 120;
@@ -118,9 +119,9 @@ export default class VideoRenderer {
     ctx.font = '500 32px Outfit, sans-serif';
     ctx.fillText(metadata.artist || 'Unknown Artist', margin + artSize + 30, headerY + artSize / 2 + 25);
 
-    // Lyrics Area (Left aligned, matching image)
+    // Lyrics Area (Aligned based on setting)
     const lyricsY = headerY + artSize + 80;
-    this.drawLyrics(ctx, time, margin, lyricsY, width - 2 * margin, height - lyricsY - 200, 'left');
+    this.drawLyrics(ctx, time, margin, lyricsY, width - 2 * margin, height - lyricsY - 200, align);
     
     // Progress Bar (Slim line)
     this.drawProgressBar(ctx, time, margin, height - 120, width - 2 * margin);
@@ -141,7 +142,7 @@ export default class VideoRenderer {
     ctx.restore();
   }
 
-  drawHorizontalLayout(ctx, time, width, height, metadata) {
+  drawHorizontalLayout(ctx, time, width, height, metadata, align) {
     // Keep sidebar-ish for horizontal or adapt as needed
     // Mirroring mobile design for horizontal too but wider
     const artSize = height * 0.4;
@@ -162,7 +163,7 @@ export default class VideoRenderer {
 
     const lyricsX = artX;
     const lyricsY = artY + artSize + 60;
-    this.drawLyrics(ctx, time, lyricsX, lyricsY, width - 2 * margin, height - lyricsY - 100, 'left');
+    this.drawLyrics(ctx, time, lyricsX, lyricsY, width - 2 * margin, height - lyricsY - 100, align);
   }
 
   drawRoundedImage(ctx, img, x, y, w, h, radius) {
@@ -253,7 +254,9 @@ export default class VideoRenderer {
         ctx.font = `bold ${fontSize}px Outfit, sans-serif`;
 
         const lineText = this.getLineText(line);
-        const textX = align === 'center' ? x + width / 2 : x;
+        let textX = x;
+        if (align === 'center') textX = x + width / 2;
+        else if (align === 'right') textX = x + width;
 
         if (activeIdx === i && line.Syllables?.Lead) {
             this.drawSyllableLine(ctx, line, time, textX, lineY, fontSize, align);
@@ -280,6 +283,9 @@ export default class VideoRenderer {
       if (align === 'center') {
           const totalWidth = ctx.measureText(this.getLineText(line)).width;
           currentX = x - totalWidth / 2;
+      } else if (align === 'right') {
+          const totalWidth = ctx.measureText(this.getLineText(line)).width;
+          currentX = x - totalWidth;
       }
 
       line.Syllables.Lead.forEach(word => {

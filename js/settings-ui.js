@@ -94,8 +94,6 @@ class SettingsUI {
 
     // --- Video Export ---
     this.addGroup(container, "Video Export (Beta)");
-    this.addDropdown(container, "Orientation", "videoExportOrientation", ["Vertical", "Horizontal"]);
-    this.addDropdown(container, "Resolution", "videoExportResolution", ["720p", "1080p"]);
     
     const exportBtn = document.createElement("button");
     exportBtn.className = "sl-btn";

@@ -10,20 +10,17 @@ const BASE_URL = 'https://api.genius.com';
 
 export const GeniusService = {
   /**
-   * Proxied fetch for Genius API with robust proxy rotation
+   * Direct fetch for Genius API using access_token query parameter.
+   * api.genius.com natively supports CORS, so we don't need a proxy.
    */
   async fetchApi(endpoint, options = {}) {
-    const url = `${BASE_URL}${endpoint}`;
-    
-    // Use Authorization header instead of query param for better security/reliability
-    const headers = {
-      ...options.headers,
-      'Authorization': `Bearer ${CLIENT_ACCESS_TOKEN}`,
-      'Accept': 'application/json'
-    };
+    // Append the access token as a query parameter (handling existing query params)
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const url = `${BASE_URL}${endpoint}${separator}access_token=${CLIENT_ACCESS_TOKEN}`;
 
     try {
-      const response = await robustFetch(url, { ...options, headers });
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       return response.json();
     } catch (e) {
       console.error(`[GeniusService] Request failed for ${endpoint}:`, e.message);
@@ -83,7 +80,7 @@ export const GeniusService = {
       const forbiddenPrefixes = ["King ", "The ", "Mr. ", "aka ", "alias ", "DJ "];
       const potentialNames = altNames.filter(name => {
         const isNotStageName = !name.toLowerCase().includes(stageName.toLowerCase()) &&
-                               !stageName.toLowerCase().includes(name.toLowerCase());
+          !stageName.toLowerCase().includes(name.toLowerCase());
         const hasGoodWordCount = name.split(" ").length >= 2 && name.split(" ").length <= 4;
         const noForbiddenPrefix = !forbiddenPrefixes.some(p => name.startsWith(p));
         const isCapitalized = name.split(" ").every(word => /^[A-Z]/.test(word));

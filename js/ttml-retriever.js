@@ -1,5 +1,6 @@
 import parseTTMLToLyrics from './ttml-parser.js';
 import { settingsManager } from './settings-manager.js';
+import { robustFetch } from './network-utils.js';
 
 const SPICY_API_URL = 'https://api.spicylyrics.org';
 const SPICY_VERSION = '2.8.0';
@@ -40,8 +41,12 @@ function normalizeText(text) {
 
 /** Proxy fetch to bypass CORS for specific providers */
 async function proxiedFetch(url, options = {}) {
-  const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-  return fetch(proxiedUrl, options);
+  try {
+    return await robustFetch(url, options);
+  } catch (e) {
+    console.warn(`[TTMLRetriever] robustFetch failed for ${url}:`, e.message);
+    throw e;
+  }
 }
 
 // ═══════════════════════════════════════════════

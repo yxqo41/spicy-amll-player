@@ -1,24 +1,34 @@
 /**
- * GeniusService.js
+ * Spicy AMLL Player — Genius Service
  * Handles fetching songwriter credits and legal names from the Genius API.
  */
 
-const CLIENT_ACCESS_TOKEN = 'eliu4SdQ6x81--EzCKflL9jyqRGglgTRUR7WVUo5IDWrgtQpiW0baUOHyewxpqnQ';
+import { robustFetch } from './network-utils.js';
+
+const CLIENT_ACCESS_TOKEN = 'PGbgAX_HAb8PrMmpSR5HqyYrTNZQIkqGPm_XUtdX2gjSWUizVxyp5SpDt5pziyit';
 const BASE_URL = 'https://api.genius.com';
 
 export const GeniusService = {
   /**
-   * Proxied fetch for Genius API
+   * Proxied fetch for Genius API with robust proxy rotation
    */
   async fetchApi(endpoint, options = {}) {
-    const url = `${BASE_URL}${endpoint}${endpoint.includes('?') ? '&' : '?'}access_token=${CLIENT_ACCESS_TOKEN}`;
-    const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+    const url = `${BASE_URL}${endpoint}`;
     
-    const response = await fetch(proxiedUrl, options);
-    if (!response.ok) {
-      throw new Error(`Genius API Error: ${response.status} ${response.statusText}`);
+    // Use Authorization header instead of query param for better security/reliability
+    const headers = {
+      ...options.headers,
+      'Authorization': `Bearer ${CLIENT_ACCESS_TOKEN}`,
+      'Accept': 'application/json'
+    };
+
+    try {
+      const response = await robustFetch(url, { ...options, headers });
+      return response.json();
+    } catch (e) {
+      console.error(`[GeniusService] Request failed for ${endpoint}:`, e.message);
+      throw e;
     }
-    return response.json();
   },
 
   /**
@@ -32,7 +42,6 @@ export const GeniusService = {
       const data = await this.fetchApi(`/search?q=${encodeURIComponent(query)}`);
       const hits = data.response.hits;
       if (hits && hits.length > 0) {
-        // Find best match (usually the first one)
         return hits[0].result;
       }
     } catch (e) {
@@ -55,7 +64,7 @@ export const GeniusService = {
   },
 
   /**
-   * Try to extract "Real Names" for artists (as seen in ttml-tool-dev)
+   * Try to extract "Real Names" for artists
    */
   async fetchArtistRealName(artistId, stageName) {
     try {
@@ -71,7 +80,6 @@ export const GeniusService = {
       if (bornMatch) return bornMatch[1];
       if (realNameMatch) return realNameMatch[1];
 
-      // Fallback to alternate names filtering
       const forbiddenPrefixes = ["King ", "The ", "Mr. ", "aka ", "alias ", "DJ "];
       const potentialNames = altNames.filter(name => {
         const isNotStageName = !name.toLowerCase().includes(stageName.toLowerCase()) &&
@@ -93,32 +101,27 @@ export const GeniusService = {
 
   /**
    * Main entry point to get songwriters for a track
-   * @param {object} metadata - Current track metadata {title, artist}
-   * @param {string[]} existingWriters - Current writers from TTML
-   * @returns {Promise<string[]>} Improved list of writers
    */
   async fetchCredits(metadata, existingWriters = []) {
-    const result = await this.searchSong(metadata.title, metadata.artist);
-    if (!result) return existingWriters;
+    try {
+      const result = await this.searchSong(metadata.title, metadata.artist);
+      if (!result) return existingWriters;
 
-    const song = await this.getSongDetails(result.id);
-    if (!song) return existingWriters;
+      const song = await this.getSongDetails(result.id);
+      if (!song) return existingWriters;
 
-    const geniusWriters = song.writer_artists || [];
-    
-    // User Requirement: If Genius has MORE songwriters, ignore TTML's and use Genius's
-    if (geniusWriters.length > existingWriters.length) {
-      console.log(`[GeniusService] Genius has more writers (${geniusWriters.length}) than TTML (${existingWriters.length}). Overriding.`);
-      
-      const names = [];
-      for (const artist of geniusWriters) {
-        // Attempt to fetch real name like ttml-tool-dev
-        const realName = await this.fetchArtistRealName(artist.id, artist.name);
-        names.push(realName);
+      const geniusWriters = song.writer_artists || [];
+      if (geniusWriters.length > existingWriters.length) {
+        const names = [];
+        for (const artist of geniusWriters) {
+          const realName = await this.fetchArtistRealName(artist.id, artist.name);
+          names.push(realName);
+        }
+        return names;
       }
-      return names;
+    } catch (e) {
+      console.error('[GeniusService] fetchCredits failed:', e);
     }
-
     return existingWriters;
   }
 };

@@ -55,7 +55,7 @@
                 <p class="zone-filename"></p>
               </div>
             </div>
-            <input type="file" id="audio-input" accept="audio/*,.mp3,.flac,.wav,.ogg,.m4a,.aac">
+            <input type="file" id="audio-input" accept="audio/*,.mp3,.flac,.wav,.ogg,.m4a,.aac" multiple>
           </div>
 
           <!-- Optional: TTML -->
@@ -70,8 +70,17 @@
                 <p class="zone-filename"></p>
               </div>
             </div>
-            <input type="file" id="ttml-input" accept=".ttml,.xml">
+            <input type="file" id="ttml-input" accept=".ttml,.xml" multiple>
           </div>
+        </div>
+        
+        <!-- Queue Preview (Hidden until files added) -->
+        <div id="queue-preview" class="queue-preview">
+          <h4>Up Next: <span id="queue-count">0 tracks</span></h4>
+          <div class="queue-list" id="queue-list">
+            <!-- Items added via JS -->
+          </div>
+          <button id="clear-queue-btn" class="clear-btn">Clear All</button>
         </div>
 
         <div class="actions">
@@ -87,6 +96,6 @@
     </main>
   </div>
 
-  <script src="js/upload.js"></script>
+  <script type="module" src="js/upload.js"></script>
 </body>
 </html>

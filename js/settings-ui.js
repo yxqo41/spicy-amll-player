@@ -84,6 +84,7 @@ class SettingsUI {
     this.addDropdown(container, "Meme Format", "memeFormat", ["Off", "Weeb (・`ω´・)", "Gibberish (Wenomechainsama)"]);
     this.addToggle(container, "Simple Lyrics", "simpleLyricsMode");
     this.addDropdown(container, "Release Year Position", "releaseYearPosition", ["Off", "Before Artist", "After Artist"]);
+    this.addToggle(container, "Force Word Sync", "forceWordSync");
 
     // --- Background ---
     this.addGroup(container, "Background");

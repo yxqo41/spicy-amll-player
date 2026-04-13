@@ -9,9 +9,12 @@ export default class AudioPlayer {
     this.audio.crossOrigin = "anonymous";
     this.isPlaying = false;
     this.duration = 0;
-    this.onTimeUpdate = null;
+    
+    // Callbacks
     this.onLoadedMetadata = null;
     this.onEnded = null;
+    this.onPlay = null;
+    this.onPause = null;
 
     this.audio.addEventListener('loadedmetadata', () => {
       this.duration = this.audio.duration * 1000; // ms
@@ -23,14 +26,19 @@ export default class AudioPlayer {
         // Repeat One
         this.seek(0);
         this.play();
-      } else if (this.repeatMode === 1) {
-        // Repeat All (Same as One for single file)
-        this.seek(0);
-        this.play();
       } else {
-        this.isPlaying = false;
         if (this.onEnded) this.onEnded();
       }
+    });
+
+    this.audio.addEventListener('play', () => {
+      this.isPlaying = true;
+      if (this.onPlay) this.onPlay();
+    });
+
+    this.audio.addEventListener('pause', () => {
+      this.isPlaying = false;
+      if (this.onPause) this.onPause();
     });
 
     this.repeatMode = 0; // 0: None, 1: All, 2: One
@@ -38,13 +46,14 @@ export default class AudioPlayer {
   }
 
   /**
-   * Load an audio file from a File object.
-   * @param {File} file
+   * Set the audio source URL.
+   * @param {string} url 
    */
-  loadFile(file) {
-    const url = URL.createObjectURL(file);
+  setSource(url) {
+    const wasPlaying = this.isPlaying;
     this.audio.src = url;
     this.audio.load();
+    if (wasPlaying) this.play();
   }
 
   /**
@@ -60,26 +69,25 @@ export default class AudioPlayer {
    * @param {number} ms
    */
   seek(ms) {
+    if (isNaN(ms)) return;
     this.audio.currentTime = ms / 1000;
   }
 
   play() {
-    this.audio.play();
-    this.isPlaying = true;
+    return this.audio.play().catch(e => console.warn("Playback failed:", e));
   }
 
   pause() {
     this.audio.pause();
-    this.isPlaying = false;
   }
 
   togglePlay() {
-    if (this.isPlaying) {
-      this.pause();
-    } else {
+    if (this.audio.paused) {
       this.play();
+    } else {
+      this.pause();
     }
-    return this.isPlaying;
+    return !this.audio.paused;
   }
 
   setVolume(v) {
@@ -107,6 +115,7 @@ export default class AudioPlayer {
    * @returns {string}
    */
   static formatTime(ms, negative = false) {
+    if (isNaN(ms)) return "0:00";
     const totalSeconds = Math.floor(Math.abs(ms) / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;

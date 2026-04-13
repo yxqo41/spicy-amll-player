@@ -66,7 +66,8 @@ class SettingsManager {
       memeFormat: "Off", // Off, Gibberish, Weeb
       releaseYearPosition: "After Artist", // Off, Before Artist, After Artist
       videoExportOrientation: "Vertical", // Vertical, Horizontal
-      videoExportResolution: "1080p" // 720p, 1080p
+      videoExportResolution: "1080p", // 720p, 1080p
+      forceWordSync: false
     };
 
     this.settings = { ...this.defaults };

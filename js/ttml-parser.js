@@ -126,13 +126,24 @@ function readITunesMetadata(root) {
   return { translations, transliterations, transliterationPieces };
 }
 
+export function parseSongwriterString(text) {
+  const writers = new Map();
+  // Split by ;, or "and" (with surrounding spaces)
+  const parts = text.split(/[,;]|\band\b/i).map(e => e.trim()).filter(Boolean);
+  for (const part of parts) {
+    const normalized = part.toLowerCase();
+    if (!writers.has(normalized)) writers.set(normalized, part);
+  }
+  return Array.from(writers.values());
+}
+
 function parseSongwriters(root) {
   const writers = new Map();
-  const addWriterParts = (value) => {
-    for (const part of value.split(/[;,]/).map(e => e.trim()).filter(Boolean)) {
-      const normalized = part.toLowerCase();
-      if (!writers.has(normalized)) writers.set(normalized, part);
-    }
+  const addWriterParts = (text) => {
+    parseSongwriterString(text).forEach(w => {
+      const normalized = w.toLowerCase();
+      if (!writers.has(normalized)) writers.set(normalized, w);
+    });
   };
 
   for (const meta of findElements(root, "amll:meta", "meta")) {

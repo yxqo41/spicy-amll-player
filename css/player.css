@@ -128,6 +128,12 @@
   gap: 15px;
 }
 
+.MetadataActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 #SpicyLyricsPage .ContentBox .NowBar .Header .Metadata {
   display: flex;
   flex-direction: column;
@@ -154,9 +160,9 @@
   text-overflow: ellipsis;
 }
 
-.options-button {
-  width: 28px;
-  height: 28px;
+.queue-button, .options-button {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
   display: flex;
@@ -164,16 +170,208 @@
   justify-content: center;
   color: #fff;
   flex-shrink: 0;
+  transition: background 0.2s, transform 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.queue-button:hover, .options-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.queue-button svg, .options-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Queue Panel (Apple Music Style) ── */
+.QueuePanel {
+  position: fixed;
+  right: -400px;
+  top: 0;
+  width: 380px;
+  height: 100%;
+  background: rgba(20, 20, 20, 0.85);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  z-index: 1000;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.QueuePanel.active {
+  transform: translateX(-400px);
+}
+
+.QueueHeader {
+  padding: 30px 24px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.QueueHeader h3 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.QueueActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#queue-clear {
+  background: transparent;
+  border: none;
+  color: #fa243c;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+#queue-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+}
+
+.QueueList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 40px;
+  scrollbar-width: none;
+}
+
+.QueueList::-webkit-scrollbar { display: none; }
+
+.player-queue-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px;
+  border-radius: 12px;
+  cursor: pointer;
   transition: background 0.2s;
 }
 
-.options-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+.player-queue-item:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
-.options-button svg {
-  width: 18px;
-  height: 18px;
+.player-queue-item.active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.player-queue-item.dragging {
+  opacity: 0.5;
+  background: var(--apple-red-glass);
+  transform: scale(0.98);
+}
+
+.player-queue-item .drag-handle {
+  cursor: grab;
+  user-select: none;
+}
+
+.player-queue-item .drag-handle:active {
+  cursor: grabbing;
+}
+
+.pq-art {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  background-size: cover;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.pq-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+.pq-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pq-artist {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Drop Zone Overlay ── */
+.drop-zone-overlay {
+  position: fixed;
+  inset: 10px;
+  background: rgba(250, 36, 60, 0.1);
+  border: 3px dashed rgba(250, 36, 60, 0.5);
+  border-radius: 30px;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.drop-zone-overlay.active {
+  opacity: 1;
+}
+
+.drop-zone-content {
+  text-align: center;
+  color: #fff;
+}
+
+.drop-zone-content svg {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 20px;
+  fill: #fa243c;
+}
+
+/* ── Mobile Responsive (Queue Bottom Sheet) ── */
+@media (max-width: 768px) {
+  .QueuePanel {
+    right: 0;
+    top: auto;
+    bottom: -80%;
+    width: 100%;
+    height: 80%;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 30px 30px 0 0;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .QueuePanel.active {
+    transform: translateY(-100%);
+  }
 }
 
 /* ── Progress Bar ── */

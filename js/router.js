@@ -1,17 +1,34 @@
 /**
- * Spicy Lyrics Web — Router
- * Manages state transfer between upload and player pages.
- * Uses IndexedDB for audio file persistence.
+ * Spicy Lyrics Web — Router & Queue Manager
+ * Manages state transfer and queue persistence.
+ * Uses IndexedDB for audio files and session storage for queue metadata.
  */
 
-// ── IndexedDB Helper ──
+// ── IndexedDB Configuration ──
+const DB_NAME = 'SpicyLyricsDB';
+const DB_VERSION = 3; // Incremented for sortOrder index
+
 function openDB() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('SpicyLyricsDB', 1);
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = (e) => {
       const db = e.target.result;
-      if (!db.objectStoreNames.contains('files')) {
-        db.createObjectStore('files');
+      
+      // Upgrade logic for stores
+      if (!db.objectStoreNames.contains('tracks')) {
+        const trackStore = db.createObjectStore('tracks', { keyPath: 'id', autoIncrement: true });
+        trackStore.createIndex('sortOrder', 'sortOrder', { unique: false });
+      } else {
+        // Add index if it doesn't exist
+        const tx = e.target.transaction;
+        const store = tx.objectStore('tracks');
+        if (!store.indexNames.contains('sortOrder')) {
+          store.createIndex('sortOrder', 'sortOrder', { unique: false });
+        }
+      }
+      
+      if (!db.objectStoreNames.contains('buffers')) {
+        db.createObjectStore('buffers');
       }
     };
     request.onsuccess = (e) => resolve(e.target.result);
@@ -20,88 +37,166 @@ function openDB() {
 }
 
 /**
- * Get audio ArrayBuffer from IndexedDB.
- * @returns {Promise<ArrayBuffer|null>}
+ * Save a new track to the queue.
  */
-export async function getAudioBuffer() {
-  try {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction('files', 'readonly');
-      const store = tx.objectStore('files');
-      const request = store.get('spicy_audio');
-      request.onsuccess = (e) => resolve(e.target.result || null);
-      request.onerror = (e) => reject(e.target.error);
+export async function addTrackToQueue(buffer, metadata) {
+  const db = await openDB();
+  const queue = await getQueue();
+  const nextOrder = queue.length;
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(['tracks', 'buffers'], 'readwrite');
+    const trackStore = tx.objectStore('tracks');
+    const bufferStore = tx.objectStore('buffers');
+
+    const addRequest = trackStore.add({
+      name: metadata.name,
+      artist: metadata.artist || 'Unknown Artist',
+      artUrl: metadata.artUrl || null,
+      type: metadata.type,
+      ttml: metadata.ttml || null,
+      sortOrder: nextOrder,
+      addedAt: Date.now()
     });
-  } catch {
-    return null;
-  }
+
+    addRequest.onsuccess = (e) => {
+      const id = e.target.result;
+      bufferStore.put(buffer, id);
+    };
+
+    tx.oncomplete = () => resolve(addRequest.result);
+    tx.onerror = (e) => reject(e.target.error);
+  });
 }
 
 /**
- * Create a blob URL from the stored audio buffer.
- * @returns {Promise<string|null>}
+ * Get all tracks sorted by sortOrder.
  */
+export async function getQueue() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('tracks', 'readonly');
+    const store = tx.objectStore('tracks');
+    const index = store.index('sortOrder');
+    const request = index.getAll(); // Retrieves sorted by index
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+/**
+ * Update the order of tracks in the database.
+ * @param {Array<number>} sortedIds - Array of track IDs in the new order.
+ */
+export async function updateQueueOrder(sortedIds) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('tracks', 'readwrite');
+    const store = tx.objectStore('tracks');
+    
+    sortedIds.forEach((id, index) => {
+      const getReq = store.get(id);
+      getReq.onsuccess = () => {
+        const data = getReq.result;
+        if (data) {
+          data.sortOrder = index;
+          store.put(data);
+        }
+      };
+    });
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+/**
+ * Get specific track data (metadata + buffer)
+ */
+export async function getTrackData(id) {
+  const db = await openDB();
+  const track = await new Promise((resolve, reject) => {
+    const tx = db.transaction('tracks', 'readonly');
+    const request = tx.objectStore('tracks').get(id);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+
+  if (!track) return null;
+
+  const buffer = await new Promise((resolve, reject) => {
+    const tx = db.transaction('buffers', 'readonly');
+    const request = tx.objectStore('buffers').get(id);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+
+  return { ...track, buffer };
+}
+
+/**
+ * Clear the entire queue and all binary data.
+ */
+export async function clearQueue() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(['tracks', 'buffers'], 'readwrite');
+    tx.objectStore('tracks').clear();
+    tx.objectStore('buffers').clear();
+    tx.oncomplete = () => {
+      sessionStorage.removeItem('spicy_current_index');
+      resolve();
+    };
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+// ── Legacy Compatibility / Current State Helpers ──
+
+export function getCurrentIndex() {
+  return parseInt(sessionStorage.getItem('spicy_current_index') || '0');
+}
+
+export function setCurrentIndex(index) {
+  sessionStorage.setItem('spicy_current_index', index.toString());
+}
+
+export async function hasPlayerData() {
+  const queue = await getQueue();
+  return queue.length > 0;
+}
+
 export async function getAudioBlobUrl() {
-  const buffer = await getAudioBuffer();
-  if (!buffer) return null;
-  const mimeType = sessionStorage.getItem('spicy_audio_type') || 'audio/mpeg';
-  const blob = new Blob([buffer], { type: mimeType });
+  const queue = await getQueue();
+  const index = getCurrentIndex();
+  if (!queue[index]) return null;
+  
+  const data = await getTrackData(queue[index].id);
+  if (!data || !data.buffer) return null;
+  
+  const blob = new Blob([data.buffer], { type: data.type });
   return URL.createObjectURL(blob);
 }
 
-/**
- * Check if the player page has the required data.
- * @returns {boolean}
- */
-export function hasPlayerData() {
-  return !!sessionStorage.getItem('spicy_ttml');
+export async function getTTMLContent() {
+  const queue = await getQueue();
+  const index = getCurrentIndex();
+  return queue[index]?.ttml || null;
 }
 
-/**
- * Check if we're in auto-fetch mode (no TTML provided).
- * @returns {boolean}
- */
+export async function getAudioName() {
+  const queue = await getQueue();
+  const index = getCurrentIndex();
+  return queue[index]?.name || null;
+}
+
 export function isAutoFetchMode() {
-  return sessionStorage.getItem('spicy_ttml') === '__AUTO_FETCH__';
+  // Logic: if current track ttml is '__AUTO_FETCH__', return true
+  // For now, we'll keep it simple: if ttml is missing or markers, it's auto-fetch.
+  return false; // Will refine in player logic
 }
 
-/**
- * Get the stored TTML content.
- * @returns {string|null}
- */
-export function getTTMLContent() {
-  const content = sessionStorage.getItem('spicy_ttml');
-  if (!content || content === '__AUTO_FETCH__') return null;
-  return content;
-}
-
-/**
- * Get the stored audio file name.
- * @returns {string|null}
- */
-export function getAudioName() {
-  return sessionStorage.getItem('spicy_audio_name');
-}
-
-/**
- * Clear all stored player data.
- */
-export async function clearPlayerData() {
-  sessionStorage.removeItem('spicy_ttml');
-  sessionStorage.removeItem('spicy_audio_name');
-  sessionStorage.removeItem('spicy_audio_type');
-  try {
-    const db = await openDB();
-    const tx = db.transaction('files', 'readwrite');
-    tx.objectStore('files').delete('spicy_audio');
-  } catch { /* ignore */ }
-}
-
-/**
- * Navigate back to the upload page.
- */
 export async function goToUpload() {
-  await clearPlayerData();
+  await clearQueue();
   window.location.href = 'index.html';
 }

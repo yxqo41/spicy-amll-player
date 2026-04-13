@@ -260,9 +260,77 @@ export function applySyllableLyrics(data, lyricsContentEl) {
 
 
 /**
+ * Estimates the 'rhythmic weight' of a word based on character count,
+ * ignoring punctuation to provide more natural timing.
+ */
+function getTextWeight(text) {
+  const compact = text.replace(/[.,!?;:'"()[\]{}\-—–…@#$%^&*~`]/g, "").replace(/\s/g, "");
+  return Math.max(1, compact.length || text.trim().length);
+}
+
+/**
+ * Converts Line-synced lyrics to Syllable-synced by estimating word durations.
+ * Distributes line duration proportionally based on character weight.
+ */
+export function convertToSyllable(data) {
+  const syllableData = {
+    ...data,
+    Type: "Syllable",
+    Content: data.Content.map(line => {
+      const wordsText = line.Text.split(/\s+/).filter(Boolean);
+      if (wordsText.length === 0) return null;
+
+      const totalDuration = (line.EndTime && line.EndTime > line.StartTime) 
+        ? line.EndTime - line.StartTime 
+        : 1.5; // Fallback duration for lines without EndTime
+      
+      const weights = wordsText.map(w => getTextWeight(w));
+      const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+
+      let currentCursor = line.StartTime;
+      let currentPosInLine = 0;
+
+      const syllables = wordsText.map((wordText, i) => {
+        const weight = weights[i];
+        const wordDuration = (weight / totalWeight) * totalDuration;
+        
+        const start = currentCursor;
+        const end = currentCursor + wordDuration;
+        currentCursor = end;
+
+        // Try to find the exact text in the line for spacing/punctuation accuracy
+        const foundIdx = line.Text.indexOf(wordText, currentPosInLine);
+        if (foundIdx !== -1) currentPosInLine = foundIdx + wordText.length;
+
+        return {
+          Text: wordText,
+          StartTime: start,
+          EndTime: end,
+          IsPartOfWord: false
+        };
+      });
+
+      return {
+        OppositeAligned: line.OppositeAligned,
+        Lead: {
+          StartTime: line.StartTime,
+          EndTime: line.EndTime,
+          Syllables: syllables
+        }
+      };
+    }).filter(Boolean)
+  };
+  return syllableData;
+}
+
+/**
  * Apply Line-synced lyrics to the DOM.
  */
 export function applyLineLyrics(data, lyricsContentEl) {
+  if (settingsManager.get("forceWordSync")) {
+    return applySyllableLyrics(convertToSyllable(data), lyricsContentEl);
+  }
+
   clearLyricsArrays();
 
   const container = document.createElement("div");

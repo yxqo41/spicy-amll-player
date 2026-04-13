@@ -1,5 +1,5 @@
 /**
- * Spicy Lyrics Web — Metadata Parser
+ * Spicy AMLL Player WEB — Metadata Parser
  * Extracts ID3 tags (MP3) and FLAC/Vorbis metadata from audio files.
  * Supports: title, artist, album, album art (cover image).
  */
@@ -115,8 +115,8 @@ function parseID3v2(view) {
         view.getUint8(offset), view.getUint8(offset + 1), view.getUint8(offset + 2)
       );
       frameSize = (view.getUint8(offset + 3) << 16) |
-                  (view.getUint8(offset + 4) << 8) |
-                  view.getUint8(offset + 5);
+        (view.getUint8(offset + 4) << 8) |
+        view.getUint8(offset + 5);
       headerLen = 6;
     }
 
@@ -213,8 +213,8 @@ function parseID3v1(view, fileSize) {
   const result = { title: '', artist: '', album: '', year: '' };
 
   if (view.getUint8(tagOffset) !== 0x54 ||    // T
-      view.getUint8(tagOffset + 1) !== 0x41 || // A
-      view.getUint8(tagOffset + 2) !== 0x47) { // G
+    view.getUint8(tagOffset + 1) !== 0x41 || // A
+    view.getUint8(tagOffset + 2) !== 0x47) { // G
     return result;
   }
 
@@ -253,8 +253,8 @@ function parseFLAC(buffer) {
     const isLast = (blockHeader & 0x80) !== 0;
     const blockType = blockHeader & 0x7f;
     const blockSize = (view.getUint8(offset + 1) << 16) |
-                      (view.getUint8(offset + 2) << 8) |
-                      view.getUint8(offset + 3);
+      (view.getUint8(offset + 2) << 8) |
+      view.getUint8(offset + 3);
 
     offset += 4;
 

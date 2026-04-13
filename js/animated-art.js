@@ -1,5 +1,5 @@
 /**
- * Spicy Lyrics Web — Animated Artwork
+ * Spicy AMLL Player WEB — Animated Artwork
  * Fetches animated (video) album art from Apple Music via iTunes search + Dodson proxy.
  * Based on the animated-art-test implementation.
  */

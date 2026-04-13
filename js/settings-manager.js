@@ -1,5 +1,5 @@
 /**
- * SettingsManager.js
+ * Spicy AMLL Player — Settings Manager
  * Manages the application settings state and persistence.
  */
 
@@ -67,7 +67,8 @@ class SettingsManager {
       releaseYearPosition: "After Artist", // Off, Before Artist, After Artist
       videoExportOrientation: "Vertical", // Vertical, Horizontal
       videoExportResolution: "1080p", // 720p, 1080p
-      forceWordSync: false
+      forceWordSync: false,
+      showSongwriters: true
     };
 
     this.settings = { ...this.defaults };
@@ -103,7 +104,7 @@ class SettingsManager {
   apply() {
     const root = document.documentElement;
     const body = document.body;
-    
+
     // Custom Font
     if (this.settings.customFontEnabled && this.settings.customFont) {
       root.style.setProperty("--spicy-custom-font", this.settings.customFont);

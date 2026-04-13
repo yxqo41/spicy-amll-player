@@ -1,5 +1,5 @@
 /**
- * Spicy Lyrics Web — Analytic Spring Physics
+ * Spicy AMLL Player WEB — Analytic Spring Physics
  * Based on @spikerko/web-modules/Spring (analytic harmonic oscillator solution)
  * This is significantly more stable than Euler integration at variable frame rates.
  */
@@ -47,9 +47,9 @@ export default class Spring {
 
   Step(deltaTime) {
     if (deltaTime <= 0) return this.position;
-    
+
     // Cap deltaTime to avoid instability on very long frames
-    const dt = Math.min(deltaTime, 0.1); 
+    const dt = Math.min(deltaTime, 0.1);
 
     const d = this.dampingRatio;
     const f = this.frequency * tau; // Hz -> Rad/s
@@ -65,7 +65,7 @@ export default class Spring {
       const c2 = q - wScaledFrequency;
       const c3 = w * (f ** 2);
       const dist = p - g;
-      
+
       this.position = dist * c0 + v * w + g;
       this.velocity = v * c2 - dist * c3;
     } else if (d < 1) { // Underdamped
@@ -106,7 +106,7 @@ export default class Spring {
       const co2 = (v - dist * r1) / (2 * f * c);
       const co1 = ec1 * (dist - co2);
       const coEc2 = co2 * ec2;
-      
+
       this.position = co1 + coEc2 + g;
       this.velocity = co1 * r1 + coEc2 * r2;
     }

@@ -10,7 +10,7 @@ const SOURCE_LABELS = {
   spl: 'Spicy Lyrics Community',
   aml: 'Apple Music',
   spt: 'Spotify',
-  spicy: 'Spicy Lyrics',
+  spicy: 'Spicy AMLL Player',
   spotify: 'Spotify',
   lrclib: 'LRCLIB',
   netease: 'Netease',
@@ -23,7 +23,7 @@ function resolveSourceLabel(source, sourceDisplayName) {
   if (sourceDisplayName?.trim()) return sourceDisplayName.trim();
   if (source && SOURCE_LABELS[source]) return SOURCE_LABELS[source];
   if (source?.trim()) return source.trim();
-  return 'Spicy Lyrics';
+  return 'Spicy AMLL Player';
 }
 
 // ═══════════════════════════════════════════════
@@ -200,7 +200,7 @@ async function fetchFromLRCLIB(songName, artistName, albumName, durationSec) {
     });
 
     const res = await fetch(`https://lrclib.net/api/get?${params}`, {
-      headers: { 'x-user-agent': 'spicy-lyrics-web/1.0' },
+      headers: { 'x-user-agent': 'spicy-amll-player/1.0' },
     });
 
     if (!res.ok) return null;
@@ -256,7 +256,7 @@ function parseTimestamp(ts) {
 }
 
 // ═══════════════════════════════════════════════
-// Spicy Lyrics API
+// Spicy AMLL Player API
 // ═══════════════════════════════════════════════
 
 async function fetchFromSpicyAPI(songId) {

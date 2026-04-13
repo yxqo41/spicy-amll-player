@@ -1,5 +1,5 @@
 /**
- * Spicy Lyrics Web — Lyrics Animator
+ * Spicy AMLL Player WEB — Lyrics Animator
  * Spring-physics animation engine for word-by-word gradient and scale animation.
  * Port of LyricsAnimator.ts
  */

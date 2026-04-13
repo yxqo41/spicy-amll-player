@@ -1,5 +1,5 @@
 /**
- * Spicy Lyrics Web — Video Exporter (DOM Capture Version)
+ * Spicy AMLL Player WEB — Video Exporter (DOM Capture Version)
  * Captures the actual page DOM for picture-perfect lyric videos.
  */
 
@@ -13,7 +13,7 @@ export default class VideoExporter {
     this.isRecording = false;
     this.recordingOverlay = null; // We use PiP instead of DOM overlay now
     this.stream = null;
-    
+
     // PiP Elements
     this.pipCanvas = document.createElement('canvas');
     this.pipCanvas.width = 400;
@@ -27,65 +27,65 @@ export default class VideoExporter {
 
   async startExport(metadata) {
     if (this.isRecording) return;
-    
+
     try {
-        // 1. Enter Rendering State (Clean UI + Hide Mouse)
-        document.body.classList.add('is-rendering');
-        
-        // 2. Prepare PiP Fallback (Just in case user wants to see progress)
-        this.updatePipCanvas(0);
-        this.pipVideo.srcObject = this.pipCanvas.captureStream();
-        await this.pipVideo.play();
-        
-        // 3. Request Tab Capture with Cursor Hidden
-        this.stream = await navigator.mediaDevices.getDisplayMedia({
-            video: {
-                displaySurface: "browser",
-                frameRate: 60,
-                cursor: "never" // Primary way to hide mouse from capture
-            },
-            audio: true,
-            selfBrowserSurface: "include"
-        });
+      // 1. Enter Rendering State (Clean UI + Hide Mouse)
+      document.body.classList.add('is-rendering');
 
-        // 4. Request PiP Window (Needs to follow the selection gesture)
-        try {
-            await this.pipVideo.requestPictureInPicture();
-        } catch (pipErr) {
-            console.warn("PiP failed, falling back to silent recording.", pipErr);
-        }
-        
-        this.recorder = new MediaRecorder(this.stream, {
-            mimeType: 'video/webm;codecs=vp9',
-            videoBitsPerSecond: 12000000 // 12 Mbps
-        });
+      // 2. Prepare PiP Fallback (Just in case user wants to see progress)
+      this.updatePipCanvas(0);
+      this.pipVideo.srcObject = this.pipCanvas.captureStream();
+      await this.pipVideo.play();
 
-        this.recorder.ondataavailable = (e) => {
-            if (e.data.size > 0) this.chunks.push(e.data);
-        };
+      // 3. Request Tab Capture with Cursor Hidden
+      this.stream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          displaySurface: "browser",
+          frameRate: 60,
+          cursor: "never" // Primary way to hide mouse from capture
+        },
+        audio: true,
+        selfBrowserSurface: "include"
+      });
 
-        this.recorder.onstop = () => {
-            this.finishExport(metadata.title);
-        };
+      // 4. Request PiP Window (Needs to follow the selection gesture)
+      try {
+        await this.pipVideo.requestPictureInPicture();
+      } catch (pipErr) {
+        console.warn("PiP failed, falling back to silent recording.", pipErr);
+      }
 
-        // UI & Starting
-        this.audioPlayer.seek(0);
-        this.chunks = [];
-        this.isRecording = true;
-        
-        this.recorder.start();
-        this.audioPlayer.play();
-        
-        this.monitorLoop();
-        
-        this.stream.getVideoTracks()[0].onended = () => {
-            if (this.isRecording) this.stopExport();
-        };
+      this.recorder = new MediaRecorder(this.stream, {
+        mimeType: 'video/webm;codecs=vp9',
+        videoBitsPerSecond: 12000000 // 12 Mbps
+      });
+
+      this.recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) this.chunks.push(e.data);
+      };
+
+      this.recorder.onstop = () => {
+        this.finishExport(metadata.title);
+      };
+
+      // UI & Starting
+      this.audioPlayer.seek(0);
+      this.chunks = [];
+      this.isRecording = true;
+
+      this.recorder.start();
+      this.audioPlayer.play();
+
+      this.monitorLoop();
+
+      this.stream.getVideoTracks()[0].onended = () => {
+        if (this.isRecording) this.stopExport();
+      };
 
     } catch (err) {
-        console.error("Export failed:", err);
-        this.stopExport();
-        alert("Capture was cancelled or failed.");
+      console.error("Export failed:", err);
+      this.stopExport();
+      alert("Capture was cancelled or failed.");
     }
   }
 
@@ -94,7 +94,7 @@ export default class VideoExporter {
     const time = this.audioPlayer.getPosition();
     const duration = this.audioPlayer.duration;
     const pct = Math.min((time / duration) * 100, 100);
-    
+
     // Update PiP Canvas
     this.updatePipCanvas(pct);
 
@@ -112,28 +112,28 @@ export default class VideoExporter {
 
     // Background
     ctx.fillStyle = '#121212';
-    ctx.fillRect(0,0,w,h);
+    ctx.fillRect(0, 0, w, h);
 
     // Pill
     const margin = 20;
     const pillH = 40;
-    const pillY = h/2 - pillH/2;
-    
+    const pillY = h / 2 - pillH / 2;
+
     ctx.fillStyle = 'rgba(255,255,255,0.1)';
     ctx.beginPath();
-    ctx.roundRect(margin, pillY, w - margin*2, pillH, 20);
+    ctx.roundRect(margin, pillY, w - margin * 2, pillH, 20);
     ctx.fill();
 
     ctx.fillStyle = '#ff3b30';
     ctx.beginPath();
-    ctx.roundRect(margin, pillY, (w - margin*2) * (pct/100), pillH, 20);
+    ctx.roundRect(margin, pillY, (w - margin * 2) * (pct / 100), pillH, 20);
     ctx.fill();
 
     // Text
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 20px Outfit, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`Recording Progress: ${Math.round(pct)}%`, w/2, pillY - 15);
+    ctx.fillText(`Recording Progress: ${Math.round(pct)}%`, w / 2, pillY - 15);
   }
 
   stopExport() {
@@ -141,15 +141,15 @@ export default class VideoExporter {
     this.isRecording = false;
     this.audioPlayer.pause();
     this.recorder.stop();
-    
+
     if (this.stream) {
-        this.stream.getTracks().forEach(track => track.stop());
+      this.stream.getTracks().forEach(track => track.stop());
     }
-    
+
     if (document.pictureInPictureElement) {
-        document.exitPictureInPicture();
+      document.exitPictureInPicture();
     }
-    
+
     document.body.classList.remove('is-rendering');
   }
 

@@ -1,6 +1,6 @@
-# 🌶️ Spicy Lyrics Web
+# 🌶️ Spicy AMLL Player
 
-A premium, high-performance web-based lyrics player that replicates the "Spicy Lyrics" experience with stunning aesthetics and advanced features. Inspired by the Apple Music lyrics interface, this player provides a feature-rich experience for synchronized lyrics with word-level precision.
+A premium, high-performance web-based lyrics player that replicates the "Spicy AMLL Player WEB" experience with stunning aesthetics and advanced features. Inspired by the Apple Music lyrics interface, this player provides a feature-rich experience for synchronized lyrics with word-level precision.
 
 ![Vibrant UI](https://img.shields.io/badge/Aesthetics-shit-ff4500) ![License](https://img.shields.io/badge/License-AGPL--3.0-blue)
 
@@ -19,9 +19,9 @@ A premium, high-performance web-based lyrics player that replicates the "Spicy L
 
 ## 🚀 Quick Start
 
-Spicy Lyrics Web is a standalone static application. No complex build steps are required.
+Spicy AMLL Player WEB is a standalone static application. No complex build steps are required.
 
-1.  **Open in Browser**: Navigate to `https://yxqo41.github.io/spicy-lyrics-web/` or `https://spicy-lyrics-web.netlify.app`.
+1.  **Open in Browser**: Navigate to `https://yxqo41.github.io/spicy-amll-player/` or `https://spicy-amll-player.netlify.app`.
 2.  **Play Music**: Drag and drop your audio file (MP3/FLAC) and an optional TTML/LRC file into the upload zone.
 
 ## 🛠️ Configuration

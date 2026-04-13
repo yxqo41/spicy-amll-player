@@ -1,5 +1,5 @@
 /**
- * Spicy Lyrics Web — Audio Player
+ * Spicy AMLL Player — Audio Player
  * HTML5 Audio wrapper with position tracking and custom controls.
  */
 

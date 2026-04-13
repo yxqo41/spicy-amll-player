@@ -26,7 +26,7 @@ class SettingsUI {
     const header = document.createElement("div");
     header.className = "SpicyLyricsSettingsHeader";
     header.innerHTML = `
-      <span>Spicy Lyrics Settings</span>
+      <span>Spicy AMLL Player Settings</span>
       <button class="SpicyLyricsSettingsHeaderClose">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -84,6 +84,7 @@ class SettingsUI {
     this.addDropdown(container, "Meme Format", "memeFormat", ["Off", "Weeb (・`ω´・)", "Gibberish (Wenomechainsama)"]);
     this.addToggle(container, "Simple Lyrics", "simpleLyricsMode");
     this.addDropdown(container, "Release Year Position", "releaseYearPosition", ["Off", "Before Artist", "After Artist"]);
+    this.addToggle(container, "Show Songwriters", "showSongwriters");
     this.addToggle(container, "Force Word Sync", "forceWordSync");
 
     // --- Background ---

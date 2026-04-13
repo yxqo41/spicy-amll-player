@@ -1,5 +1,5 @@
 /**
- * Spicy Lyrics Web — RTL Detection
+ * Spicy AMLL Player WEB — RTL Detection
  * Port of isRtl.ts
  */
 

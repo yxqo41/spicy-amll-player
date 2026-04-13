@@ -1,5 +1,5 @@
 /**
- * Spicy Lyrics Web — Scroll Manager
+ * Spicy AMLL Player WEB — Scroll Manager
  * Auto-scrolls the lyrics container to keep the active line centered.
  * Ported from revancedv2's ScrollToActiveLine.ts with proper bounce prevention.
  */
@@ -45,10 +45,10 @@ export function initScrollManager(lyricsContent) {
   lyricsContent.addEventListener('wheel', markUserScroll, { passive: true });
   lyricsContent.addEventListener('touchmove', markUserScroll, { passive: true });
   lyricsContent.addEventListener('mousedown', markUserScroll, { passive: true });
-  
+
   // Generic scroll detection (catches scrollbar drags)
   lyricsContent._isInternalScroll = false;
-  
+
   lyricsContent.addEventListener('scroll', () => {
     if (!lyricsContent._isInternalScroll) {
       markUserScroll();
@@ -94,10 +94,10 @@ function scrollIntoCenter(container, element, instant = false) {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const eased = easeOutCubic(progress);
-      
+
       container._isInternalScroll = true;
       container.scrollTop = currentScroll + distance * eased;
-      
+
       if (progress < 1) {
         container._scrollAnimId = requestAnimationFrame(step);
       } else {

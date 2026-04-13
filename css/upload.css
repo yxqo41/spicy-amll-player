@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   Spicy Lyrics Web — Apple Music Style Upload
+   Spicy AMLL Player WEB — Apple Music Style Upload
    ═══════════════════════════════════════════════ */
 
 :root {
@@ -82,10 +82,21 @@ body {
 }
 
 @keyframes moveBlob {
-  0% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(100px, 50px) scale(1.1); }
-  66% { transform: translate(-50px, 120px) scale(0.9); }
-  100% { transform: translate(0, 0) scale(1); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(100px, 50px) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-50px, 120px) scale(0.9);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 /* ── Main Container ── */
@@ -106,8 +117,15 @@ body {
 }
 
 @keyframes cardFadeIn {
-  from { opacity: 0; transform: translateY(30px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* ── Header ── */
@@ -229,7 +247,9 @@ body {
   display: none;
 }
 
-.upload-zone input { display: none; }
+.upload-zone input {
+  display: none;
+}
 
 /* ── Actions ── */
 .actions {
@@ -323,7 +343,9 @@ body {
   user-select: none;
 }
 
-.queue-item:active { cursor: grabbing; }
+.queue-item:active {
+  cursor: grabbing;
+}
 
 .queue-item.dragging {
   opacity: 0.5;
@@ -379,7 +401,9 @@ body {
   transition: color 0.2s;
 }
 
-.remove-item:hover { color: var(--apple-red); }
+.remove-item:hover {
+  color: var(--apple-red);
+}
 
 .clear-btn {
   background: transparent;
@@ -397,8 +421,15 @@ body {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ── Footer ── */
@@ -420,9 +451,14 @@ body {
   font-weight: 600;
 }
 
-.upload-footer a:hover { text-decoration: underline; }
+.upload-footer a:hover {
+  text-decoration: underline;
+}
 
-.attribution { font-style: italic; opacity: 0.7; }
+.attribution {
+  font-style: italic;
+  opacity: 0.7;
+}
 
 /* ── Responsive ── */
 @media (max-width: 650px) {
@@ -431,13 +467,16 @@ body {
     width: 95%;
   }
 
-  .upload-header h1 { font-size: 2.5rem; }
+  .upload-header h1 {
+    font-size: 2.5rem;
+  }
 
   .upload-zones {
     grid-template-columns: 1fr;
   }
-  
-  .upload-zone.primary, .upload-zone.optional {
+
+  .upload-zone.primary,
+  .upload-zone.optional {
     padding: 24px;
   }
 }

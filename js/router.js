@@ -1,5 +1,5 @@
 /**
- * Spicy Lyrics Web — Router & Queue Manager
+ * Spicy AMLL Player WEB — Router & Queue Manager
  * Manages state transfer and queue persistence.
  * Uses IndexedDB for audio files and session storage for queue metadata.
  */
@@ -13,7 +13,7 @@ function openDB() {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = (e) => {
       const db = e.target.result;
-      
+
       // Upgrade logic for stores
       if (!db.objectStoreNames.contains('tracks')) {
         const trackStore = db.createObjectStore('tracks', { keyPath: 'id', autoIncrement: true });
@@ -26,7 +26,7 @@ function openDB() {
           store.createIndex('sortOrder', 'sortOrder', { unique: false });
         }
       }
-      
+
       if (!db.objectStoreNames.contains('buffers')) {
         db.createObjectStore('buffers');
       }
@@ -93,7 +93,7 @@ export async function updateQueueOrder(sortedIds) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('tracks', 'readwrite');
     const store = tx.objectStore('tracks');
-    
+
     sortedIds.forEach((id, index) => {
       const getReq = store.get(id);
       getReq.onsuccess = () => {
@@ -170,10 +170,10 @@ export async function getAudioBlobUrl() {
   const queue = await getQueue();
   const index = getCurrentIndex();
   if (!queue[index]) return null;
-  
+
   const data = await getTrackData(queue[index].id);
   if (!data || !data.buffer) return null;
-  
+
   const blob = new Blob([data.buffer], { type: data.type });
   return URL.createObjectURL(blob);
 }

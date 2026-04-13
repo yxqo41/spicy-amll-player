@@ -4,8 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spicy Lyrics — Player</title>
-  <meta name="description" content="Spicy Lyrics Player — Synchronized lyrics with beautiful animations.">
+  <title>Spicy AMLL Player — Player</title>
+  <meta name="description" content="Spicy AMLL Player — Synchronized lyrics with beautiful animations.">
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/global.css">
@@ -163,6 +163,7 @@
     import { applyDefaultBackground, applyLegacyBackground, extractColors } from './js/dynamic-bg.js';
     import { parseAudioMetadata } from './js/metadata-parser.js';
     import { retrieveTTML } from './js/ttml-retriever.js';
+    import { GeniusService } from './js/genius-service.js';
     import { settingsManager } from './js/settings-manager.js';
     import { settingsUI } from './js/settings-ui.js';
     import { getAnimatedArtwork, applyAnimatedArt } from './js/animated-art.js';
@@ -373,6 +374,34 @@
             autoFetchLyrics(songMetadata);
           }
 
+          // --- Fetch Songwriter Credits ---
+          if (settingsManager.get('showSongwriters')) {
+            const existingWriters = parsedLyrics?.SongWriters || [];
+            GeniusService.fetchCredits(songMetadata, existingWriters).then(writers => {
+              if (writers && writers.length > existingWriters.length) {
+                // Update the actual lyrics object and the UI
+                if (parsedLyrics) {
+                  parsedLyrics.SongWriters = writers;
+                  const creditsEl = lyricsContent.querySelector('.Credits');
+                  if (creditsEl) {
+                    creditsEl.textContent = `Written by: ${writers.join(', ')}`;
+                  } else {
+                    const scrollContainer = lyricsContent.querySelector('.SpicyLyricsScrollContainer');
+                    if (scrollContainer) {
+                      const newCredits = document.createElement('div');
+                      newCredits.className = 'Credits';
+                      newCredits.textContent = `Written by: ${writers.join(', ')}`;
+                      // Insert before the spacer
+                      const spacer = scrollContainer.querySelector('.lyrics-spacer');
+                      if (spacer) scrollContainer.insertBefore(newCredits, spacer);
+                      else scrollContainer.appendChild(newCredits);
+                    }
+                  }
+                }
+              }
+            });
+          }
+
           refreshQueue(); // Update active state
           queueForceScroll();
           resolve();
@@ -384,7 +413,7 @@
     function updateMetadataUI(metadata) {
       if (metadata.title) {
         songNameEl.querySelector('span').textContent = metadata.title;
-        document.title = `Spicy Lyrics — ${metadata.title}`;
+        document.title = `Spicy AMLL Player — ${metadata.title}`;
       }
       if (metadata.artist) {
         const yearStr = (metadata.year && settingsManager.get("releaseYearPosition") !== "Off") ? metadata.year : "";

@@ -1,5 +1,5 @@
 /**
- * Spicy Lyrics Web — Dynamic Background
+ * Spicy AMLL Player WEB — Dynamic Background
  * Extracts colors from images and creates animated backgrounds.
  */
 

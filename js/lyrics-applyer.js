@@ -1,5 +1,5 @@
 /**
- * Spicy Lyrics Web — Lyrics Applyer
+ * Spicy AMLL Player — Lyrics Applyer
  * Builds DOM elements from parsed TTML data.
  * Port of Applyer/Synced/Syllable.ts + Line.ts
  */

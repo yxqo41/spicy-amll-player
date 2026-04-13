@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   Spicy Lyrics Web — Player Page
+   Spicy AMLL Player WEB — Player Page
    Ported from ContentBox.css + default.css
    ═══════════════════════════════════════════════ */
 
@@ -726,7 +726,8 @@ body.is-rendering {
 }
 
 body.is-rendering .NowBar {
-  padding-bottom: 20px; /* Reduced since controls are gone */
+  padding-bottom: 20px;
+  /* Reduced since controls are gone */
 }
 
 .lyrics-loading-indicator .loading-text {

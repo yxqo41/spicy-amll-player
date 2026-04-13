@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   Spicy Lyrics Web — Lyrics Styles
+   Spicy AMLL Player WEB — Lyrics Styles
    Ported from Lyrics/main.css + Lyrics/Mixed.css
    ═══════════════════════════════════════════════ */
 
@@ -92,7 +92,7 @@
   --font-size: var(--DefaultLyricsSize);
   display: flex;
   flex-wrap: wrap;
-  transition: 
+  transition:
     opacity 0.2s cubic-bezier(0.61, 1, 0.88, 1),
     margin-top 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     margin-bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -551,4 +551,4 @@
   height: 50vh;
   width: 100%;
   pointer-events: none;
-}
+}

@@ -135,33 +135,7 @@ class SettingsUI {
 
     // --- Audio Engine ---
     this.addGroup(container, "Audio Engine");
-    this.addDropdown(container, "Gapless Mode", "gaplessMode", ["Multi-Player", "Web Audio"]);
     
-    const crossfadeWrap = document.createElement("div");
-    crossfadeWrap.style.display = "flex";
-    crossfadeWrap.style.flexDirection = "column";
-    crossfadeWrap.style.width = "50%";
-    const crossfadeSlider = document.createElement("input");
-    crossfadeSlider.type = "range";
-    crossfadeSlider.min = "0";
-    crossfadeSlider.max = "12000";
-    crossfadeSlider.step = "500";
-    crossfadeSlider.value = settingsManager.get("crossfadeDuration");
-    const crossfadeVal = document.createElement("span");
-    crossfadeVal.style.fontSize = "10px";
-    crossfadeVal.style.opacity = "0.6";
-    crossfadeVal.style.textAlign = "right";
-    crossfadeVal.textContent = `${settingsManager.get("crossfadeDuration") / 1000}s`;
-    
-    crossfadeSlider.oninput = () => {
-      const ms = parseInt(crossfadeSlider.value);
-      settingsManager.set("crossfadeDuration", ms);
-      crossfadeVal.textContent = `${ms / 1000}s`;
-    };
-    crossfadeWrap.appendChild(crossfadeSlider);
-    crossfadeWrap.appendChild(crossfadeVal);
-    this.addRow(container, "Crossfade Duration", crossfadeWrap);
-
     const eqBtn = document.createElement("button");
     eqBtn.className = "sl-btn";
     eqBtn.textContent = "Open Mixing Board (EQ)";

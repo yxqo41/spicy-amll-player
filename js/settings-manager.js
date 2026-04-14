@@ -69,8 +69,6 @@ class SettingsManager {
       videoExportResolution: "1080p", // 720p, 1080p
       forceWordSync: false,
       showSongwriters: true,
-      gaplessMode: 'Multi-Player',
-      crossfadeDuration: 6000,
       eqGains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     };
 
@@ -167,8 +165,6 @@ class SettingsManager {
     // Audio Engine Settings
     if (window.spicyPlayer) {
       const p = window.spicyPlayer;
-      p.gaplessMode = this.settings.gaplessMode;
-      p.crossfadeDuration = this.settings.crossfadeDuration;
       this.settings.eqGains.forEach((g, i) => p.setEQGain(i, g));
     }
 

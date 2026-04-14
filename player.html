@@ -328,16 +328,21 @@
       }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
-    async function loadTrack(index, audioAlreadyManaged = false) {
+    async function loadTrack(index) {
       if (index < 0 || index >= currentQueue.length) return;
       
+      const contentBox = document.querySelector('.ContentBox');
+      if (contentBox) contentBox.style.opacity = '0';
+      
+      // Short delay for fade out
+      await new Promise(r => setTimeout(r, 340));
+
       setCurrentIndex(index);
       const track = await getTrackData(currentQueue[index].id);
-      if (!track) return;
-
-      // Reset State
-      crossfadeTriggered = false;
-      preloadedNext = false;
+      if (!track) {
+        if (contentBox) contentBox.style.opacity = '1';
+        return;
+      }
 
       // Reset UI
       parsedLyrics = null;
@@ -346,7 +351,6 @@
       if (sourceBadge) sourceBadge.textContent = '';
       showNotice('⏳ Loading track...');
       
-      // ── Hard Reset Album Art & Background ──
       albumArt.innerHTML = '';
       albumArt.className = 'MediaImageContainer'; 
       albumArt.style.backgroundImage = 'none'; 
@@ -359,7 +363,6 @@
       
       const processMetadata = async (duration) => {
           timeTotal.textContent = AudioPlayer.formatTime(duration, true);
-          
           songMetadata = await parseAudioMetadata(track.buffer, track.name);
           updateMetadataUI(songMetadata);
 
@@ -407,19 +410,17 @@
 
           refreshQueue();
           queueForceScroll();
+          
+          if (contentBox) contentBox.style.opacity = '1';
       };
 
-      if (audioAlreadyManaged) {
-        await processMetadata(player.duration);
-      } else {
-        return new Promise((resolve) => {
-          player.onLoadedMetadata = async (duration) => {
-            await processMetadata(duration);
-            resolve();
-          };
-          player.setSource(url);
-        });
-      }
+      return new Promise((resolve) => {
+        player.onLoadedMetadata = async (duration) => {
+          await processMetadata(duration);
+          resolve();
+        };
+        player.setSource(url);
+      });
     }
 
     function updateMetadataUI(metadata) {
@@ -586,16 +587,14 @@
       }
     });
 
+
+
     // ── Events ──
     player.onLoadedMetadata = (duration) => {
       timeTotal.textContent = AudioPlayer.formatTime(duration, true);
     };
 
-    let crossfadeTriggered = false;
-    let preloadedNext = false;
-
     player.onEnded = () => {
-      if (crossfadeTriggered) return; // Already handled by crossfade
       const nextIdx = getCurrentIndex() + 1;
       if (nextIdx < currentQueue.length) {
         loadTrack(nextIdx);
@@ -611,26 +610,9 @@
       if (playing && !animationFrameId) startAnimationLoop();
     };
 
-    async function handleNextWithCrossfade() {
-      const nextIdx = getCurrentIndex() + 1;
-      if (nextIdx < currentQueue.length) {
-        crossfadeTriggered = true;
-        // Start crossfade in player
-        await player.startCrossfade();
-        // Load the metadata for the NEW track into the UI
-        await loadTrack(nextIdx, true); // true = audio already playing/managed
-      }
-    }
-
     btnForward.onclick = () => {
       const next = getCurrentIndex() + 1;
-      if (next < currentQueue.length) {
-        if (player.isPlaying) {
-          handleNextWithCrossfade();
-        } else {
-          loadTrack(next);
-        }
-      }
+      if (next < currentQueue.length) loadTrack(next);
     };
 
     btnBackward.onclick = () => {
@@ -722,27 +704,8 @@
     }
 
     function startAnimationLoop() {
-      async function loop() {
+      function loop() {
         const pos = player.getPosition();
-        const remaining = player.duration - pos;
-
-        // --- Automatic Crossfade and Preload ---
-        if (player.isPlaying) {
-          const nextIdx = getCurrentIndex() + 1;
-          if (nextIdx < currentQueue.length) {
-            // Preload 10 seconds before end
-            if (remaining < 10000 && !preloadedNext) {
-              preloadedNext = true;
-              const nextUrl = await getAudioBlobUrl(nextIdx);
-              if (nextUrl) player.preloadNext(nextUrl);
-            }
-            // Trigger Crossfade at 6 seconds
-            if (remaining < (player.crossfadeDuration + 100) && !crossfadeTriggered) {
-              handleNextWithCrossfade();
-            }
-          }
-        }
-
         setLyricsTime(pos, lyricsType);
         if (!document.hidden) {
           if (player.duration > 0) {

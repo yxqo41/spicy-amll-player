@@ -439,7 +439,7 @@
         extractColors(metadata.artUrl).then(colors => {
           dynamicBg.innerHTML = '';
           dynamicBg.className = 'spicy-dynamic-bg';
-          applyLegacyBackground(dynamicBg, colors);
+          applyLegacyBackground(dynamicBg, metadata.artUrl);
           if (colors.vibrant) document.documentElement.style.setProperty('--ArtworkGlowColor', colors.vibrant.join(', '));
         }).catch(e => console.warn('Color extraction failed:', e));
       } else {

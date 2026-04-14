@@ -1,3 +1,6 @@
+let _kawarp = null;
+let _resizeHandler = null;
+
 /**
  * Spicy AMLL Player WEB — Dynamic Background
  * Extracts colors from images and creates animated backgrounds.
@@ -69,25 +72,46 @@ function darkenColor(rgb, amount) {
  * @param {HTMLElement} bgContainer - The .spicy-dynamic-bg element
  * @param {{vibrant: number[], dark: number[], muted: number[]}} colors
  */
-export function applyLegacyBackground(bgContainer, colors) {
-  bgContainer.classList.add('LegacyBackground');
+export async function applyLegacyBackground(bgContainer, img) {
+  const { default: Kawarp } = await import(
+    "https://nurislamaibekuly.github.io/kawarp-js/kawarp.js"
+  );
+
+  _kawarp?.stop?.();
+  _kawarp = null;
+  if (_resizeHandler) {
+    window.removeEventListener('resize', _resizeHandler);
+    _resizeHandler = null;
+  }
+
   bgContainer.innerHTML = '';
+  bgContainer.className = 'spicy-dynamic-bg KawarpBackground';
 
-  const front = document.createElement('div');
-  front.classList.add('Front');
-  front.style.background = `radial-gradient(circle, rgb(${colors.vibrant.join(',')}) 0%, transparent 70%)`;
+  const canvas = document.createElement('canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  bgContainer.appendChild(canvas);
 
-  const back = document.createElement('div');
-  back.classList.add('Back');
-  back.style.background = `radial-gradient(circle, rgb(${colors.dark.join(',')}) 0%, transparent 70%)`;
+  _kawarp = new Kawarp(canvas, {
+    warpIntensity: 0.6,
+    blurPasses: 6,
+    animationSpeed: 1.0,
+  });
 
-  const backCenter = document.createElement('div');
-  backCenter.classList.add('BackCenter');
-  backCenter.style.background = `radial-gradient(circle, rgb(${colors.muted.join(',')}) 0%, transparent 70%)`;
+  await _kawarp.loadImage(img);
+  _kawarp.start();
 
-  bgContainer.appendChild(front);
-  bgContainer.appendChild(back);
-  bgContainer.appendChild(backCenter);
+  _resizeHandler = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    _kawarp?.resize?.();
+  };
+  window.addEventListener('resize', _resizeHandler);
+}
+
+export function stopKawarp() {
+  _kawarp?.stop?.();
+  _kawarp = null;
 }
 
 /**

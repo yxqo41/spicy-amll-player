@@ -57,6 +57,7 @@
 
   padding-left: var(--LyricsLeftSidePadding);
   padding-right: var(--LyricsRightSidePadding);
+  font-family: var(--spicy-custom-font, inherit);
 }
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent:not(:has(.LyricsNotice)) * {

@@ -206,6 +206,8 @@
     // ── State ──
     settingsManager.apply();
     const player = new AudioPlayer();
+    window.spicyPlayer = player;
+
     const mediaSessionManager = new MediaSessionManager(
       player,
       () => { if (btnForward.onclick) btnForward.onclick(); },
@@ -326,14 +328,18 @@
       }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
-    async function loadTrack(index) {
+    async function loadTrack(index, audioAlreadyManaged = false) {
       if (index < 0 || index >= currentQueue.length) return;
       
       setCurrentIndex(index);
       const track = await getTrackData(currentQueue[index].id);
       if (!track) return;
 
-      // Reset UI & State
+      // Reset State
+      crossfadeTriggered = false;
+      preloadedNext = false;
+
+      // Reset UI
       parsedLyrics = null;
       lyricsContent.innerHTML = '';
       lyricsType = 'None';
@@ -341,10 +347,9 @@
       showNotice('⏳ Loading track...');
       
       // ── Hard Reset Album Art & Background ──
-      // Remove any lingering animated art videos and clear children
       albumArt.innerHTML = '';
-      albumArt.className = 'MediaImageContainer'; // Reset classes
-      albumArt.style.backgroundImage = 'none'; // Temporarily none to force a clear
+      albumArt.className = 'MediaImageContainer'; 
+      albumArt.style.backgroundImage = 'none'; 
       
       dynamicBg.innerHTML = '';
       dynamicBg.className = 'spicy-dynamic-bg';
@@ -352,21 +357,16 @@
       const blob = new Blob([track.buffer], { type: track.type });
       const url = URL.createObjectURL(blob);
       
-      // Wait for metadata to ensure duration is available for auto-fetch
-      return new Promise((resolve) => {
-        player.onLoadedMetadata = async (duration) => {
+      const processMetadata = async (duration) => {
           timeTotal.textContent = AudioPlayer.formatTime(duration, true);
           
-          // Parse metadata
           songMetadata = await parseAudioMetadata(track.buffer, track.name);
           updateMetadataUI(songMetadata);
 
-          // Audio name fallback
           if (!songMetadata.title) {
             songNameEl.querySelector('span').textContent = track.name.replace(/\.[^.]+$/, '');
           }
 
-          // Handle Lyrics
           if (track.ttml && track.ttml !== '__AUTO_FETCH__') {
             try {
               parsedLyrics = parseTTMLToLyrics(track.ttml);
@@ -380,12 +380,10 @@
             autoFetchLyrics(songMetadata);
           }
 
-          // --- Fetch Songwriter Credits ---
           if (settingsManager.get('showSongwriters')) {
             const existingWriters = parsedLyrics?.SongWriters || [];
             GeniusService.fetchCredits(songMetadata, existingWriters).then(writers => {
               if (writers && writers.length > existingWriters.length) {
-                // Update the actual lyrics object and the UI
                 if (parsedLyrics) {
                   parsedLyrics.SongWriters = writers;
                   const creditsEl = lyricsContent.querySelector('.Credits');
@@ -397,7 +395,6 @@
                       const newCredits = document.createElement('div');
                       newCredits.className = 'Credits';
                       newCredits.textContent = `Written by: ${writers.join(', ')}`;
-                      // Insert before the spacer
                       const spacer = scrollContainer.querySelector('.lyrics-spacer');
                       if (spacer) scrollContainer.insertBefore(newCredits, spacer);
                       else scrollContainer.appendChild(newCredits);
@@ -408,12 +405,21 @@
             });
           }
 
-          refreshQueue(); // Update active state
+          refreshQueue();
           queueForceScroll();
-          resolve();
-        };
-        player.setSource(url);
-      });
+      };
+
+      if (audioAlreadyManaged) {
+        await processMetadata(player.duration);
+      } else {
+        return new Promise((resolve) => {
+          player.onLoadedMetadata = async (duration) => {
+            await processMetadata(duration);
+            resolve();
+          };
+          player.setSource(url);
+        });
+      }
     }
 
     function updateMetadataUI(metadata) {
@@ -585,7 +591,11 @@
       timeTotal.textContent = AudioPlayer.formatTime(duration, true);
     };
 
+    let crossfadeTriggered = false;
+    let preloadedNext = false;
+
     player.onEnded = () => {
+      if (crossfadeTriggered) return; // Already handled by crossfade
       const nextIdx = getCurrentIndex() + 1;
       if (nextIdx < currentQueue.length) {
         loadTrack(nextIdx);
@@ -601,9 +611,26 @@
       if (playing && !animationFrameId) startAnimationLoop();
     };
 
+    async function handleNextWithCrossfade() {
+      const nextIdx = getCurrentIndex() + 1;
+      if (nextIdx < currentQueue.length) {
+        crossfadeTriggered = true;
+        // Start crossfade in player
+        await player.startCrossfade();
+        // Load the metadata for the NEW track into the UI
+        await loadTrack(nextIdx, true); // true = audio already playing/managed
+      }
+    }
+
     btnForward.onclick = () => {
       const next = getCurrentIndex() + 1;
-      if (next < currentQueue.length) loadTrack(next);
+      if (next < currentQueue.length) {
+        if (player.isPlaying) {
+          handleNextWithCrossfade();
+        } else {
+          loadTrack(next);
+        }
+      }
     };
 
     btnBackward.onclick = () => {
@@ -695,8 +722,27 @@
     }
 
     function startAnimationLoop() {
-      function loop() {
+      async function loop() {
         const pos = player.getPosition();
+        const remaining = player.duration - pos;
+
+        // --- Automatic Crossfade and Preload ---
+        if (player.isPlaying) {
+          const nextIdx = getCurrentIndex() + 1;
+          if (nextIdx < currentQueue.length) {
+            // Preload 10 seconds before end
+            if (remaining < 10000 && !preloadedNext) {
+              preloadedNext = true;
+              const nextUrl = await getAudioBlobUrl(nextIdx);
+              if (nextUrl) player.preloadNext(nextUrl);
+            }
+            // Trigger Crossfade at 6 seconds
+            if (remaining < (player.crossfadeDuration + 100) && !crossfadeTriggered) {
+              handleNextWithCrossfade();
+            }
+          }
+        }
+
         setLyricsTime(pos, lyricsType);
         if (!document.hidden) {
           if (player.duration > 0) {

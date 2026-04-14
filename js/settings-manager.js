@@ -68,7 +68,10 @@ class SettingsManager {
       videoExportOrientation: "Vertical", // Vertical, Horizontal
       videoExportResolution: "1080p", // 720p, 1080p
       forceWordSync: false,
-      showSongwriters: true
+      showSongwriters: true,
+      gaplessMode: 'Multi-Player',
+      crossfadeDuration: 6000,
+      eqGains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     };
 
     this.settings = { ...this.defaults };
@@ -105,11 +108,38 @@ class SettingsManager {
     const root = document.documentElement;
     const body = document.body;
 
-    // Custom Font
+    // Custom Font handling
+    const existingLink = document.getElementById("spicy-custom-font-link");
     if (this.settings.customFontEnabled && this.settings.customFont) {
-      root.style.setProperty("--spicy-custom-font", this.settings.customFont);
-      body.style.fontFamily = `var(--spicy-custom-font), var(--font-family, 'Inter', sans-serif)`;
+      if (this.settings.customFont.startsWith("http")) {
+        // It's a URL (Google Fonts, etc.)
+        if (!existingLink || existingLink.href !== this.settings.customFont) {
+          if (existingLink) existingLink.remove();
+          const link = document.createElement("link");
+          link.id = "spicy-custom-font-link";
+          link.rel = "stylesheet";
+          link.href = this.settings.customFont;
+          document.head.appendChild(link);
+        }
+
+        // Try to extract family name from Google Fonts URL
+        let family = this.settings.customFont;
+        try {
+          const url = new URL(this.settings.customFont);
+          const f = url.searchParams.get("family");
+          if (f) family = f.split(":")[0].replace(/\+/g, " ");
+        } catch (e) {}
+
+        root.style.setProperty("--spicy-custom-font", `"${family}"`);
+        body.style.fontFamily = `var(--spicy-custom-font), 'Inter', sans-serif`;
+      } else {
+        // It's a local font name
+        if (existingLink) existingLink.remove();
+        root.style.setProperty("--spicy-custom-font", `"${this.settings.customFont}"`);
+        body.style.fontFamily = `var(--spicy-custom-font), 'Inter', sans-serif`;
+      }
     } else {
+      if (existingLink) existingLink.remove();
       root.style.removeProperty("--spicy-custom-font");
       body.style.fontFamily = "";
     }
@@ -132,6 +162,14 @@ class SettingsManager {
     const dynamicBg = document.getElementById("dynamic-bg");
     if (dynamicBg) {
       dynamicBg.style.display = this.settings.hide_npv_bg ? "none" : "block";
+    }
+
+    // Audio Engine Settings
+    if (window.spicyPlayer) {
+      const p = window.spicyPlayer;
+      p.gaplessMode = this.settings.gaplessMode;
+      p.crossfadeDuration = this.settings.crossfadeDuration;
+      this.settings.eqGains.forEach((g, i) => p.setEQGain(i, g));
     }
 
     // Dispatch event for other modules (e.g., animated-art.js)

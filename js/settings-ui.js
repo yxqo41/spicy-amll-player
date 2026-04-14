@@ -1,4 +1,5 @@
 import { settingsManager, LYRICS_SOURCE_PROVIDER_DEFINITIONS } from "./settings-manager.js";
+import { EQ_BANDS, EQ_PRESETS } from "./equalizer-presets.js";
 
 /**
  * settings-ui.js
@@ -131,6 +132,42 @@ class SettingsUI {
         tokenRow.querySelector("input").disabled = true;
         tokenRow.querySelector("input").style.opacity = "0.6";
     }
+
+    // --- Audio Engine ---
+    this.addGroup(container, "Audio Engine");
+    this.addDropdown(container, "Gapless Mode", "gaplessMode", ["Multi-Player", "Web Audio"]);
+    
+    const crossfadeWrap = document.createElement("div");
+    crossfadeWrap.style.display = "flex";
+    crossfadeWrap.style.flexDirection = "column";
+    crossfadeWrap.style.width = "50%";
+    const crossfadeSlider = document.createElement("input");
+    crossfadeSlider.type = "range";
+    crossfadeSlider.min = "0";
+    crossfadeSlider.max = "12000";
+    crossfadeSlider.step = "500";
+    crossfadeSlider.value = settingsManager.get("crossfadeDuration");
+    const crossfadeVal = document.createElement("span");
+    crossfadeVal.style.fontSize = "10px";
+    crossfadeVal.style.opacity = "0.6";
+    crossfadeVal.style.textAlign = "right";
+    crossfadeVal.textContent = `${settingsManager.get("crossfadeDuration") / 1000}s`;
+    
+    crossfadeSlider.oninput = () => {
+      const ms = parseInt(crossfadeSlider.value);
+      settingsManager.set("crossfadeDuration", ms);
+      crossfadeVal.textContent = `${ms / 1000}s`;
+    };
+    crossfadeWrap.appendChild(crossfadeSlider);
+    crossfadeWrap.appendChild(crossfadeVal);
+    this.addRow(container, "Crossfade Duration", crossfadeWrap);
+
+    const eqBtn = document.createElement("button");
+    eqBtn.className = "sl-btn";
+    eqBtn.textContent = "Open Mixing Board (EQ)";
+    eqBtn.style.marginTop = "10px";
+    eqBtn.onclick = () => this.showMixingBoard();
+    this.addRow(container, "Equalizer", eqBtn);
   }
 
   addGroup(container, title) {
@@ -302,6 +339,115 @@ class SettingsUI {
     renderList();
     pmOverlay.appendChild(pmModal);
     document.body.appendChild(pmOverlay);
+  }
+
+  showMixingBoard() {
+    const overlay = document.createElement("div");
+    overlay.className = "SpicyLyricsSettingsOverlay active";
+    overlay.style.zIndex = "10002";
+    overlay.onclick = () => overlay.remove();
+
+    const modal = document.createElement("div");
+    modal.className = "SpicyLyricsSettingsContainer active";
+    modal.style.maxWidth = "600px";
+    modal.style.width = "95vw";
+    modal.onclick = (e) => e.stopPropagation();
+
+    const header = document.createElement("div");
+    header.className = "SpicyLyricsSettingsHeader";
+    header.innerHTML = `<span>Spicy Mixing Board (EQ)</span><button class="pm-close" style="background:none; border:none; color:inherit; cursor:pointer; font-size:20px;">✕</button>`;
+    header.querySelector(".pm-close").onclick = () => overlay.remove();
+    modal.appendChild(header);
+
+    const scrollArea = document.createElement("div");
+    scrollArea.className = "SpicyLyricsSettingsScroll";
+    scrollArea.style.padding = "20px";
+    modal.appendChild(scrollArea);
+
+    // Presets Row
+    const presetRow = document.createElement("div");
+    presetRow.style.marginBottom = "20px";
+    presetRow.innerHTML = `<span style="font-size: 13px; opacity: 0.6; margin-right: 10px;">Preset:</span>`;
+    const sel = document.createElement("select");
+    sel.className = "sl-select";
+    sel.style.width = "auto";
+    Object.keys(EQ_PRESETS).forEach(p => {
+      const o = document.createElement("option");
+      o.value = p; o.textContent = p;
+      sel.appendChild(o);
+    });
+    presetRow.appendChild(sel);
+    scrollArea.appendChild(presetRow);
+
+    // Sliders Container
+    const slidersContainer = document.createElement("div");
+    slidersContainer.style.display = "flex";
+    slidersContainer.style.justifyContent = "space-between";
+    slidersContainer.style.height = "250px";
+    slidersContainer.style.gap = "8px";
+    scrollArea.appendChild(slidersContainer);
+
+    const currentGains = settingsManager.get("eqGains");
+    const sliders = [];
+
+    EQ_BANDS.forEach((freq, i) => {
+      const col = document.createElement("div");
+      col.style.display = "flex";
+      col.style.flexDirection = "column";
+      col.style.alignItems = "center";
+      col.style.flex = "1";
+
+      const valLabel = document.createElement("span");
+      valLabel.style.fontSize = "10px";
+      valLabel.style.marginBottom = "8px";
+      valLabel.textContent = currentGains[i] > 0 ? `+${currentGains[i]}` : currentGains[i];
+
+      const slider = document.createElement("input");
+      slider.type = "range";
+      slider.className = "sl-eq-slider";
+      slider.setAttribute("orient", "vertical"); // For some browsers
+      slider.style.appearance = "slider-vertical";
+      slider.style.width = "10px";
+      slider.style.height = "180px";
+      slider.min = "-12";
+      slider.max = "12";
+      slider.step = "1";
+      slider.value = currentGains[i];
+
+      const freqLabel = document.createElement("span");
+      freqLabel.style.fontSize = "9px";
+      freqLabel.style.marginTop = "8px";
+      freqLabel.style.opacity = "0.6";
+      freqLabel.textContent = freq >= 1000 ? `${freq/1000}k` : freq;
+
+      slider.oninput = () => {
+        valLabel.textContent = slider.value > 0 ? `+${slider.value}` : slider.value;
+        const newGains = [...settingsManager.get("eqGains")];
+        newGains[i] = parseInt(slider.value);
+        settingsManager.set("eqGains", newGains);
+      };
+
+      sliders.push(slider);
+      col.appendChild(valLabel);
+      col.appendChild(slider);
+      col.appendChild(freqLabel);
+      slidersContainer.appendChild(col);
+    });
+
+    sel.onchange = () => {
+      const preset = EQ_PRESETS[sel.value];
+      if (preset) {
+        settingsManager.set("eqGains", [...preset]);
+        preset.forEach((gain, i) => {
+          sliders[i].value = gain;
+          const label = sliders[i].previousSibling;
+          if (label) label.textContent = gain > 0 ? `+${gain}` : gain;
+        });
+      }
+    };
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
   }
 }
 

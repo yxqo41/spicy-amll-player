@@ -1,5 +1,6 @@
 import { addTrackToQueue, clearQueue, setCurrentIndex } from './router.js';
 import { parseAudioMetadata } from './metadata-parser.js';
+import { getAnimatedArtwork } from './animated-art.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const ttmlZone = document.getElementById('ttml-zone');
@@ -262,7 +263,10 @@ document.addEventListener('DOMContentLoaded', () => {
   startBtn.addEventListener('click', async () => {
     if (stagedAudio.length === 0) return;
     
-    startBtn.textContent = 'Preparing Queue...';
+    const originalText = startBtn.querySelector('span');
+    if (originalText) originalText.textContent = 'Preparing Queue...';
+    else startBtn.textContent = 'Preparing Queue...';
+
     startBtn.classList.remove('enabled');
     startBtn.disabled = true;
 
@@ -300,18 +304,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ── Sidebar Navigation ──
-  const navItems = document.querySelectorAll('.am-nav-item');
+  // ── Sidebar & Mobile Navigation ──
+  const navItems = document.querySelectorAll('.am-nav-item, .am-mobile-nav-item');
   const pages = document.querySelectorAll('.am-page');
 
   navItems.forEach(item => {
     item.addEventListener('click', () => {
       const pageId = item.dataset.page;
-      if (!pageId || pageId === 'listen' || pageId === 'browse' || pageId === 'radio') return; // Not implemented
+      if (!pageId || pageId === 'listen' || pageId === 'browse' || pageId === 'radio') return;
 
-      // Update Active Nav
-      navItems.forEach(i => i.classList.remove('am-nav-active'));
-      item.classList.add('am-nav-active');
+      // Update Active Nav (Both sidebar and mobile nav)
+      navItems.forEach(i => i.classList.remove('am-nav-active', 'am-mobile-nav-active'));
+      document.querySelectorAll(`[data-page="${pageId}"]`).forEach(el => {
+        if (el.classList.contains('am-nav-item')) el.classList.add('am-nav-active');
+        if (el.classList.contains('am-mobile-nav-item')) el.classList.add('am-mobile-nav-active');
+      });
 
       // Update Active Page
       pages.forEach(p => p.classList.remove('active'));
@@ -354,7 +361,49 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       card.onclick = () => loadTestTrack(track, card);
       grid.appendChild(card);
+      
+      // Lazy-load artwork extraction
+      peekMetadata(track, card);
     });
+  }
+
+  async function peekMetadata(track, card) {
+    try {
+      // Fetch just the first 1MB of the audio for metadata parsing
+      const response = await fetch(track.audio, { headers: { 'Range': 'bytes=0-1048575' } });
+      const buffer = await response.arrayBuffer();
+      const metadata = await parseAudioMetadata(buffer, track.audio);
+      
+      const artEl = card.querySelector('.testdb-art');
+
+      // 1. Set Static Art as Background
+      if (metadata.artUrl) {
+        artEl.style.backgroundImage = `url(${metadata.artUrl})`;
+        artEl.innerHTML = ''; // Remove the SVG icon
+      }
+
+      // 2. Fetch and render Animated Art
+      const videoUrl = await getAnimatedArtwork(metadata.artist, metadata.album, metadata.title);
+      if (videoUrl) {
+        const video = document.createElement('video');
+        video.src = videoUrl;
+        video.autoplay = true;
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; opacity: 0; transition: opacity 0.5s;';
+        
+        video.onloadeddata = () => {
+          video.style.opacity = '1';
+          artEl.style.backgroundImage = 'none';
+        };
+
+        artEl.innerHTML = '';
+        artEl.appendChild(video);
+      }
+    } catch (e) {
+      console.warn('[TestDB] Metadata peek failed:', e);
+    }
   }
 
   async function loadTestTrack(track, card) {
@@ -362,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       await clearQueue();
 
-      // Fetch Audio
+      // Fetch Full Audio
       const audioResp = await fetch(track.audio);
       const audioBuffer = await audioResp.arrayBuffer();
       const metadata = await parseAudioMetadata(audioBuffer, track.audio);
@@ -378,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
         name: track.name || metadata.title,
         artist: track.artist || metadata.artist,
         artUrl: metadata.artUrl || null,
-        type: 'audio/flac', // Most are flac in testdb
+        type: 'audio/flac',
         ttml: ttmlContent
       });
 

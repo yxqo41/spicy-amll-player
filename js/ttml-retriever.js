@@ -4,7 +4,6 @@ import { robustFetch } from './network-utils.js';
 
 const SPICY_API_URL = 'https://api.spicylyrics.org';
 const SPICY_VERSION = '2.8.0';
-const DEFAULT_MUSIXMATCH_TOKEN = '260407cedd74339c647cfc2ad6fac02ab1f32910a5a18725c97acc';
 
 /** Source label mapping */
 const SOURCE_LABELS = {
@@ -101,12 +100,11 @@ async function searchSpotifyTrack(songName, artistName, albumName) {
 // ═══════════════════════════════════════════════
 
 async function fetchFromMusixmatch(songName, artistName, albumName, durationMs) {
-  const token = settingsManager.get("musixmatchToken") || DEFAULT_MUSIXMATCH_TOKEN;
   const durationSec = durationMs / 1000;
   
   try {
-    const baseUrl = "https://apic-desktop.musixmatch.com/ws/1.1/macro.subtitles.get";
     const params = new URLSearchParams({
+      provider: 'musixmatch',
       format: "json",
       namespace: "lyrics_richsynched",
       subtitle_format: "mxm",
@@ -114,11 +112,10 @@ async function fetchFromMusixmatch(songName, artistName, albumName, durationMs) 
       q_track: songName,
       q_artist: artistName,
       q_album: albumName || "",
-      q_duration: durationSec,
-      usertoken: token
+      q_duration: durationSec
     });
 
-    const res = await proxiedFetch(`${baseUrl}?${params}`);
+    const res = await fetch(`/api/proxy?${params}`);
     if (!res.ok) return null;
     
     const data = await res.json();

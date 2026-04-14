@@ -728,3 +728,62 @@
 .testdb-card.loading {
   animation: testdbPulse 1.5s infinite ease-in-out;
 }
+
+/* ══════════════════════════════════════════════════
+   MOBILE BOTTOM NAVIGATION
+   ══════════════════════════════════════════════════ */
+.am-mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  z-index: 1000;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -5px 25px rgba(0,0,0,0.5);
+}
+
+.am-mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding-top: 8px;
+}
+
+.am-mobile-nav-item svg {
+  width: 22px;
+  height: 22px;
+  transition: transform 0.2s;
+}
+
+.am-mobile-nav-item:active svg {
+  transform: scale(0.9);
+}
+
+.am-mobile-nav-item.am-mobile-nav-active {
+  color: #fa243c;
+}
+
+.am-mobile-nav-item.am-mobile-nav-active svg {
+  filter: drop-shadow(0 0 10px rgba(250, 36, 60, 0.4));
+}
+
+@media (max-width: 900px) {
+  .am-mobile-nav {
+    display: grid;
+  }
+}

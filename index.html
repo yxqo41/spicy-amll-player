@@ -213,15 +213,30 @@
     </main>
   </div>
 
+    <!-- ═══ Mobile Bottom Nav ═══ -->
+    <nav class="am-mobile-nav">
+      <div class="am-mobile-nav-item am-mobile-nav-active" data-page="upload">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+        </svg>
+        <span>Upload</span>
+      </div>
+      <div class="am-mobile-nav-item" data-page="testdb">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/>
+        </svg>
+        <span>Library</span>
+      </div>
+      <div class="am-mobile-nav-item" onclick="alert('Coming soon!')">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h2v2h-2v-2zm0-10h2v8h-2V6z"/>
+        </svg>
+        <span>Info</span>
+      </div>
+    </nav>
+  </div>
+
   <script type="module" src="js/upload.js"></script>
-  <script>
-    // Sidebar dummy nav handling
-    document.querySelectorAll('.am-nav-item:not([data-page="upload"])').forEach(item => {
-      item.addEventListener('click', () => {
-        alert("Hey! You just found a dumb thing that the dev doesn't want to implement. Bye!");
-      });
-    });
-  </script>
 </body>
 
 </html>

@@ -561,7 +561,6 @@
           bgVideo.style.cssText = 'position:absolute;top:-10%;left:-10%;width:120%;height:120%;object-fit:cover;';
           bgVideo.onloadeddata = () => {
              dynamicBg.innerHTML = ''; dynamicBg.className = 'spicy-dynamic-bg AnimatedArtBackground'; dynamicBg.appendChild(bgVideo);
-             mediaSessionManager.startAnimatedArtworkSync(bgVideo);
           };
         }
       } catch (e) {}

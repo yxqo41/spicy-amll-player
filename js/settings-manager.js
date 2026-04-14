@@ -38,7 +38,7 @@ export const LYRICS_SOURCE_PROVIDER_DEFINITIONS = {
 
 export const DEFAULT_LYRICS_SOURCE_ORDER = ["musixmatch", "lrclib", "netease"];
 
-const HARDCODED_MUSIXMATCH_TOKEN = "260407cedd74339c647cfc2ad6fac02ab1f32910a5a18725c97acc";
+
 
 class SettingsManager {
   constructor() {
@@ -59,7 +59,7 @@ class SettingsManager {
       customFont: "",
       lyricsSourceOrder: [...DEFAULT_LYRICS_SOURCE_ORDER],
       disabledLyricsSources: [],
-      musixmatchToken: HARDCODED_MUSIXMATCH_TOKEN,
+      musixmatchToken: "",
       ignoreMusixmatchWordSync: true,
       prioritizeAppleMusicQuality: true,
       language: "en-US",

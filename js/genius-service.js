@@ -3,7 +3,6 @@
  * Handles fetching songwriter credits, legal names, and plain-text lyrics from the Genius API.
  */
 
-const CLIENT_ACCESS_TOKEN = 'PGbgAX_HAb8PrMmpSR5HqyYrTNZQIkqGPm_XUtdX2gjSWUizVxyp5SpDt5pziyit';
 const BASE_URL = 'https://api.genius.com';
 
 /** CORS proxies for scraping Genius song pages */
@@ -19,14 +18,17 @@ const SCRAPE_PROXIES = [
 
 export const GeniusService = {
   /**
-   * Direct fetch for Genius API using access_token query parameter.
-   * api.genius.com natively supports CORS, so we don't need a proxy.
+   * Proxied fetch for Genius API.
+   * Authentication is handled on the server side via Netlify Functions.
    */
   async fetchApi(endpoint, options = {}) {
-    const separator = endpoint.includes('?') ? '&' : '?';
-    const url = `${BASE_URL}${endpoint}${separator}access_token=${CLIENT_ACCESS_TOKEN}`;
-
     try {
+      const urlObj = new URL(endpoint, 'https://api.genius.com');
+      const params = new URLSearchParams(urlObj.search);
+      params.set('provider', 'genius');
+      params.set('endpoint', urlObj.pathname);
+
+      const url = `/api/proxy?${params.toString()}`;
       const response = await fetch(url, options);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       return response.json();

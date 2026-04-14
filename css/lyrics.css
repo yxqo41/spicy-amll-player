@@ -306,9 +306,6 @@
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word.PartOfWord + .word {
   transform-origin: right center;
 }
-  margin-bottom: -0.25em;
-  margin-top: -0.15em;
-}
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word.PartOfWord,
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .letterGroup.PartOfWord {

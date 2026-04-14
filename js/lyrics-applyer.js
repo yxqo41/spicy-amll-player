@@ -27,6 +27,81 @@ function convertTime(t) {
 }
 
 /**
+ * Checks if a word is eligible for letter-by-letter emphasis.
+ * Restricted to LTR languages and depends on character length vs duration.
+ */
+function isLetterCapable(text, duration) {
+  const isSimpleMode = settingsManager.get("simpleLyricsMode");
+  const letterLength = text.split("").length;
+  
+  if (isRtl(text)) return false;
+
+  // New sensitivity: 0.9s and 8+ letters
+  if (duration >= 900 && letterLength >= 8) {
+    return true;
+  }
+
+  // Fallback to complex duration formula for other words
+  const baseMinDuration = isSimpleMode ? 1050 : 1000;
+  const complexMinDuration = baseMinDuration + ((letterLength - 1) * 25);
+  
+  return duration >= complexMinDuration;
+}
+
+/**
+ * Splits a word into individual letters and sets up timing for each.
+ */
+function applyEmphasis(letters, wordElem, lead, isBgWord = false) {
+  const isSimpleMode = settingsManager.get("simpleLyricsMode");
+  
+  // Official subtractions from Emphasize.ts
+  const subStart = isSimpleMode ? -21 : 0;
+  const subEnd = isSimpleMode ? -40 : 250;
+
+  const startTime = convertTime(lead.StartTime) - subStart;
+  const endTime = convertTime(lead.EndTime) - subEnd;
+  const totalDuration = endTime - startTime;
+  const letterDuration = totalDuration / letters.length;
+  
+  const letterDataArr = [];
+
+  letters.forEach((letter, index) => {
+    const letterElem = document.createElement("span");
+    letterElem.textContent = letter;
+    letterElem.classList.add("letter", "Emphasis");
+    
+    const letterStartTime = startTime + (index * letterDuration);
+    const letterEndTime = letterStartTime + letterDuration;
+
+    if (index === letters.length - 1) {
+      letterElem.classList.add("LastLetterInWord");
+    }
+
+    if (!settingsManager.get("simpleLyricsMode")) {
+      letterElem.style.setProperty("--gradient-position", "-20%");
+    }
+    letterElem.style.setProperty("--text-shadow-opacity", "0%");
+    letterElem.style.setProperty("--text-shadow-blur-radius", "4px");
+    letterElem.style.scale = IDLE_LYRICS_SCALE.toString();
+    letterElem.style.transform = `translateY(calc(var(--DefaultLyricsSize) * 0.02))`;
+
+    letterDataArr.push({
+      HTMLElement: letterElem,
+      StartTime: letterStartTime,
+      EndTime: letterEndTime,
+      TotalTime: letterDuration,
+      Emphasis: true,
+      BGLetter: isBgWord
+    });
+
+    wordElem.appendChild(letterElem);
+  });
+
+  wordElem.classList.add("letterGroup");
+  return letterDataArr;
+}
+
+/**
  * Global lyrics object tracking all line/word references.
  */
 export const LyricsObject = {
@@ -85,6 +160,7 @@ export function applySyllableLyrics(data, lyricsContentEl) {
   data.Content.forEach((line, index, arr) => {
     const lineElem = document.createElement("div");
     lineElem.classList.add("line");
+    lineElem.setAttribute("dir", "auto");
 
     const nextLineStartTime = arr[index + 1]?.Lead.StartTime ?? 0;
     const lineEndTimeAndNextDist = nextLineStartTime !== 0 ? nextLineStartTime - line.Lead.EndTime : 0;
@@ -106,39 +182,53 @@ export function applySyllableLyrics(data, lyricsContentEl) {
 
     // Build words/syllables
     line.Lead.Syllables.forEach((lead, iL, aL) => {
-      const word = document.createElement("span");
+      const totalDuration = convertTime(lead.EndTime) - convertTime(lead.StartTime);
+      const isEmphasized = isLetterCapable(lead.Text, totalDuration);
+      
+      let word;
+      let lettersData = null;
+
+      if (isEmphasized) {
+        word = document.createElement("div");
+        const letters = lead.Text.split("");
+        lettersData = applyEmphasis(letters, word, lead, false);
+      } else {
+        word = document.createElement("span");
+        word.textContent = transformText(lead.Text);
+        if (!settingsManager.get("simpleLyricsMode")) {
+          word.style.setProperty("--gradient-position", "-20%");
+          word.style.setProperty("--text-shadow-opacity", "0%");
+          word.style.setProperty("--text-shadow-blur-radius", "4px");
+          word.style.scale = IDLE_LYRICS_SCALE.toString();
+          word.style.transform = "translateY(calc(var(--DefaultLyricsSize) * 0.01))";
+        }
+        word.classList.add("word");
+      }
 
       if (isRtl(lead.Text) && !lineElem.classList.contains("rtl")) {
         lineElem.classList.add("rtl");
       }
 
-      const totalDuration = convertTime(lead.EndTime) - convertTime(lead.StartTime);
-
-      word.textContent = transformText(lead.Text);
-      if (!settingsManager.get("simpleLyricsMode")) {
-        word.style.setProperty("--gradient-position", "-20%");
-        word.style.setProperty("--text-shadow-opacity", "0%");
-        word.style.setProperty("--text-shadow-blur-radius", "4px");
-        word.style.scale = IDLE_LYRICS_SCALE.toString();
-        word.style.transform = "translateY(calc(var(--DefaultLyricsSize) * 0.01))";
-      }
-      word.classList.add("word");
-
-      if (iL === aL.length - 1) {
-        word.classList.add("LastWordInLine");
-      } else if (lead.IsPartOfWord) {
-        word.classList.add("PartOfWord");
-      }
-
       const ci = LyricsObject.Types.Syllable.Lines.length - 1;
       if (LyricsObject.Types.Syllable.Lines[ci]?.Syllables?.Lead) {
-        LyricsObject.Types.Syllable.Lines[ci].Syllables.Lead.push({
+        const syllableObj = {
           HTMLElement: word,
           Text: lead.Text,
           StartTime: convertTime(lead.StartTime),
           EndTime: convertTime(lead.EndTime),
           TotalTime: totalDuration,
-        });
+        };
+        if (isEmphasized) {
+          syllableObj.LetterGroup = true;
+          syllableObj.Letters = lettersData;
+        }
+        LyricsObject.Types.Syllable.Lines[ci].Syllables.Lead.push(syllableObj);
+      }
+
+      if (iL === aL.length - 1) {
+        word.classList.add("LastWordInLine");
+      } else if (lead.IsPartOfWord) {
+        word.classList.add("PartOfWord");
       }
 
       const mergeWords = settingsManager.get("syllableRendering") === "Merge Words";
@@ -161,6 +251,7 @@ export function applySyllableLyrics(data, lyricsContentEl) {
       line.Background.forEach(bg => {
         const bgLine = document.createElement("div");
         bgLine.classList.add("line", "bg-line");
+        bgLine.setAttribute("dir", "auto");
 
         LyricsObject.Types.Syllable.Lines.push({
           HTMLElement: bgLine,
@@ -177,31 +268,48 @@ export function applySyllableLyrics(data, lyricsContentEl) {
         let currentBGWordGroup = null;
 
         bg.Syllables.forEach((bw, bI, bA) => {
-          const bwE = document.createElement("span");
+          const totalDuration = convertTime(bw.EndTime) - convertTime(bw.StartTime);
+          const isEmphasized = isLetterCapable(bw.Text, totalDuration);
+
+          let bwE;
+          let lettersData = null;
+
+          if (isEmphasized) {
+            bwE = document.createElement("div");
+            const letters = bw.Text.split("");
+            lettersData = applyEmphasis(letters, bwE, bw, true);
+          } else {
+            bwE = document.createElement("span");
+            bwE.textContent = transformText(bw.Text);
+            if (!settingsManager.get("simpleLyricsMode")) {
+              bwE.style.setProperty("--gradient-position", "0%");
+              bwE.style.setProperty("--text-shadow-opacity", "0%");
+              bwE.style.setProperty("--text-shadow-blur-radius", "4px");
+              bwE.style.scale = IDLE_LYRICS_SCALE.toString();
+              bwE.style.transform = "translateY(calc(var(--font-size) * 0.01))";
+            }
+            bwE.classList.add("word");
+          }
 
           if (isRtl(bw.Text) && !bgLine.classList.contains("rtl")) {
             bgLine.classList.add("rtl");
           }
 
-          bwE.textContent = transformText(bw.Text);
-          if (!settingsManager.get("simpleLyricsMode")) {
-            bwE.style.setProperty("--gradient-position", "0%");
-            bwE.style.setProperty("--text-shadow-opacity", "0%");
-            bwE.style.setProperty("--text-shadow-blur-radius", "4px");
-            bwE.style.scale = IDLE_LYRICS_SCALE.toString();
-            bwE.style.transform = "translateY(calc(var(--font-size) * 0.01))";
-          }
-
           const ci = LyricsObject.Types.Syllable.Lines.length - 1;
           if (LyricsObject.Types.Syllable.Lines[ci]?.Syllables?.Lead) {
-            LyricsObject.Types.Syllable.Lines[ci].Syllables.Lead.push({
+            const syllableObj = {
               HTMLElement: bwE,
               Text: bw.Text,
               StartTime: convertTime(bw.StartTime),
               EndTime: convertTime(bw.EndTime),
-              TotalTime: convertTime(bw.EndTime) - convertTime(bw.StartTime),
+              TotalTime: totalDuration,
               BGWord: true,
-            });
+            };
+            if (isEmphasized) {
+              syllableObj.LetterGroup = true;
+              syllableObj.Letters = lettersData;
+            }
+            LyricsObject.Types.Syllable.Lines[ci].Syllables.Lead.push(syllableObj);
           }
 
           bwE.classList.add("bg-word", "word");
@@ -280,10 +388,10 @@ export function convertToSyllable(data) {
       const wordsText = line.Text.split(/\s+/).filter(Boolean);
       if (wordsText.length === 0) return null;
 
-      const totalDuration = (line.EndTime && line.EndTime > line.StartTime) 
-        ? line.EndTime - line.StartTime 
+      const totalDuration = (line.EndTime && line.EndTime > line.StartTime)
+        ? line.EndTime - line.StartTime
         : 1.5; // Fallback duration for lines without EndTime
-      
+
       const weights = wordsText.map(w => getTextWeight(w));
       const totalWeight = weights.reduce((sum, w) => sum + w, 0);
 
@@ -293,7 +401,7 @@ export function convertToSyllable(data) {
       const syllables = wordsText.map((wordText, i) => {
         const weight = weights[i];
         const wordDuration = (weight / totalWeight) * totalDuration;
-        
+
         const start = currentCursor;
         const end = currentCursor + wordDuration;
         currentCursor = end;
@@ -348,6 +456,7 @@ export function applyLineLyrics(data, lyricsContentEl) {
   data.Content.forEach((line, index, arr) => {
     const lineElem = document.createElement("div");
     lineElem.classList.add("line");
+    lineElem.setAttribute("dir", "auto");
 
     LyricsObject.Types.Line.Lines.push({
       HTMLElement: lineElem,
@@ -408,6 +517,7 @@ export function applyStaticLyrics(data, lyricsContentEl) {
   data.Lines.forEach(line => {
     const lineElem = document.createElement("div");
     lineElem.classList.add("line", "static");
+    lineElem.setAttribute("dir", "auto");
     if (isRtl(line.Text)) lineElem.classList.add("rtl");
 
     const wordElem = document.createElement("span");

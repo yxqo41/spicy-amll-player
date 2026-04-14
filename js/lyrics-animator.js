@@ -53,6 +53,25 @@ const YOffsetDamping = 0.4, YOffsetFrequency = 1.25;
 const ScaleDamping = 0.6, ScaleFrequency = 0.7;
 const GlowDamping = 0.5, GlowFrequency = 1;
 const BlurMultiplier = 2.5;
+const LetterGlowMultiplier_Opacity = 230;
+
+const SimpleLyricsMode_LetterEffectsStrengthConfig = {
+  LongerThan: 1500,
+  Longer: {
+    Glow: 0.4,
+    YOffset: 0.45,
+    Scale: 1.103,
+  },
+  Shorter: {
+    Glow: 0.285,
+    YOffset: 0.1,
+    Scale: 1.09,
+  },
+};
+
+function easeSinOut(x) {
+  return Math.sin((x * Math.PI) / 2);
+}
 
 // ── Style Cache ──
 const _styleCache = new WeakMap();
@@ -68,7 +87,7 @@ function setStyleIfChanged(el, prop, value) {
 
 function getElementState(currentTime, startTime, endTime) {
   if (currentTime < startTime) return "NotSung";
-  if (currentTime > endTime) return "Active";
+  if (currentTime > endTime) return "Sung";
   return "Active";
 }
 
@@ -90,6 +109,14 @@ function createDotSprings() {
   return {
     Scale: new Spring(DotScaleSpline.at(0), ScaleFrequency, ScaleDamping),
     Opacity: new Spring(DotOpacitySpline.at(0), GlowFrequency, GlowDamping),
+  };
+}
+
+function createLetterSprings() {
+  return {
+    Scale: new Spring(ScaleSpline.at(0), ScaleFrequency, ScaleDamping),
+    YOffset: new Spring(YOffsetSpline.at(0), YOffsetFrequency, YOffsetDamping),
+    Glow: new Spring(GlowSpline.at(0), GlowFrequency, GlowDamping),
   };
 }
 
@@ -210,7 +237,7 @@ function animateSyllable(position, deltaTime) {
 
         const isSimpleMode = settingsManager.get("simpleLyricsMode");
 
-        if (isSimpleMode) {
+        if (isSimpleMode && !word.LetterGroup) {
           if (wordActive || wordSung) {
             word.HTMLElement.classList.add("active");
           } else {
@@ -219,21 +246,20 @@ function animateSyllable(position, deltaTime) {
           continue;
         }
 
-        // Regular word animation
+        const isScrolling = isUserScrolling();
+
+        // Unified Physics: Calculate parent word springs even for emphasize-capable words
         if (!word.AnimatorStore) {
           word.AnimatorStore = createWordSprings();
           word.AnimatorStore.Scale.SetGoal(ScaleSpline.at(0), true);
           word.AnimatorStore.YOffset.SetGoal(YOffsetSpline.at(0), true);
           word.AnimatorStore.Glow.SetGoal(GlowSpline.at(0), true);
-          // GPU Promotion
           word.HTMLElement.style.willChange = "transform, opacity, scale";
           word.HTMLElement.style.backfaceVisibility = "hidden";
         }
 
         const pct = getProgressPercentage(position, word.StartTime, word.EndTime);
         let targetScale, targetYOffset, targetGlow, targetGradientPos;
-
-        const isScrolling = isUserScrolling();
 
         if (wordActive) {
           targetScale = ScaleSpline.at(pct);
@@ -260,15 +286,105 @@ function animateSyllable(position, deltaTime) {
         const curYOffset = word.AnimatorStore.YOffset.Step(deltaTime);
         const curGlow = word.AnimatorStore.Glow.Step(deltaTime);
 
-        // Batch writes with precision thresholds
+        // Apply parent-level animation (Layers the jump!)
         setStyleIfChanged(word.HTMLElement, "scale", `${curScale.toFixed(4)}`);
         setStyleIfChanged(word.HTMLElement, "transform",
           `translate3d(0, calc(var(--DefaultLyricsSize) * ${curYOffset.toFixed(4)}), 0)`);
-        word.HTMLElement.style.setProperty("--gradient-position", `${targetGradientPos.toFixed(2)}%`);
-        setStyleIfChanged(word.HTMLElement, "--text-shadow-blur-radius",
-          `${(4 + 2 * curGlow).toFixed(2)}px`);
-        setStyleIfChanged(word.HTMLElement, "--text-shadow-opacity",
-          `${(curGlow * 185).toFixed(2)}%`);
+        
+        if (!word.LetterGroup) {
+          word.HTMLElement.style.setProperty("--gradient-position", `${targetGradientPos.toFixed(2)}%`);
+          setStyleIfChanged(word.HTMLElement, "--text-shadow-blur-radius",
+            `${(4 + 2 * curGlow).toFixed(2)}px`);
+          setStyleIfChanged(word.HTMLElement, "--text-shadow-opacity",
+            `${(curGlow * LetterGlowMultiplier_Opacity).toFixed(2)}%`);
+        }
+
+        // Letter-level animation (ripples inside the jumping word)
+        if (word.LetterGroup && word.Letters) {
+          // Find the active letter index for proximity effects
+          let activeLetterIndex = -1;
+          let activeLetterPercentage = 0;
+
+          for (let i = 0; i < word.Letters.length; i++) {
+            if (getElementState(position, word.Letters[i].StartTime, word.Letters[i].EndTime) === "Active") {
+              activeLetterIndex = i;
+              activeLetterPercentage = getProgressPercentage(position, word.Letters[i].StartTime, word.Letters[i].EndTime);
+              break;
+            }
+          }
+
+          const strength = (word.EndTime - word.StartTime) > SimpleLyricsMode_LetterEffectsStrengthConfig.LongerThan
+            ? SimpleLyricsMode_LetterEffectsStrengthConfig.Longer
+            : SimpleLyricsMode_LetterEffectsStrengthConfig.Shorter;
+
+          // Animate individual letters with proximity waves
+          word.Letters.forEach((letter, k) => {
+            if (!letter.AnimatorStore) {
+              letter.AnimatorStore = createLetterSprings();
+              letter.AnimatorStore.Scale.SetGoal(ScaleSpline.at(0), true);
+              letter.AnimatorStore.YOffset.SetGoal(YOffsetSpline.at(0), true);
+              letter.AnimatorStore.Glow.SetGoal(GlowSpline.at(0), true);
+              letter.HTMLElement.style.willChange = "transform, opacity, scale";
+              letter.HTMLElement.style.backfaceVisibility = "hidden";
+            }
+
+            const lstate = getElementState(position, letter.StartTime, letter.EndTime);
+            
+            // Proximity Falloff: Focus for Y, Broader for Glow
+            let falloffY = 0;
+            let falloffGlow = 0;
+            if (activeLetterIndex !== -1) {
+              const distance = Math.abs(k - activeLetterIndex);
+              falloffY = Math.max(0, 1 / (1 + distance * 0.9));
+              falloffGlow = Math.max(0, 1 / (1 + distance * 0.5)); // 0.5 for broader shine
+            }
+
+            // Determine active/sung base values
+            const basePct = activeLetterIndex !== -1 ? activeLetterPercentage : (lstate === "Sung" ? 1 : 0);
+            const baseScale = ScaleSpline.at(basePct) * (isSimpleMode ? strength.Scale : 1);
+            const baseYOffset = YOffsetSpline.at(basePct) * (isSimpleMode ? strength.YOffset : 1);
+            const baseGlow = GlowSpline.at(basePct) * (isSimpleMode ? strength.Glow : 1);
+
+            const restingScale = ScaleSpline.at(0);
+            const restingYOffset = YOffsetSpline.at(0);
+            const restingGlow = GlowSpline.at(0);
+
+            // Layered interpolation
+            let ts = restingScale + (baseScale - restingScale) * falloffY;
+            let ty = restingYOffset + (baseYOffset - restingYOffset) * falloffY;
+            let tg = restingGlow + (baseGlow - restingGlow) * falloffGlow;
+
+            if (isScrolling) ty = 0;
+
+            let tgp = -20;
+            if (lstate === "Sung") {
+              tgp = 100;
+            } else if (lstate === "Active") {
+              tgp = -20 + 120 * easeSinOut(activeLetterPercentage);
+            }
+
+            letter.AnimatorStore.Scale.SetGoal(ts);
+            letter.AnimatorStore.YOffset.SetGoal(ty);
+            letter.AnimatorStore.Glow.SetGoal(tg);
+
+            const cs = letter.AnimatorStore.Scale.Step(deltaTime);
+            const cy = letter.AnimatorStore.YOffset.Step(deltaTime);
+            const cg = letter.AnimatorStore.Glow.Step(deltaTime);
+
+            setStyleIfChanged(letter.HTMLElement, "scale", `${cs.toFixed(4)}`);
+            // Secondary jump on top of parent jump
+            setStyleIfChanged(letter.HTMLElement, "transform",
+              `translate3d(0, calc(var(--DefaultLyricsSize) * ${(cy * 2.5).toFixed(4)}), 0)`);
+            
+            letter.HTMLElement.style.setProperty("--gradient-position", `${tgp.toFixed(2)}%`);
+
+            // Stronger shine: 4px base + up to 20px boom
+            setStyleIfChanged(letter.HTMLElement, "--text-shadow-blur-radius",
+              `${(4 + 20 * cg).toFixed(2)}px`);
+            setStyleIfChanged(letter.HTMLElement, "--text-shadow-opacity",
+              `${(cg * LetterGlowMultiplier_Opacity).toFixed(2)}%`);
+          });
+        }
       }
       // Class updates are already handled in Pass 1
 

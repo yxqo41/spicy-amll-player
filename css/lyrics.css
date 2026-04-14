@@ -275,7 +275,7 @@
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl {
   direction: rtl !important;
-  transform-origin: right center !important;
+  transform-origin: center center !important; /* Scale from middle to prevent off-screen overflow */
 }
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word,
@@ -552,3 +552,35 @@
   width: 100%;
   pointer-events: none;
 }
+
+/* ── Mobile Responsive Fix ── */
+@media (max-width: 768px) {
+  #SpicyLyricsPage .LyricsContainer .LyricsContent {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    text-align: center;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+  }
+
+  #SpicyLyricsPage .LyricsContainer .LyricsContent .SpicyLyricsScrollContainer {
+    width: 100%;
+    margin-top: 10vh;
+    padding-bottom: 50vh;
+  }
+
+  #SpicyLyricsPage .LyricsContainer .LyricsContent .line {
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 10px 10px !important;
+    transform-origin: center center !important;
+    width: 100% !important;
+  }
+
+  /* RTL specific centering on mobile */
+  #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl {
+    justify-content: center !important;
+    text-align: center !important;
+    direction: rtl !important;
+  }
+}

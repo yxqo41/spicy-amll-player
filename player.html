@@ -168,6 +168,7 @@
     import { settingsUI } from './js/settings-ui.js';
     import { getAnimatedArtwork, applyAnimatedArt } from './js/animated-art.js';
     import VideoExporter from './js/video-exporter.js';
+    import { MediaSessionManager } from './js/media-session.js';
 
 
     // ── Elements ──
@@ -205,6 +206,11 @@
     // ── State ──
     settingsManager.apply();
     const player = new AudioPlayer();
+    const mediaSessionManager = new MediaSessionManager(
+      player,
+      () => { if (btnForward.onclick) btnForward.onclick(); },
+      () => { if (btnBackward.onclick) btnBackward.onclick(); }
+    );
     let lyricsType = 'None';
     let parsedLyrics = null;
     let animationFrameId = null;
@@ -434,9 +440,11 @@
         albumArt.style.backgroundImage = 'none';
       }
 
-      if (metadata.artist && metadata.album) {
-        fetchAnimatedArt(metadata.artist, metadata.album);
+      if (metadata.artist) {
+        fetchAnimatedArt(metadata.artist, metadata.album, metadata.title);
       }
+
+      mediaSessionManager.updateMetadata(metadata.title, metadata.artist, metadata.album, metadata.artUrl);
     }
 
     async function autoFetchLyrics(metadata) {
@@ -534,20 +542,44 @@
       }
     }
 
-    async function fetchAnimatedArt(artist, album) {
+    async function fetchAnimatedArt(artist, album, title) {
+      // Check if animated cover art is enabled in settings
+      if (!settingsManager.get('coverArtAnimation')) {
+        // Remove any existing animated art if the setting was just toggled off
+        const existingVideo = albumArt?.querySelector('.animated-art-video');
+        if (existingVideo) existingVideo.remove();
+        return;
+      }
+
       try {
-        const videoUrl = await getAnimatedArtwork(artist, album);
+        const videoUrl = await getAnimatedArtwork(artist, album, title);
         if (videoUrl) {
           applyAnimatedArt(albumArt, videoUrl);
           const bgVideo = document.createElement('video');
+          bgVideo.crossOrigin = 'anonymous';
           bgVideo.src = videoUrl; bgVideo.autoplay = true; bgVideo.loop = true; bgVideo.muted = true; bgVideo.playsInline = true;
           bgVideo.style.cssText = 'position:absolute;top:-10%;left:-10%;width:120%;height:120%;object-fit:cover;';
           bgVideo.onloadeddata = () => {
              dynamicBg.innerHTML = ''; dynamicBg.className = 'spicy-dynamic-bg AnimatedArtBackground'; dynamicBg.appendChild(bgVideo);
+             mediaSessionManager.startAnimatedArtworkSync(bgVideo);
           };
         }
       } catch (e) {}
     }
+
+    // Listen for settings changes to remove animated art in real-time when toggled off
+    window.addEventListener('spicy-settings-changed', (e) => {
+      if (!e.detail.coverArtAnimation) {
+        const existingVideo = albumArt?.querySelector('.animated-art-video');
+        if (existingVideo) existingVideo.remove();
+        // Also remove background video
+        const bgVideo = dynamicBg?.querySelector('video');
+        if (bgVideo) {
+          bgVideo.remove();
+          dynamicBg.className = 'spicy-dynamic-bg';
+        }
+      }
+    });
 
     // ── Events ──
     player.onLoadedMetadata = (duration) => {

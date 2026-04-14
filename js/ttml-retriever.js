@@ -303,6 +303,7 @@ async function fetchFromSpicyAPI(songId) {
   }
 }
 
+
 // ═══════════════════════════════════════════════
 // Main Entry Point
 // ═══════════════════════════════════════════════
@@ -312,6 +313,8 @@ export async function retrieveTTML(songName, artistName, albumName, durationSec 
   const disabled = new Set(settingsManager.get("disabledLyricsSources") || []);
   const activeOrder = order.filter(p => !disabled.has(p));
 
+  console.log(`[TTMLRetriever] Saved order: ${JSON.stringify(order)}`);
+  console.log(`[TTMLRetriever] Disabled: ${JSON.stringify([...disabled])}`);
   console.log(`[TTMLRetriever] Sequential lookup: ${activeOrder.join(" -> ")}`);
 
   for (const providerId of activeOrder) {
@@ -319,9 +322,11 @@ export async function retrieveTTML(songName, artistName, albumName, durationSec 
     let result = null;
 
     try {
-      if (providerId === "spicy" || providerId === "apple") {
-        const spotifyId = await searchSpotifyTrack(songName, artistName, albumName);
-        if (spotifyId) result = await fetchFromSpicyAPI(spotifyId);
+      if (providerId === "spicy" || providerId === "apple" || providerId === "genius") {
+        // [DISABLED] These providers are currently unavailable or disabled by the developer.
+        // Skipping at the code level to avoid unnecessary requests/failures without clearing user settings.
+        console.log(`[TTMLRetriever] ⏭ Skipping ${providerId} (disabled/unavailable)`);
+        continue;
       } else if (providerId === "musixmatch") {
         result = await fetchFromMusixmatch(songName, artistName, albumName, durationSec * 1000);
       } else if (providerId === "netease") {

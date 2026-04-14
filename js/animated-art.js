@@ -8,14 +8,14 @@ const DODSON_PROXY = 'https://clients.dodoapps.io/playlist-precis/playlist-artwo
 
 /**
  * Search iTunes for an album and return the Apple Music collection URL.
- * @param {string} artist
- * @param {string} album
+ * Searches with artist name for accurate results.
+ * @param {string} query - Search query (usually "artist album" or "artist title")
  * @returns {Promise<string|null>} Apple Music collection URL or null
  */
-async function searchiTunesAlbum(artist, album) {
+async function searchiTunes(query) {
   try {
-    const query = encodeURIComponent(`${artist} ${album}`);
-    const res = await fetch(`https://itunes.apple.com/search?term=${query}&entity=album&limit=5`);
+    const encoded = encodeURIComponent(query);
+    const res = await fetch(`https://itunes.apple.com/search?term=${encoded}&entity=album&limit=5`);
     if (!res.ok) return null;
 
     const data = await res.json();
@@ -23,7 +23,7 @@ async function searchiTunesAlbum(artist, album) {
 
     return data.results[0].collectionViewUrl || null;
   } catch (err) {
-    console.warn('iTunes search failed:', err);
+    console.warn('[AnimatedArt] iTunes search failed:', err);
     return null;
   }
 }
@@ -49,38 +49,63 @@ async function fetchAnimatedArtUrl(appleMusicUrl) {
     const data = await res.json();
     return data.animatedUrl1080 || data.animatedUrl || null;
   } catch (err) {
-    console.warn('Dodson proxy request failed:', err);
+    console.warn('[AnimatedArt] Dodson proxy request failed:', err);
     return null;
   }
 }
 
 /**
  * Try to fetch animated cover art for a song.
+ * Searches with artist + album, falling back to artist + title if album search fails.
  * @param {string} artist - Artist name
  * @param {string} album - Album name
+ * @param {string} [title] - Song title (used as fallback search)
  * @returns {Promise<string|null>} Video URL for animated artwork, or null
  */
-export async function getAnimatedArtwork(artist, album) {
-  if (!artist || !album) return null;
+export async function getAnimatedArtwork(artist, album, title) {
+  if (!artist) return null;
 
-  console.log(`[AnimatedArt] Searching for animated artwork: ${artist} — ${album}`);
-
-  const appleMusicUrl = await searchiTunesAlbum(artist, album);
-  if (!appleMusicUrl) {
-    console.log('[AnimatedArt] No Apple Music URL found');
-    return null;
+  // Strategy 1: Search with "artist album"
+  if (album) {
+    console.log(`[AnimatedArt] Searching: "${artist} ${album}"`);
+    const url = await searchiTunes(`${artist} ${album}`);
+    if (url) {
+      console.log(`[AnimatedArt] Found Apple Music URL via album: ${url}`);
+      const videoUrl = await fetchAnimatedArtUrl(url);
+      if (videoUrl) {
+        console.log(`[AnimatedArt] Animated artwork found!`);
+        return videoUrl;
+      }
+    }
   }
 
-  console.log(`[AnimatedArt] Found Apple Music URL: ${appleMusicUrl}`);
-
-  const videoUrl = await fetchAnimatedArtUrl(appleMusicUrl);
-  if (!videoUrl) {
-    console.log('[AnimatedArt] No animated artwork available for this album');
-    return null;
+  // Strategy 2: Fallback to "artist title" if album search failed or no album
+  if (title && title !== album) {
+    console.log(`[AnimatedArt] Album search failed, trying: "${artist} ${title}"`);
+    const url = await searchiTunes(`${artist} ${title}`);
+    if (url) {
+      console.log(`[AnimatedArt] Found Apple Music URL via title: ${url}`);
+      const videoUrl = await fetchAnimatedArtUrl(url);
+      if (videoUrl) {
+        console.log(`[AnimatedArt] Animated artwork found via title fallback!`);
+        return videoUrl;
+      }
+    }
   }
 
-  console.log(`[AnimatedArt] Animated artwork found!`);
-  return videoUrl;
+  // Strategy 3: Try just artist name as last resort
+  console.log(`[AnimatedArt] Trying artist-only search: "${artist}"`);
+  const url = await searchiTunes(artist);
+  if (url) {
+    const videoUrl = await fetchAnimatedArtUrl(url);
+    if (videoUrl) {
+      console.log(`[AnimatedArt] Animated artwork found via artist-only!`);
+      return videoUrl;
+    }
+  }
+
+  console.log('[AnimatedArt] No animated artwork found after all strategies');
+  return null;
 }
 
 /**
@@ -96,6 +121,7 @@ export function applyAnimatedArt(mediaBoxEl, videoUrl) {
   if (existingVideo) existingVideo.remove();
 
   const video = document.createElement('video');
+  video.crossOrigin = 'anonymous';
   video.classList.add('animated-art-video');
   video.src = videoUrl;
   video.autoplay = true;

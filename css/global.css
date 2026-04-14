@@ -2,10 +2,29 @@
    Spicy AMLL Player WEB — Global Styles
    ═══════════════════════════════════════════════ */
 
-/* Google Fonts */
+/* Google Fonts (fallback for Georgian, CJK, Cyrillic, Devanagari, etc.) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;500;600;700;800;900&display=swap');
+
+/* ── Local Fonts: SF Pro (Latin) & SF Arabic ── */
+@font-face {
+  font-family: 'SF Pro';
+  src: url('../fonts/sfpro.woff2') format('woff2'),
+       url('../fonts/sfpro.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Arabic';
+  src: url('../fonts/sfarabic.woff2') format('woff2'),
+       url('../fonts/sfarabic.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* ── Reset ── */
 *,
@@ -28,7 +47,8 @@ body {
   padding: 0;
   background: #000000;
   color: #ffffff;
-  font-family: Inter, "Noto Sans Georgian", "Vazirmatn", sans-serif;
+  font-family: 'SF Pro', 'SF Arabic', Inter, "Noto Sans Georgian", "Vazirmatn", sans-serif;
+
   font-weight: 700;
   overflow: hidden;
   height: 100vh;
@@ -87,7 +107,7 @@ input {
   --LyricsRightSidePadding: 6cqw;
 
   /* Font */
-  --spicy-font-family: Inter, "Noto Sans Georgian", "Vazirmatn", sans-serif;
+  --spicy-font-family: 'SF Pro', 'SF Arabic', Inter, "Noto Sans Georgian", "Vazirmatn", sans-serif;
 
   /* Default font size for content */
   --default-font-size: clamp(0.5rem, calc(1cqw * 3), 2.4rem);

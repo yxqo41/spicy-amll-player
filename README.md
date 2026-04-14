@@ -37,3 +37,9 @@ This project is licensed under the **GNU Affero General Public License v3**. See
 
 ---
 *Created with Html and css and js basicly by models of antigravity but ideas are mine*
+
+---
+
+# San Francisco Pro Fonts
+
+Obtained from [https://developer.apple.com/fonts/](https://developer.apple.com/fonts/)

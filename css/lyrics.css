@@ -229,7 +229,6 @@
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line:not(.musical-line) .word,
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line .letter {
   display: inline-block;
-  direction: ltr !important;
   unicode-bidi: isolate;
 }
 
@@ -240,11 +239,11 @@
   vertical-align: baseline;
 }
 
-/* ── Word Spacing (::after gap) ── */
+/* ── Word Spacing (Logical Gap) ── */
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line .word:not(.PartOfWord, .dot, .LastWordInLine)::after,
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line .letterGroup:not(.PartOfWord, .dot, .LastWordInLine)::after {
   content: "";
-  margin-right: 0.3ch;
+  margin-inline-end: 0.3ch;
 }
 
 /* ── Word Groups ── */
@@ -284,21 +283,29 @@
    ═══════════════════════════════════════════════ */
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl {
-  text-align: right;
-  transform-origin: center center !important; 
+  text-align: right !important;
+  direction: rtl !important;
+  unicode-bidi: isolate !important;
+  transform-origin: center center !important;
 }
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word,
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .letter {
   --gradient-degrees: -90deg !important;
+  transform-origin: center center;
 }
 
-#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl,
-#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word,
-#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .letter,
-#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .letterGroup {
-  padding-bottom: 1.25cqw;
-  padding-top: 1.15cqw;
+#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word.PartOfWord {
+  transform-origin: left center;
+}
+
+#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word.PartOfWord + .word.PartOfWord {
+  transform-origin: center center;
+}
+
+#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word.PartOfWord + .word {
+  transform-origin: right center;
+}
   margin-bottom: -0.25em;
   margin-top: -0.15em;
 }

@@ -27,16 +27,38 @@ const GlowRange = [
   { Time: 0.6, Value: 1 },
   { Time: 1, Value: 0 },
 ];
-const DotScaleRange = [
-  { Time: 0, Value: 0.75 },
-  { Time: 0.7, Value: 1.05 },
-  { Time: 1, Value: 1 },
-];
-const DotOpacityRange = [
-  { Time: 0, Value: 0.35 },
-  { Time: 0.6, Value: 1 },
-  { Time: 1, Value: 1 },
-];
+
+const DotAnimations = {
+  YOffsetDamping: 0.4,
+  YOffsetFrequency: 1.25,
+  ScaleDamping: 0.6,
+  ScaleFrequency: 0.7,
+  GlowDamping: 0.5,
+  GlowFrequency: 1,
+  OpacityDamping: 0.5,
+  OpacityFrequency: 1,
+  
+  ScaleRange: [
+    { Time: 0, Value: 0.75 },
+    { Time: 0.7, Value: 1.05 },
+    { Time: 1, Value: 1 },
+  ],
+  YOffsetRange: [
+    { Time: 0, Value: 0 },
+    { Time: 0.9, Value: -0.12 },
+    { Time: 1, Value: 0 },
+  ],
+  GlowRange: [
+    { Time: 0, Value: 0 },
+    { Time: 0.6, Value: 1 },
+    { Time: 1, Value: 1 },
+  ],
+  OpacityRange: [
+    { Time: 0, Value: 0.35 }, 
+    { Time: 0.6, Value: 1 },
+    { Time: 1, Value: 1 },
+  ],
+};
 
 function getSpline(range) {
   return new Spline(range.map(r => r.Time), range.map(r => r.Value));
@@ -45,10 +67,12 @@ function getSpline(range) {
 const ScaleSpline = getSpline(ScaleRange);
 const YOffsetSpline = getSpline(YOffsetRange);
 const GlowSpline = getSpline(GlowRange);
-const DotScaleSpline = getSpline(DotScaleRange);
-const DotOpacitySpline = getSpline(DotOpacityRange);
 
-// ── Spring Config ──
+const DotScaleSpline = getSpline(DotAnimations.ScaleRange);
+const DotYOffsetSpline = getSpline(DotAnimations.YOffsetRange);
+const DotGlowSpline = getSpline(DotAnimations.GlowRange);
+const DotOpacitySpline = getSpline(DotAnimations.OpacityRange);
+
 const YOffsetDamping = 0.4, YOffsetFrequency = 1.25;
 const ScaleDamping = 0.6, ScaleFrequency = 0.7;
 const GlowDamping = 0.5, GlowFrequency = 1;
@@ -75,14 +99,51 @@ function easeSinOut(x) {
 
 // ── Style Cache ──
 const _styleCache = new WeakMap();
+const _styleQueue = new Map();
 
-function setStyleIfChanged(el, prop, value) {
+function setStyleIfChanged(el, prop, value, epsilon = 0) {
   let map = _styleCache.get(el);
   if (!map) { map = new Map(); _styleCache.set(el, map); }
   const prev = map.get(prop);
-  if (prev === value) return;
-  el.style.setProperty(prop, value);
+  if (prev !== undefined) {
+    const parseNum = (v) => {
+      const n = parseFloat(v);
+      return Number.isNaN(n) ? null : n;
+    };
+    const a = parseNum(prev);
+    const b = parseNum(value);
+    if (a !== null && b !== null) {
+      if (Math.abs(a - b) <= epsilon) return;
+    } else {
+      if (prev === value) return;
+    }
+  }
+  queueStyle(el, prop, value);
   map.set(prop, value);
+}
+
+function queueStyle(el, prop, value) {
+  let props = _styleQueue.get(el);
+  if (!props) {
+    props = new Map();
+    _styleQueue.set(el, props);
+  }
+  props.set(prop, value);
+}
+
+function flushStyleBatch() {
+  if (_styleQueue.size === 0) return;
+  for (const [el, props] of _styleQueue) {
+    for (const [prop, value] of props) {
+      el.style.setProperty(prop, value);
+    }
+  }
+  _styleQueue.clear();
+}
+
+function promoteToGPU(el) {
+  el.style.willChange = "transform, opacity, text-shadow, scale";
+  el.style.backfaceVisibility = "hidden";
 }
 
 function getElementState(currentTime, startTime, endTime) {
@@ -107,8 +168,10 @@ function createWordSprings() {
 
 function createDotSprings() {
   return {
-    Scale: new Spring(DotScaleSpline.at(0), ScaleFrequency, ScaleDamping),
-    Opacity: new Spring(DotOpacitySpline.at(0), GlowFrequency, GlowDamping),
+    Scale: new Spring(DotScaleSpline.at(0), DotAnimations.ScaleFrequency, DotAnimations.ScaleDamping),
+    YOffset: new Spring(DotYOffsetSpline.at(0), DotAnimations.YOffsetFrequency, DotAnimations.YOffsetDamping),
+    Glow: new Spring(DotGlowSpline.at(0), DotAnimations.GlowFrequency, DotAnimations.GlowDamping),
+    Opacity: new Spring(DotOpacitySpline.at(0), DotAnimations.OpacityFrequency, DotAnimations.OpacityDamping),
   };
 }
 
@@ -160,14 +223,12 @@ function animateSyllable(position, deltaTime) {
   const arr = LyricsObject.Types.Syllable.Lines;
   if (!arr.length) return;
 
-  // Pass 1: Update status classes for ALL lines (Always Visible logic)
-  // This is fast because we use a status cache to avoid redundant DOM touches.
+  // Pass 1: Update status classes for ALL lines
   let activeIdx = -1;
   for (let i = 0; i < arr.length; i++) {
     const line = arr[i];
     const isAct = position >= line.StartTime && position <= line.EndTime;
     const isSung = position > line.EndTime;
-    const isNot = position < line.StartTime;
     const status = isAct ? "Active" : (isSung ? "Sung" : "NotSung");
 
     if (line._lastAppliedStatus !== status) {
@@ -179,18 +240,14 @@ function animateSyllable(position, deltaTime) {
   }
 
   // Pass 2: Heavy Animations (Windowed Optimization)
-  // Only process physics and complex CSS updates for lines near the current position.
   const searchIdx = activeIdx !== -1 ? activeIdx : (blurringLastLine || 0);
   const startIdx = Math.max(0, searchIdx - 5);
   const endIdx = Math.min(arr.length, searchIdx + 10);
 
   for (let index = startIdx; index < endIdx; index++) {
-
-
     const line = arr[index];
     const lineActive = position >= line.StartTime && position <= line.EndTime;
     const lineSung = position > line.EndTime;
-    const lineNotSung = position < line.StartTime;
 
     if (lineActive) {
       if (blurringLastLine !== index) {
@@ -200,7 +257,6 @@ function animateSyllable(position, deltaTime) {
 
       if (!line.Syllables?.Lead) continue;
 
-
       for (let wi = 0; wi < line.Syllables.Lead.length; wi++) {
         const word = line.Syllables.Lead[wi];
         const wordActive = position >= word.StartTime && position <= word.EndTime;
@@ -208,30 +264,66 @@ function animateSyllable(position, deltaTime) {
         const isDot = word.Dot;
 
         if (isDot) {
+          // very spicy dot
           if (!word.AnimatorStore) {
             word.AnimatorStore = createDotSprings();
+            word.AnimatorStore.Scale.SetGoal(DotScaleSpline.at(0), true);
+            word.AnimatorStore.YOffset.SetGoal(DotYOffsetSpline.at(0), true);
+            word.AnimatorStore.Glow.SetGoal(DotGlowSpline.at(0), true);
+            word.AnimatorStore.Opacity.SetGoal(DotOpacitySpline.at(0), true);
+            promoteToGPU(word.HTMLElement);
           }
 
           const pct = getProgressPercentage(position, word.StartTime, word.EndTime);
-          let targetScale, targetOpacity;
+          let targetScale, targetYOffset, targetGlow, targetOpacity;
 
           if (wordActive) {
             targetScale = DotScaleSpline.at(pct);
+            targetYOffset = DotYOffsetSpline.at(pct);
+            targetGlow = DotGlowSpline.at(pct);
             targetOpacity = DotOpacitySpline.at(pct);
           } else if (wordSung) {
             targetScale = DotScaleSpline.at(1);
+            targetYOffset = DotYOffsetSpline.at(1);
+            targetGlow = DotGlowSpline.at(1);
             targetOpacity = DotOpacitySpline.at(1);
           } else {
             targetScale = DotScaleSpline.at(0);
+            targetYOffset = DotYOffsetSpline.at(0);
+            targetGlow = DotGlowSpline.at(0);
             targetOpacity = DotOpacitySpline.at(0);
           }
 
           word.AnimatorStore.Scale.SetGoal(targetScale);
+          word.AnimatorStore.YOffset.SetGoal(targetYOffset);
+          word.AnimatorStore.Glow.SetGoal(targetGlow);
           word.AnimatorStore.Opacity.SetGoal(targetOpacity);
+
           const curScale = word.AnimatorStore.Scale.Step(deltaTime);
+          const curYOffset = word.AnimatorStore.YOffset.Step(deltaTime);
+          const curGlow = word.AnimatorStore.Glow.Step(deltaTime);
           const curOpacity = word.AnimatorStore.Opacity.Step(deltaTime);
-          setStyleIfChanged(word.HTMLElement, "scale", `${curScale}`);
-          setStyleIfChanged(word.HTMLElement, "opacity", `${curOpacity}`);
+
+          setStyleIfChanged(
+            word.HTMLElement,
+            "transform",
+            `translate3d(0, calc(var(--DefaultLyricsSize) * ${curYOffset ?? 0}), 0)`,
+            0.001
+          );
+          setStyleIfChanged(word.HTMLElement, "scale", `${curScale}`, 0.001);
+          setStyleIfChanged(word.HTMLElement, "opacity", `${curOpacity}`, 0.001);
+          setStyleIfChanged(
+            word.HTMLElement,
+            "--text-shadow-blur-radius",
+            `${4 + 6 * curGlow}px`,
+            0.5
+          );
+          setStyleIfChanged(
+            word.HTMLElement,
+            "--text-shadow-opacity",
+            `${curGlow * 90}%`,
+            1
+          );
           continue;
         }
 
@@ -248,14 +340,12 @@ function animateSyllable(position, deltaTime) {
 
         const isScrolling = isUserScrolling();
 
-        // Unified Physics: Calculate parent word springs even for emphasize-capable words
         if (!word.AnimatorStore) {
           word.AnimatorStore = createWordSprings();
           word.AnimatorStore.Scale.SetGoal(ScaleSpline.at(0), true);
           word.AnimatorStore.YOffset.SetGoal(YOffsetSpline.at(0), true);
           word.AnimatorStore.Glow.SetGoal(GlowSpline.at(0), true);
-          word.HTMLElement.style.willChange = "transform, opacity, scale";
-          word.HTMLElement.style.backfaceVisibility = "hidden";
+          promoteToGPU(word.HTMLElement);
         }
 
         const pct = getProgressPercentage(position, word.StartTime, word.EndTime);
@@ -286,7 +376,6 @@ function animateSyllable(position, deltaTime) {
         const curYOffset = word.AnimatorStore.YOffset.Step(deltaTime);
         const curGlow = word.AnimatorStore.Glow.Step(deltaTime);
 
-        // Apply parent-level animation (Layers the jump!)
         setStyleIfChanged(word.HTMLElement, "scale", `${curScale.toFixed(4)}`);
         setStyleIfChanged(word.HTMLElement, "transform",
           `translate3d(0, calc(var(--DefaultLyricsSize) * ${curYOffset.toFixed(4)}), 0)`);
@@ -299,9 +388,7 @@ function animateSyllable(position, deltaTime) {
             `${(curGlow * LetterGlowMultiplier_Opacity).toFixed(2)}%`);
         }
 
-        // Letter-level animation (ripples inside the jumping word)
         if (word.LetterGroup && word.Letters) {
-          // Find the active letter index for proximity effects
           let activeLetterIndex = -1;
           let activeLetterPercentage = 0;
 
@@ -317,29 +404,25 @@ function animateSyllable(position, deltaTime) {
             ? SimpleLyricsMode_LetterEffectsStrengthConfig.Longer
             : SimpleLyricsMode_LetterEffectsStrengthConfig.Shorter;
 
-          // Animate individual letters with proximity waves
           word.Letters.forEach((letter, k) => {
             if (!letter.AnimatorStore) {
               letter.AnimatorStore = createLetterSprings();
               letter.AnimatorStore.Scale.SetGoal(ScaleSpline.at(0), true);
               letter.AnimatorStore.YOffset.SetGoal(YOffsetSpline.at(0), true);
               letter.AnimatorStore.Glow.SetGoal(GlowSpline.at(0), true);
-              letter.HTMLElement.style.willChange = "transform, opacity, scale";
-              letter.HTMLElement.style.backfaceVisibility = "hidden";
+              promoteToGPU(letter.HTMLElement);
             }
 
             const lstate = getElementState(position, letter.StartTime, letter.EndTime);
             
-            // Proximity Falloff: Focus for Y, Broader for Glow
             let falloffY = 0;
             let falloffGlow = 0;
             if (activeLetterIndex !== -1) {
               const distance = Math.abs(k - activeLetterIndex);
               falloffY = Math.max(0, 1 / (1 + distance * 0.9));
-              falloffGlow = Math.max(0, 1 / (1 + distance * 0.5)); // 0.5 for broader shine
+              falloffGlow = Math.max(0, 1 / (1 + distance * 0.5));
             }
 
-            // Determine active/sung base values
             const basePct = activeLetterIndex !== -1 ? activeLetterPercentage : (lstate === "Sung" ? 1 : 0);
             const baseScale = ScaleSpline.at(basePct) * (isSimpleMode ? strength.Scale : 1);
             const baseYOffset = YOffsetSpline.at(basePct) * (isSimpleMode ? strength.YOffset : 1);
@@ -349,7 +432,6 @@ function animateSyllable(position, deltaTime) {
             const restingYOffset = YOffsetSpline.at(0);
             const restingGlow = GlowSpline.at(0);
 
-            // Layered interpolation
             let ts = restingScale + (baseScale - restingScale) * falloffY;
             let ty = restingYOffset + (baseYOffset - restingYOffset) * falloffY;
             let tg = restingGlow + (baseGlow - restingGlow) * falloffGlow;
@@ -372,13 +454,11 @@ function animateSyllable(position, deltaTime) {
             const cg = letter.AnimatorStore.Glow.Step(deltaTime);
 
             setStyleIfChanged(letter.HTMLElement, "scale", `${cs.toFixed(4)}`);
-            // Secondary jump on top of parent jump
             setStyleIfChanged(letter.HTMLElement, "transform",
               `translate3d(0, calc(var(--DefaultLyricsSize) * ${(cy * 2.5).toFixed(4)}), 0)`);
             
             letter.HTMLElement.style.setProperty("--gradient-position", `${tgp.toFixed(2)}%`);
 
-            // Stronger shine: 4px base + up to 20px boom
             setStyleIfChanged(letter.HTMLElement, "--text-shadow-blur-radius",
               `${(4 + 20 * cg).toFixed(2)}px`);
             setStyleIfChanged(letter.HTMLElement, "--text-shadow-opacity",
@@ -386,19 +466,15 @@ function animateSyllable(position, deltaTime) {
           });
         }
       }
-      // Class updates are already handled in Pass 1
-
     }
   }
+  flushStyleBatch();
 }
 
 function animateLine(position, deltaTime) {
-
-
   const arr = LyricsObject.Types.Line.Lines;
   if (!arr.length) return;
 
-  // Pass 1: Global Status Classes
   let activeIdx = -1;
   for (let i = 0; i < arr.length; i++) {
     const line = arr[i];
@@ -414,18 +490,14 @@ function animateLine(position, deltaTime) {
     if (isAct) activeIdx = i;
   }
 
-  // Pass 2: Animations (Windowed)
   const searchIdx = activeIdx !== -1 ? activeIdx : (blurringLastLine || 0);
   const startIdx = Math.max(0, searchIdx - 5);
   const endIdx = Math.min(arr.length, searchIdx + 10);
 
   for (let index = startIdx; index < endIdx; index++) {
-
-
     const line = arr[index];
     const lineActive = position >= line.StartTime && position <= line.EndTime;
     const lineSung = position > line.EndTime;
-    const lineNotSung = position < line.StartTime;
 
     if (lineActive) {
       if (blurringLastLine !== index) {
@@ -439,7 +511,6 @@ function animateLine(position, deltaTime) {
       const pct = getProgressPercentage(position, line.StartTime, line.EndTime);
       const gradientPos = -20 + 120 * pct;
 
-      // Animate gradient on the first word child
       const wordEl = line.HTMLElement.querySelector('.word');
       const isSimpleMode = settingsManager.get("simpleLyricsMode");
 
@@ -451,31 +522,79 @@ function animateLine(position, deltaTime) {
         }
       }
 
-      // Dot animation for line mode
+      // fuck da old dot animation
       if (line.DotLine && line.Syllables?.Lead) {
-        for (const dot of line.Syllables.Lead) {
-          if (!dot.AnimatorStore) dot.AnimatorStore = createDotSprings();
+        for (let i = 0; i < line.Syllables.Lead.length; i++) {
+          const dot = line.Syllables.Lead[i];
+          
+          if (!dot.AnimatorStore) {
+            dot.AnimatorStore = createDotSprings();
+            dot.AnimatorStore.Scale.SetGoal(DotScaleSpline.at(0), true);
+            dot.AnimatorStore.YOffset.SetGoal(DotYOffsetSpline.at(0), true);
+            dot.AnimatorStore.Glow.SetGoal(DotGlowSpline.at(0), true);
+            dot.AnimatorStore.Opacity.SetGoal(DotOpacitySpline.at(0), true);
+            promoteToGPU(dot.HTMLElement);
+          }
 
-          const dpct = getProgressPercentage(position, dot.StartTime, dot.EndTime);
-          const dotActive = position >= dot.StartTime && position <= dot.EndTime;
-          const dotSung = position > dot.EndTime;
+          const dotState = getElementState(position, dot.StartTime, dot.EndTime);
+          const dotPercentage = getProgressPercentage(position, dot.StartTime, dot.EndTime);
 
-          let ts, to;
-          if (dotActive) { ts = DotScaleSpline.at(dpct); to = DotOpacitySpline.at(dpct); }
-          else if (dotSung) { ts = DotScaleSpline.at(1); to = DotOpacitySpline.at(1); }
-          else { ts = DotScaleSpline.at(0); to = DotOpacitySpline.at(0); }
+          let targetScale, targetYOffset, targetGlow, targetOpacity;
 
-          dot.AnimatorStore.Scale.SetGoal(ts);
-          dot.AnimatorStore.Opacity.SetGoal(to);
-          setStyleIfChanged(dot.HTMLElement, "scale", `${dot.AnimatorStore.Scale.Step(deltaTime)}`);
-          setStyleIfChanged(dot.HTMLElement, "opacity", `${dot.AnimatorStore.Opacity.Step(deltaTime)}`);
+          if (dotState === "Active") {
+            targetScale = DotScaleSpline.at(dotPercentage);
+            targetYOffset = DotYOffsetSpline.at(dotPercentage);
+            targetGlow = DotGlowSpline.at(dotPercentage);
+            targetOpacity = DotOpacitySpline.at(dotPercentage);
+          } else if (dotState === "NotSung") {
+            targetScale = DotScaleSpline.at(0);
+            targetYOffset = DotYOffsetSpline.at(0);
+            targetGlow = DotGlowSpline.at(0);
+            targetOpacity = DotOpacitySpline.at(0);
+          } else {
+            // Sung
+            targetScale = DotScaleSpline.at(1);
+            targetYOffset = DotYOffsetSpline.at(1);
+            targetGlow = DotGlowSpline.at(1);
+            targetOpacity = DotOpacitySpline.at(1);
+          }
+
+          dot.AnimatorStore.Scale.SetGoal(targetScale);
+          dot.AnimatorStore.YOffset.SetGoal(targetYOffset);
+          dot.AnimatorStore.Glow.SetGoal(targetGlow);
+          dot.AnimatorStore.Opacity.SetGoal(targetOpacity);
+
+          const currentScale = dot.AnimatorStore.Scale.Step(deltaTime);
+          const currentYOffset = dot.AnimatorStore.YOffset.Step(deltaTime);
+          const currentGlow = dot.AnimatorStore.Glow.Step(deltaTime);
+          const currentOpacity = dot.AnimatorStore.Opacity.Step(deltaTime);
+
+          setStyleIfChanged(
+            dot.HTMLElement,
+            "transform",
+            `translate3d(0, calc(var(--DefaultLyricsSize) * ${currentYOffset ?? 0}), 0)`,
+            0.001
+          );
+          setStyleIfChanged(dot.HTMLElement, "scale", `${currentScale}`, 0.001);
+          setStyleIfChanged(dot.HTMLElement, "opacity", `${currentOpacity}`, 0.001);
+          setStyleIfChanged(
+            dot.HTMLElement,
+            "--text-shadow-blur-radius",
+            `${4 + 6 * currentGlow}px`,
+            0.5
+          );
+          setStyleIfChanged(
+            dot.HTMLElement,
+            "--text-shadow-opacity",
+            `${currentGlow * 90}%`,
+            1
+          );
         }
       }
-      // Class updates already handled
     }
   }
+  flushStyleBatch();
 }
-
 
 /**
  * Reset animator state (call when loading new lyrics).
@@ -483,5 +602,5 @@ function animateLine(position, deltaTime) {
 export function resetAnimator() {
   blurringLastLine = null;
   lastFrameTime = performance.now();
-  _styleCache.clear = undefined; // WeakMaps auto-clean
+  _styleCache.clear = undefined;
 }

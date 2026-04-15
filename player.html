@@ -562,15 +562,22 @@
         const videoUrl = await getAnimatedArtwork(artist, album, title);
         if (videoUrl) {
           applyAnimatedArt(albumArt, videoUrl);
+          
           const bgVideo = document.createElement('video');
           bgVideo.crossOrigin = 'anonymous';
-          bgVideo.src = videoUrl; bgVideo.autoplay = true; bgVideo.loop = true; bgVideo.muted = true; bgVideo.playsInline = true;
-          bgVideo.style.cssText = 'position:absolute;top:-10%;left:-10%;width:120%;height:120%;object-fit:cover;';
+          bgVideo.src = videoUrl;
+          bgVideo.autoplay = true;
+          bgVideo.loop = true;
+          bgVideo.muted = true;
+          bgVideo.playsInline = true;
+          
           bgVideo.onloadeddata = () => {
-             dynamicBg.innerHTML = ''; dynamicBg.className = 'spicy-dynamic-bg AnimatedArtBackground'; dynamicBg.appendChild(bgVideo);
+            applyLegacyBackground(dynamicBg, bgVideo);
           };
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('[AnimatedArt] Integration error:', e);
+      }
     }
 
     // Listen for settings changes to remove animated art in real-time when toggled off

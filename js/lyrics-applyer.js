@@ -233,13 +233,22 @@ export function applySyllableLyrics(data, lyricsContentEl) {
 
       const mergeWords = settingsManager.get("syllableRendering") === "Merge Words";
 
-      if (mergeWords && lead.IsPartOfWord) {
-        if (!currentWordGroup) {
-          currentWordGroup = document.createElement("span");
-          currentWordGroup.classList.add("word-group");
-          lineElem.appendChild(currentWordGroup);
+      if (mergeWords) {
+        if (lead.IsPartOfWord) {
+          if (!currentWordGroup) {
+            currentWordGroup = document.createElement("span");
+            currentWordGroup.classList.add("word-group");
+            lineElem.appendChild(currentWordGroup);
+          }
+          currentWordGroup.appendChild(word);
+        } else {
+          if (currentWordGroup) {
+            currentWordGroup.appendChild(word);
+            currentWordGroup = null;
+          } else {
+            lineElem.appendChild(word);
+          }
         }
-        currentWordGroup.appendChild(word);
       } else {
         currentWordGroup = null;
         lineElem.appendChild(word);

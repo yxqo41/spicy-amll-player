@@ -283,10 +283,14 @@
    ═══════════════════════════════════════════════ */
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl {
-  text-align: right !important;
+  text-align: start !important;
   direction: rtl !important;
   unicode-bidi: isolate !important;
   transform-origin: center center !important;
+}
+
+#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl.OppositeAligned {
+  text-align: end !important;
 }
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word,
@@ -295,25 +299,15 @@
   transform-origin: center center;
 }
 
-#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word.PartOfWord {
+#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl :is(.word, .letterGroup).PartOfWord {
   transform-origin: left center;
 }
 
-#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word.PartOfWord + .word.PartOfWord {
+#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl :is(.word, .letterGroup).PartOfWord + :is(.word, .letterGroup) {
   transform-origin: center center;
 }
 
-#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word.PartOfWord + .word {
-  transform-origin: right center;
-}
-
-#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word.PartOfWord,
-#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .letterGroup.PartOfWord {
-  transform-origin: left center;
-}
-
-#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .word.PartOfWord+ :is(.word, .letterGroup),
-#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .letterGroup.PartOfWord+ :is(.word, .letterGroup) {
+#SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl :is(.word, .letterGroup).PartOfWord + :is(.word, .letterGroup):not(.PartOfWord) {
   transform-origin: right center;
 }
 

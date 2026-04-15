@@ -1,5 +1,13 @@
 let _kawarp = null;
 let _resizeHandler = null;
+let _frameId = null;
+let _videoUpdateTimer = null;
+
+// Hidden canvas for frame capture (reused)
+const _sourceCanvas = document.createElement('canvas');
+const _sourceCtx = _sourceCanvas.getContext('2d', { alpha: false });
+_sourceCanvas.width = 128; // Low resolution for background motion is enough
+_sourceCanvas.height = 128;
 
 /**
  * Spicy AMLL Player WEB — Dynamic Background
@@ -70,15 +78,15 @@ function darkenColor(rgb, amount) {
 /**
  * Apply a legacy animated background to the page.
  * @param {HTMLElement} bgContainer - The .spicy-dynamic-bg element
- * @param {{vibrant: number[], dark: number[], muted: number[]}} colors
+ * @param {HTMLElement|string} img - The image/video element or URL
  */
 export async function applyLegacyBackground(bgContainer, img) {
   const { default: Kawarp } = await import(
     "https://nurislamaibekuly.github.io/kawarp-js/kawarp.js"
   );
 
-  _kawarp?.stop?.();
-  _kawarp = null;
+  stopKawarp();
+
   if (_resizeHandler) {
     window.removeEventListener('resize', _resizeHandler);
     _resizeHandler = null;
@@ -98,8 +106,28 @@ export async function applyLegacyBackground(bgContainer, img) {
     animationSpeed: 1.0,
   });
 
-  await _kawarp.loadImage(img);
+  // Initial load
+  if (img instanceof HTMLVideoElement) {
+    // For video, we first draw one frame to get it started
+    _sourceCtx.drawImage(img, 0, 0, _sourceCanvas.width, _sourceCanvas.height);
+    await _kawarp.loadImage(_sourceCanvas.toDataURL('image/webp', 0.1));
+  } else {
+    await _kawarp.loadImage(img);
+  }
+  
   _kawarp.start();
+
+  // If source is a video, update the frame periodically (10 FPS)
+  if (img instanceof HTMLVideoElement) {
+    const updateFrame = async () => {
+      if (!_kawarp) return;
+      _sourceCtx.drawImage(img, 0, 0, _sourceCanvas.width, _sourceCanvas.height);
+      // We use a low-quality webp data URL to satisfying the engine's loadImage(url) requirement
+      await _kawarp.loadImage(_sourceCanvas.toDataURL('image/webp', 0.1));
+      _videoUpdateTimer = setTimeout(updateFrame, 100);
+    };
+    _videoUpdateTimer = setTimeout(updateFrame, 100);
+  }
 
   _resizeHandler = () => {
     canvas.width = window.innerWidth;
@@ -110,6 +138,14 @@ export async function applyLegacyBackground(bgContainer, img) {
 }
 
 export function stopKawarp() {
+  if (_videoUpdateTimer) {
+    clearTimeout(_videoUpdateTimer);
+    _videoUpdateTimer = null;
+  }
+  if (_frameId) {
+    cancelAnimationFrame(_frameId);
+    _frameId = null;
+  }
   _kawarp?.stop?.();
   _kawarp = null;
 }

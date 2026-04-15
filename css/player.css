@@ -933,27 +933,78 @@ body.is-rendering .NowBar {
   text-align: right;
 }
 
-/* --- Simple Lyrics Mode --- */
 .sl-simple-mode .line {
-  filter: none !important;
-  opacity: 1 !important;
-  transform: none !important;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.3ch;
+  margin: 1cqw 0 !important;
+  padding: 10px 0 !important;
+  text-align: left !important;
+  width: 100% !important;
 }
 
 .sl-simple-mode .word {
-  opacity: 0.3;
-  transition: opacity 0.3s ease, color 0.3s ease;
-  scale: 1 !important;
+  display: inline !important;
+  opacity: 0.3 !important;
+  transition: opacity 0.15s ease !important;
+  color: #fff !important;
   background: none !important;
   -webkit-background-clip: unset !important;
   background-clip: unset !important;
-  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
   text-shadow: none !important;
+  scale: 1 !important;
+  transform: none !important;
+  font-size: inherit !important;
 }
 
 .sl-simple-mode .word.active {
-  opacity: 1;
+  opacity: 1 !important;
   color: #fff !important;
+  font-weight: 700 !important;
+}
+
+.sl-simple-mode .letter {
+  display: inline !important;
+  opacity: 0.3 !important;
+  transition: opacity 0.15s ease !important;
+  color: #fff !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: #fff !important;
+  text-shadow: none !important;
+  scale: 1 !important;
+  transform: none !important;
+  font-size: inherit !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.sl-simple-mode .letter.active {
+  opacity: 1 !important;
+  color: #fff !important;
+}
+
+.sl-simple-mode .letterGroup {
+  display: inline !important;
+  white-space: normal !important;
+}
+
+.sl-simple-mode .line.Active {
+  opacity: 1 !important;
+}
+
+.sl-simple-mode .line.Sung,
+.sl-simple-mode .line.NotSung {
+  opacity: 0.5 !important;
+}
+
+.sl-simple-mode .word-group {
+  display: inline !important;
+  white-space: normal !important;
 }
 
 .sl-simple-mode .line.past .word {
@@ -1147,4 +1198,9 @@ body.is-rendering .NowBar {
   .VolumeArea {
     display: none;
   }
+}
+
+.sl-simple-mode .word.past {
+  opacity: 1 !important;
+  color: #fff !important;
 }

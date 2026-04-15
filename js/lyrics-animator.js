@@ -98,7 +98,7 @@ function easeSinOut(x) {
 }
 
 // ── Style Cache ──
-const _styleCache = new WeakMap();
+let _styleCache = new WeakMap();
 const _styleQueue = new Map();
 
 function setStyleIfChanged(el, prop, value, epsilon = 0) {
@@ -329,11 +329,30 @@ function animateSyllable(position, deltaTime) {
 
         const isSimpleMode = settingsManager.get("simpleLyricsMode");
 
-        if (isSimpleMode && !word.LetterGroup) {
-          if (wordActive || wordSung) {
+        if (isSimpleMode) {
+          if (wordActive) {
             word.HTMLElement.classList.add("active");
-          } else {
+            word.HTMLElement.classList.remove("past");
+          } else if (wordSung) {
             word.HTMLElement.classList.remove("active");
+            word.HTMLElement.classList.add("past");
+          } else {
+            word.HTMLElement.classList.remove("active", "past");
+          }
+          
+          if (word.LetterGroup && word.Letters) {
+            word.Letters.forEach((letter, k) => {
+              const letterState = getElementState(position, letter.StartTime, letter.EndTime);
+              if (letterState === "Active") {
+                letter.HTMLElement.classList.add("active");
+                letter.HTMLElement.classList.remove("past");
+              } else if (letterState === "Sung") {
+                letter.HTMLElement.classList.remove("active");
+                letter.HTMLElement.classList.add("past");
+              } else {
+                letter.HTMLElement.classList.remove("active", "past");
+              }
+            });
           }
           continue;
         }
@@ -457,7 +476,16 @@ function animateSyllable(position, deltaTime) {
             setStyleIfChanged(letter.HTMLElement, "transform",
               `translate3d(0, calc(var(--DefaultLyricsSize) * ${(cy * 2.5).toFixed(4)}), 0)`);
             
+            setStyleIfChanged(letter.HTMLElement, "scale", `${cs.toFixed(4)}`);
+            setStyleIfChanged(letter.HTMLElement, "transform",
+              `translate3d(0, calc(var(--DefaultLyricsSize) * ${(cy * 2.5).toFixed(4)}), 0)`);
+
             letter.HTMLElement.style.setProperty("--gradient-position", `${tgp.toFixed(2)}%`);
+
+            setStyleIfChanged(letter.HTMLElement, "--text-shadow-blur-radius",
+              `${(4 + 20 * cg).toFixed(2)}px`);
+            setStyleIfChanged(letter.HTMLElement, "--text-shadow-opacity",
+              `${(cg * LetterGlowMultiplier_Opacity).toFixed(2)}%`);
 
             setStyleIfChanged(letter.HTMLElement, "--text-shadow-blur-radius",
               `${(4 + 20 * cg).toFixed(2)}px`);
@@ -475,6 +503,7 @@ function animateLine(position, deltaTime) {
   const arr = LyricsObject.Types.Line.Lines;
   if (!arr.length) return;
 
+  const isSimpleMode = settingsManager.get("simpleLyricsMode");
   let activeIdx = -1;
   for (let i = 0; i < arr.length; i++) {
     const line = arr[i];
@@ -486,6 +515,15 @@ function animateLine(position, deltaTime) {
       line.HTMLElement.classList.remove("Active", "Sung", "NotSung");
       line.HTMLElement.classList.add(status);
       line._lastAppliedStatus = status;
+      // Keep word .active in sync whenever status changes — avoids stale class
+      // outside the windowed animation range
+      if (isSimpleMode) {
+        const wordEl = line.HTMLElement.querySelector('.word');
+        if (wordEl) {
+          if (isAct) wordEl.classList.add("active");
+          else wordEl.classList.remove("active");
+        }
+      }
     }
     if (isAct) activeIdx = i;
   }
@@ -512,14 +550,9 @@ function animateLine(position, deltaTime) {
       const gradientPos = -20 + 120 * pct;
 
       const wordEl = line.HTMLElement.querySelector('.word');
-      const isSimpleMode = settingsManager.get("simpleLyricsMode");
 
-      if (wordEl) {
-        if (isSimpleMode) {
-          wordEl.classList.add("active");
-        } else {
-          wordEl.style.setProperty("--gradient-position", `${gradientPos}%`);
-        }
+      if (wordEl && !isSimpleMode) {
+        wordEl.style.setProperty("--gradient-position", `${gradientPos}%`);
       }
 
       // fuck da old dot animation
@@ -602,5 +635,5 @@ function animateLine(position, deltaTime) {
 export function resetAnimator() {
   blurringLastLine = null;
   lastFrameTime = performance.now();
-  _styleCache.clear = undefined;
+  _styleCache = new WeakMap();
 }

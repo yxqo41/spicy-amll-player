@@ -33,6 +33,8 @@ function convertTime(t) {
 function isLetterCapable(text, duration) {
   const isSimpleMode = settingsManager.get("simpleLyricsMode");
   const letterLength = text.split("").length;
+
+  if (isSimpleMode) return false; // FUCKKKK
   
   if (isRtl(text)) return false;
 
@@ -55,8 +57,9 @@ function applyEmphasis(letters, wordElem, lead, isBgWord = false) {
   const isSimpleMode = settingsManager.get("simpleLyricsMode");
   
   // Official subtractions from Emphasize.ts
-  const subStart = isSimpleMode ? -21 : 0;
-  const subEnd = isSimpleMode ? -40 : 250;
+  // In simple mode: shift start 21ms earlier and trim less off the end (40ms vs 250ms)
+  const subStart = isSimpleMode ? 21 : 0;
+  const subEnd = isSimpleMode ? 40 : 250;
 
   const startTime = convertTime(lead.StartTime) - subStart;
   const endTime = convertTime(lead.EndTime) - subEnd;
@@ -201,6 +204,13 @@ export function applySyllableLyrics(data, lyricsContentEl) {
           word.style.setProperty("--text-shadow-blur-radius", "4px");
           word.style.scale = IDLE_LYRICS_SCALE.toString();
           word.style.transform = "translateY(calc(var(--DefaultLyricsSize) * 0.01))";
+        } else {
+          // Clear any stale inline styles from a previous non-simple render
+          word.style.removeProperty("--gradient-position");
+          word.style.removeProperty("--text-shadow-opacity");
+          word.style.removeProperty("--text-shadow-blur-radius");
+          word.style.removeProperty("scale");
+          word.style.removeProperty("transform");
         }
         word.classList.add("word");
       }
@@ -296,6 +306,12 @@ export function applySyllableLyrics(data, lyricsContentEl) {
               bwE.style.setProperty("--text-shadow-blur-radius", "4px");
               bwE.style.scale = IDLE_LYRICS_SCALE.toString();
               bwE.style.transform = "translateY(calc(var(--font-size) * 0.01))";
+            } else {
+              bwE.style.removeProperty("--gradient-position");
+              bwE.style.removeProperty("--text-shadow-opacity");
+              bwE.style.removeProperty("--text-shadow-blur-radius");
+              bwE.style.removeProperty("scale");
+              bwE.style.removeProperty("transform");
             }
             bwE.classList.add("word");
           }

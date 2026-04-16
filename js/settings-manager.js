@@ -81,19 +81,45 @@ class SettingsManager {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        let migrated = false;
+
+        // ── General Settings Migration ──
+        // Start from defaults, overlay saved values on top.
+        // This automatically fills in any NEW keys the user doesn't have yet.
+        for (const key of Object.keys(this.defaults)) {
+          if (!(key in parsed)) {
+            migrated = true; // A new default key was missing from saved data
+          }
+        }
         this.settings = { ...this.defaults, ...parsed };
-        
-        // Ensure new providers are added to existing saved settings
+
+        // ── Lyrics Provider Migration ──
+        // Inject any new providers into the user's saved source order
         this.defaults.lyricsSourceOrder.forEach(provider => {
           if (!this.settings.lyricsSourceOrder.includes(provider)) {
-            // Add 'apple' to the front if it's the new one, else push
             if (provider === "apple") {
               this.settings.lyricsSourceOrder.unshift(provider);
             } else {
               this.settings.lyricsSourceOrder.push(provider);
             }
+            migrated = true;
           }
         });
+
+        // Remove 'apple' from disabled list if it was previously disabled
+        // (it was marked unavailable before, users may have it force-disabled)
+        if (Array.isArray(this.settings.disabledLyricsSources)) {
+          const appleIdx = this.settings.disabledLyricsSources.indexOf("apple");
+          if (appleIdx !== -1) {
+            this.settings.disabledLyricsSources.splice(appleIdx, 1);
+            migrated = true;
+          }
+        }
+
+        // Persist the migration so new defaults are saved for next time
+        if (migrated) {
+          localStorage.setItem("spicy_settings", JSON.stringify(this.settings));
+        }
       } catch (e) {
         console.error("Failed to parse settings", e);
       }

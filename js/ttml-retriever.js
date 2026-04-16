@@ -300,6 +300,76 @@ async function fetchFromSpicyAPI(songId) {
   }
 }
 
+// ═══════════════════════════════════════════════
+// Apple Music Provider
+// ═══════════════════════════════════════════════
+
+async function fetchFromAppleMusic(songName, artistName, albumName) {
+  try {
+    let trackId = null;
+
+    // Strategy 1: Artist + Album + Song
+    if (albumName) {
+      const q1 = encodeURIComponent(`${artistName} ${albumName} ${songName}`);
+      let res1 = await fetch(`https://itunes.apple.com/search?term=${q1}&entity=song&limit=1`);
+      if (res1.ok) {
+        let data1 = await res1.json();
+        if (data1.results && data1.results.length > 0) {
+          trackId = data1.results[0].trackId;
+        }
+      }
+    }
+
+    // Strategy 2: Artist + Song
+    if (!trackId) {
+      const q2 = encodeURIComponent(`${artistName} ${songName}`);
+      let res2 = await fetch(`https://itunes.apple.com/search?term=${q2}&entity=song&limit=1`);
+      if (res2.ok) {
+        let data2 = await res2.json();
+        if (data2.results && data2.results.length > 0) {
+          trackId = data2.results[0].trackId;
+        }
+      }
+    }
+
+    if (!trackId) {
+      console.log('[TTMLRetriever] Apple Music: Could not find track ID on iTunes.');
+      return null;
+    }
+
+    console.log(`[TTMLRetriever] Apple Music: Found track ID ${trackId}, fetching TTML...`);
+    
+    // Use the proxy/api to get TTML
+    const apiRes = await proxiedFetch(`https://spicyamllserver.onrender.com/api/getttmlam?song=${trackId}`);
+    if (!apiRes.ok) return null;
+
+    const data = await apiRes.json();
+    console.log('[TTMLRetriever] Apple Music API Full Response:', data);
+
+    const ttmlCode = data?.raw?.data?.[0]?.attributes?.ttmlLocalizations;
+    console.log('[TTMLRetriever] Apple Music Extracted TTML:', ttmlCode);
+
+    if (!ttmlCode) {
+       console.log('[TTMLRetriever] Apple Music: No TTML found for track ID.');
+       return null;
+    }
+
+    let lyricsData = parseTTMLToLyrics(ttmlCode);
+    if (lyricsData?.Type) {
+      return {
+        lyricsData,
+        source: 'apple',
+        sourceDisplayName: 'Apple Music'
+      };
+    }
+
+    return null;
+  } catch (e) {
+    console.warn('[TTMLRetriever] Apple Music fetch error:', e);
+    return null;
+  }
+}
+
 
 // ═══════════════════════════════════════════════
 // Main Entry Point
@@ -319,11 +389,13 @@ export async function retrieveTTML(songName, artistName, albumName, durationSec 
     let result = null;
 
     try {
-      if (providerId === "spicy" || providerId === "apple" || providerId === "genius") {
+      if (providerId === "spicy" || providerId === "genius") {
         // [DISABLED] These providers are currently unavailable or disabled by the developer.
         // Skipping at the code level to avoid unnecessary requests/failures without clearing user settings.
         console.log(`[TTMLRetriever] ⏭ Skipping ${providerId} (disabled/unavailable)`);
         continue;
+      } else if (providerId === "apple" || providerId === "aml") {
+        result = await fetchFromAppleMusic(songName, artistName, albumName);
       } else if (providerId === "musixmatch") {
         result = await fetchFromMusixmatch(songName, artistName, albumName, durationSec * 1000);
       } else if (providerId === "netease") {

@@ -487,7 +487,12 @@
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        const text = (isStatic ? line.Text : line.Text) || "";
+        const isSyllable = data.Type === 'Syllable';
+        let text = line.Text || "";
+        if (isSyllable && line.Lead && line.Lead.Syllables) {
+           text = line.Lead.Syllables.map(s => s.Text).join("");
+        }
+        text = text || "";
         
         // 1. Delete lines containing technical metadata or empty lines
         if (!text.trim() ||
@@ -562,18 +567,6 @@
         const videoUrl = await getAnimatedArtwork(artist, album, title);
         if (videoUrl) {
           applyAnimatedArt(albumArt, videoUrl);
-          
-          const bgVideo = document.createElement('video');
-          bgVideo.crossOrigin = 'anonymous';
-          bgVideo.src = videoUrl;
-          bgVideo.autoplay = true;
-          bgVideo.loop = true;
-          bgVideo.muted = true;
-          bgVideo.playsInline = true;
-          
-          bgVideo.onloadeddata = () => {
-            applyLegacyBackground(dynamicBg, bgVideo);
-          };
         }
       } catch (e) {
         console.error('[AnimatedArt] Integration error:', e);

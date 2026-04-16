@@ -10,7 +10,7 @@ export const LYRICS_SOURCE_PROVIDER_DEFINITIONS = {
     id: "spicy"
   },
   apple: {
-    label: "Apple Music (currently unavailable due to the original developer not giving us access)",
+    label: "Apple Music",
     description: "Premium animated and time-synced lyrics.",
     id: "apple"
   },
@@ -36,7 +36,7 @@ export const LYRICS_SOURCE_PROVIDER_DEFINITIONS = {
   }
 };
 
-export const DEFAULT_LYRICS_SOURCE_ORDER = ["musixmatch", "lrclib", "netease"];
+export const DEFAULT_LYRICS_SOURCE_ORDER = ["apple", "musixmatch", "lrclib", "netease"];
 
 
 
@@ -82,6 +82,18 @@ class SettingsManager {
       try {
         const parsed = JSON.parse(saved);
         this.settings = { ...this.defaults, ...parsed };
+        
+        // Ensure new providers are added to existing saved settings
+        this.defaults.lyricsSourceOrder.forEach(provider => {
+          if (!this.settings.lyricsSourceOrder.includes(provider)) {
+            // Add 'apple' to the front if it's the new one, else push
+            if (provider === "apple") {
+              this.settings.lyricsSourceOrder.unshift(provider);
+            } else {
+              this.settings.lyricsSourceOrder.push(provider);
+            }
+          }
+        });
       } catch (e) {
         console.error("Failed to parse settings", e);
       }

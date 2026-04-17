@@ -22,23 +22,23 @@ export async function robustFetch(url, options = {}) {
     try {
       const proxiedUrl = PROXIES[i](url);
       const response = await fetch(proxiedUrl, options);
-      
+
       if (response.ok) {
         return response;
       }
-      
+
       const statusText = response.statusText || 'Unknown Error';
       lastError = new Error(`Proxy ${i + 1} (${new URL(proxiedUrl).hostname}) failed: ${response.status} ${statusText}`);
       console.warn(`[NetworkUtils] ${lastError.message}`);
-      
+
       // If it's a 403 or 429, try next proxy immediately
       if (response.status === 403 || response.status === 429) continue;
-      
+
     } catch (e) {
       lastError = e;
       console.warn(`[NetworkUtils] Proxy ${i + 1} request error:`, e.message);
     }
-    
+
     // Subtle delay between retries
     if (i < PROXIES.length - 1) {
       await new Promise(r => setTimeout(r, 200));

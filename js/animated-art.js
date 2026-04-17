@@ -3,6 +3,7 @@
  * Fetches animated (video) album art from Apple Music via iTunes search + Dodson proxy.
  * Based on the animated-art-test implementation.
  */
+import { robustFetch } from './network-utils.js';
 
 const DODSON_PROXY = 'https://clients.dodoapps.io/playlist-precis/playlist-artwork.php';
 
@@ -15,7 +16,7 @@ const DODSON_PROXY = 'https://clients.dodoapps.io/playlist-precis/playlist-artwo
 async function searchiTunes(query) {
   try {
     const encoded = encodeURIComponent(query);
-    const res = await fetch(`https://itunes.apple.com/search?term=${encoded}&entity=album&limit=5`);
+    const res = await robustFetch(`https://itunes.apple.com/search?term=${encoded}&entity=album&limit=5`);
     if (!res.ok) return null;
 
     const data = await res.json();

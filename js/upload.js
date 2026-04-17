@@ -1,6 +1,7 @@
 import { addTrackToQueue, clearQueue, setCurrentIndex } from './router.js';
 import { parseAudioMetadata } from './metadata-parser.js';
 import { getAnimatedArtwork } from './animated-art.js';
+import { robustFetch } from './network-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const ttmlZone = document.getElementById('ttml-zone');
@@ -14,6 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const queueList = document.getElementById('queue-list');
   const queueCount = document.getElementById('queue-count');
   const clearQueueBtn = document.getElementById('clear-queue-btn');
+
+  const prepOverlay = document.getElementById('prep-overlay');
+  const prepStatus = document.getElementById('prep-status');
+  const trendingGrid = document.getElementById('trending-grid');
 
   let stagedAudio = []; // Array of { file, ttmlFile: null }
   let stagedTTML = [];  // Array of File
@@ -311,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
   navItems.forEach(item => {
     item.addEventListener('click', () => {
       const pageId = item.dataset.page;
-      if (!pageId || pageId === 'listen' || pageId === 'browse' || pageId === 'radio') return;
+      if (!pageId || pageId === 'browse' || pageId === 'radio') return;
 
       // Update Active Nav (Both sidebar and mobile nav)
       navItems.forEach(i => i.classList.remove('am-nav-active', 'am-mobile-nav-active'));
@@ -326,8 +331,99 @@ document.addEventListener('DOMContentLoaded', () => {
       if (targetPage) targetPage.classList.add('active');
 
       if (pageId === 'testdb') renderTestDB();
+      if (pageId === 'listen') fetchTrending();
     });
   });
+
+  // ── Listen Now / Trending Logic ──
+  let trendingCache = null;
+
+  async function fetchTrending() {
+    if (trendingCache) {
+      renderListenNow(trendingCache);
+      return;
+    }
+
+    // Skeleton loader is already in HTML
+    try {
+      const res = await fetch('https://itunes.apple.com/search?term=pop&entity=song&limit=15');
+      const data = await res.json();
+      trendingCache = data.results;
+      renderListenNow(trendingCache);
+    } catch (err) {
+      console.error("Failed to fetch trending:", err);
+      if (trendingGrid) trendingGrid.innerHTML = `<div class="am-error-msg">Failed to load trending songs.</div>`;
+    }
+  }
+
+  function renderListenNow(songs) {
+    if (!trendingGrid) return;
+    trendingGrid.innerHTML = songs.map(song => {
+      const highResArt = song.artworkUrl100.replace('100x100', '600x600');
+      return `
+        <div class="trending-card animate-fade" data-id="${song.trackId}">
+          <div class="trending-art">
+            <img src="${highResArt}" loading="lazy" alt="${song.trackName}">
+          </div>
+          <div class="trending-info">
+            <h4>${song.trackName}</h4>
+            <p>${song.artistName}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Add click listeners
+    trendingGrid.querySelectorAll('.trending-card').forEach(card => {
+      card.onclick = () => {
+        const id = card.dataset.id;
+        const song = songs.find(s => s.trackId == id);
+        if (song) loadRemoteTrack(song);
+      };
+    });
+  }
+
+  async function loadRemoteTrack(song) {
+    if (!prepOverlay) return;
+    
+    prepOverlay.classList.add('active');
+    prepStatus.textContent = "Downloading Track...";
+    
+    try {
+      // 1. Fetch Audio Buffer from AMLL Server
+      const audioUrl = `https://spicyamllserver.onrender.com/api/downloadam?song=${song.trackId}`;
+      const response = await robustFetch(audioUrl);
+      const audioBuffer = await response.arrayBuffer();
+
+      prepStatus.textContent = "Processing Metadata...";
+      
+      // 2. Prepare Metadata
+      const metadata = {
+        name: song.trackName,
+        artist: song.artistName,
+        album: song.collectionName,
+        artUrl: song.artworkUrl100.replace('100x100', '600x600'),
+        type: 'audio/mpeg', // Proxy usually returns mpeg/m4a
+        ttml: '__AUTO_FETCH__'
+      };
+
+      // 3. Clear and Add to Queue
+      await clearQueue();
+      await addTrackToQueue(audioBuffer, metadata);
+
+      // 4. Go to Player
+      setCurrentIndex(0);
+      window.location.href = 'player.html';
+
+    } catch (err) {
+      console.error("Remote load failed:", err);
+      prepOverlay.classList.remove('active');
+      alert("Failed to load track from server: " + err.message);
+    }
+  }
+
+  // Initial load
+  fetchTrending();
 
   // ── Test Database Logic ──
   const TEST_TRACKS = [

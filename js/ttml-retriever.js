@@ -311,7 +311,7 @@ async function fetchFromAppleMusic(songName, artistName, albumName) {
     // Strategy 1: Artist + Album + Song
     if (albumName) {
       const q1 = encodeURIComponent(`${artistName} ${albumName} ${songName}`);
-      let res1 = await fetch(`https://itunes.apple.com/search?term=${q1}&entity=song&limit=1`);
+      let res1 = await proxiedFetch(`https://itunes.apple.com/search?term=${q1}&entity=song&limit=1`);
       if (res1.ok) {
         let data1 = await res1.json();
         if (data1.results && data1.results.length > 0) {
@@ -323,7 +323,7 @@ async function fetchFromAppleMusic(songName, artistName, albumName) {
     // Strategy 2: Artist + Song
     if (!trackId) {
       const q2 = encodeURIComponent(`${artistName} ${songName}`);
-      let res2 = await fetch(`https://itunes.apple.com/search?term=${q2}&entity=song&limit=1`);
+      let res2 = await proxiedFetch(`https://itunes.apple.com/search?term=${q2}&entity=song&limit=1`);
       if (res2.ok) {
         let data2 = await res2.json();
         if (data2.results && data2.results.length > 0) {

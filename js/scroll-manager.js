@@ -56,8 +56,20 @@ export function initScrollManager(lyricsContent) {
   }, { passive: true });
 }
 
+// Spring physics state
+const scrollSpring = {
+  position: 0,
+  velocity: 0,
+  target: 0,
+  rafId: null,
+  lastTime: null,
+  tension: 180,
+  damping: 22,
+  precision: 0.5,
+};
+
 /**
- * Smoothly scroll an element into the center of the container.
+ * Smoothly scroll an element into the center of the container using spring physics.
  */
 function scrollIntoCenter(container, element, instant = false) {
   if (!container || !element) return;
@@ -70,45 +82,66 @@ function scrollIntoCenter(container, element, instant = false) {
   const clampedTarget = Math.max(0, Math.min(targetScroll, container.scrollHeight - containerHeight));
 
   if (instant) {
+    if (scrollSpring.rafId) {
+      cancelAnimationFrame(scrollSpring.rafId);
+      scrollSpring.rafId = null;
+    }
     container._isInternalScroll = true;
     container.scrollTop = clampedTarget;
+    scrollSpring.position = clampedTarget;
+    scrollSpring.target = clampedTarget;
+    scrollSpring.velocity = 0;
     requestAnimationFrame(() => { container._isInternalScroll = false; });
   } else {
-    // Basic eased scroll
-    const currentScroll = container.scrollTop;
-    const distance = clampedTarget - currentScroll;
-
-    if (Math.abs(distance) < 2) {
-      container._isInternalScroll = true;
-      container.scrollTop = clampedTarget;
-      requestAnimationFrame(() => { container._isInternalScroll = false; });
-      return;
+    scrollSpring.target = clampedTarget;
+    
+    if (!scrollSpring.rafId) {
+      scrollSpring.lastTime = null;
+      scrollSpring.position = container.scrollTop;
+      scrollSpring.rafId = requestAnimationFrame((t) => tickSpring(t, container));
     }
-
-    const startTime = performance.now();
-    const duration = 500; // Slightly slower for smoother experience
-
-    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
-
-    function step(now) {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = easeOutCubic(progress);
-
-      container._isInternalScroll = true;
-      container.scrollTop = currentScroll + distance * eased;
-
-      if (progress < 1) {
-        container._scrollAnimId = requestAnimationFrame(step);
-      } else {
-        requestAnimationFrame(() => { container._isInternalScroll = false; });
-      }
-    }
-
-    if (container._scrollAnimId) cancelAnimationFrame(container._scrollAnimId);
-    container._scrollAnimId = requestAnimationFrame(step);
   }
 }
+
+function tickSpring(timestamp, container) {
+  if (!container) {
+    scrollSpring.rafId = null;
+    return;
+  }
+
+  if (!scrollSpring.lastTime) {
+    scrollSpring.lastTime = timestamp;
+    scrollSpring.rafId = requestAnimationFrame((t) => tickSpring(t, container));
+    return;
+  }
+
+  const dt = Math.min((timestamp - scrollSpring.lastTime) / 1000, 0.064);
+  scrollSpring.lastTime = timestamp;
+
+  const displacement = scrollSpring.position - scrollSpring.target;
+  const acceleration = -scrollSpring.tension * displacement - scrollSpring.damping * scrollSpring.velocity;
+  
+  scrollSpring.velocity += acceleration * dt;
+  scrollSpring.position += scrollSpring.velocity * dt;
+
+  container._isInternalScroll = true;
+  container.scrollTop = scrollSpring.position;
+
+  const settled =
+    Math.abs(scrollSpring.velocity) < scrollSpring.precision &&
+    Math.abs(scrollSpring.position - scrollSpring.target) < scrollSpring.precision;
+
+  if (settled) {
+    container.scrollTop = scrollSpring.target;
+    scrollSpring.position = scrollSpring.target;
+    scrollSpring.velocity = 0;
+    scrollSpring.rafId = null;
+    requestAnimationFrame(() => { container._isInternalScroll = false; });
+  } else {
+    scrollSpring.rafId = requestAnimationFrame((t) => tickSpring(t, container));
+  }
+}
+
 
 /**
  * Check if an element is in viewport.

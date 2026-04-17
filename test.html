@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple Music Explicitness Tester</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8">
+    <div class="max-w-3xl mx-auto">
+        <div class="glass-card rounded-3xl p-6 md:p-10 shadow-2xl">
+            <header class="mb-8 text-center">
+                <div class="inline-block p-3 bg-red-100 rounded-2xl mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800">Music Catalog Explorer</h1>
+                <p class="text-gray-500 mt-2 text-sm">Unified Search & Global Chart Insights</p>
+            </header>
+
+            <!-- Search Area -->
+            <div class="relative mb-10">
+                <input type="text" id="searchInput"
+                    class="w-full pl-5 pr-12 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all text-lg shadow-sm"
+                    placeholder="Search songs or artists...">
+                <button onclick="performSearch()"
+                    class="absolute right-3 top-3 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Pre-search Content -->
+            <div id="initialContent">
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">Trending Songs</h2>
+                        <span class="text-xs font-bold text-blue-500 uppercase tracking-wider">Top Chart</span>
+                    </div>
+                    <div id="trendingSongs" class="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
+                        <!-- Skeleton Loaders -->
+                        <div class="min-w-[140px] animate-pulse bg-gray-200 h-40 rounded-2xl"></div>
+                        <div class="min-w-[140px] animate-pulse bg-gray-200 h-40 rounded-2xl"></div>
+                        <div class="min-w-[140px] animate-pulse bg-gray-200 h-40 rounded-2xl"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">Featured Albums</h2>
+                        <span class="text-xs font-bold text-blue-500 uppercase tracking-wider">Editor's Choice</span>
+                    </div>
+                    <div id="featuredAlbums" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <!-- Skeleton Loaders -->
+                        <div class="animate-pulse bg-gray-200 h-24 rounded-2xl"></div>
+                        <div class="animate-pulse bg-gray-200 h-24 rounded-2xl"></div>
+                        <div class="animate-pulse bg-gray-200 h-24 rounded-2xl"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Search Content -->
+            <div id="searchContent" class="hidden">
+                <div id="loader" class="py-10 text-center">
+                    <div
+                        class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent">
+                    </div>
+                    <p class="mt-2 text-gray-500 font-medium">Updating catalog results...</p>
+                </div>
+                <div id="resultsContainer" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <footer class="mt-8 text-center text-gray-400 text-xs">
+            Catalog ID data provided via public iTunes API for content verification.
+        </footer>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const initialContent = document.getElementById('initialContent');
+        const searchContent = document.getElementById('searchContent');
+        const loader = document.getElementById('loader');
+
+        // Load trending content on start
+        window.onload = () => {
+            fetchTrending();
+        };
+
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performSearch();
+        });
+
+        async function fetchTrending() {
+            try {
+                // Fetching top 10 songs to simulate "trending"
+                const songsRes = await fetch('https://itunes.apple.com/search?term=pop&entity=song&limit=10');
+                const albumsRes = await fetch('https://itunes.apple.com/search?term=2024&entity=album&limit=6');
+
+                const songsData = await songsRes.json();
+                const albumsData = await albumsRes.json();
+
+                renderTrendingSongs(songsData.results);
+                renderFeaturedAlbums(albumsData.results);
+            } catch (err) {
+                console.error("Chart load failed", err);
+            }
+        }
+
+        function renderTrendingSongs(songs) {
+            const container = document.getElementById('trendingSongs');
+            container.innerHTML = songs.map(song => `
+                <div class="min-w-[140px] max-w-[140px] animate-fade group cursor-pointer" onclick="quickSearch('${song.trackName}')">
+                    <div class="relative overflow-hidden rounded-2xl shadow-md">
+                        <img src="${song.artworkUrl100.replace('100x100', '300x300')}" class="w-full aspect-square object-cover transition-transform group-hover:scale-110">
+                        <div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors"></div>
+                    </div>
+                    <h4 class="mt-2 text-sm font-bold text-gray-800 truncate">${song.trackName}</h4>
+                    <p class="text-xs text-gray-500 truncate">${song.artistName}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderFeaturedAlbums(albums) {
+            const container = document.getElementById('featuredAlbums');
+            container.innerHTML = albums.map(album => `
+                <div class="flex items-center p-3 bg-white rounded-2xl border border-gray-100 shadow-sm animate-fade cursor-pointer hover:border-blue-200" onclick="quickSearch('${album.collectionName}')">
+                    <img src="${album.artworkUrl100}" class="w-12 h-12 rounded-lg">
+                    <div class="ml-3 overflow-hidden">
+                        <h4 class="text-xs font-bold text-gray-800 truncate">${album.collectionName}</h4>
+                        <p class="text-[10px] text-gray-400 truncate">${album.artistName}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function quickSearch(val) {
+            searchInput.value = val;
+            performSearch();
+        }
+
+        async function performSearch() {
+            const query = searchInput.value.trim();
+            if (!query) {
+                initialContent.classList.remove('hidden');
+                searchContent.classList.add('hidden');
+                return;
+            }
+
+            initialContent.classList.add('hidden');
+            searchContent.classList.remove('hidden');
+            resultsContainer.innerHTML = '';
+            loader.classList.remove('hidden');
+
+            try {
+                const baseUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=25`;
+
+                const [genRes, artRes] = await Promise.all([
+                    fetch(baseUrl),
+                    fetch(`${baseUrl}&attribute=artistTerm`)
+                ]);
+
+                const genData = await genRes.json();
+                const artData = await artRes.json();
+
+                const unique = Array.from(new Map([...genData.results, ...artData.results].map(t => [t.trackId, t])).values());
+
+                loader.classList.add('hidden');
+
+                if (unique.length === 0) {
+                    resultsContainer.innerHTML = `<div class="py-12 text-center text-gray-400">No catalog entries for "${query}"</div>`;
+                    return;
+                }
+
+                unique.forEach(track => {
+                    const card = document.createElement('div');
+                    card.className = "flex items-center p-4 bg-white rounded-2xl border border-gray-100 shadow-sm animate-fade";
+                    card.innerHTML = `
+                        <img src="${track.artworkUrl100}" class="w-16 h-16 rounded-xl shadow-inner bg-gray-50" alt="Artwork">
+                        <div class="ml-4 flex-grow overflow-hidden">
+                            <h3 class="font-bold text-gray-800 truncate">${track.trackName}</h3>
+                            <p class="text-sm text-gray-500 truncate">${track.artistName}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-[9px] font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 uppercase">ID: ${track.trackId}</span>
+                                ${track.trackExplicitness === 'explicit' ?
+                            '<span class="text-[9px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded uppercase">Explicit</span>' :
+                            '<span class="text-[9px] font-bold bg-green-100 text-green-600 px-1.5 py-0.5 rounded uppercase">Clean</span>'}
+                            </div>
+                        </div>
+                        <a href="${track.trackViewUrl}" target="_blank" class="ml-2 p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </a>
+                    `;
+                    resultsContainer.appendChild(card);
+                });
+
+            } catch (err) {
+                loader.classList.add('hidden');
+                resultsContainer.innerHTML = `<div class="text-red-500 text-center">Connection error. Please check your network.</div>`;
+            }
+        }
+    </script>
+</body>
+
+</html>

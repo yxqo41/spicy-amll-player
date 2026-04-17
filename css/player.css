@@ -939,77 +939,69 @@ body.is-rendering .NowBar {
   justify-content: center;
   align-items: center;
   gap: 0.3ch;
-  margin: 1cqw 0 !important;
-  padding: 10px 0 !important;
+  margin: 1.2cqw 0 !important;
+  padding: 12px 0 !important;
   text-align: left !important;
   width: 100% !important;
+  transform-origin: center;
+  transition: transform 0.2s ease-out; /* Fallback for non-JS updates */
 }
 
 .sl-simple-mode .word {
-  display: inline !important;
-  opacity: 0.3 !important;
-  transition: opacity 0.15s ease !important;
-  color: #fff !important;
+  display: inline-block !important;
+  opacity: 0.35;
+  color: #fff;
   background: none !important;
   -webkit-background-clip: unset !important;
   background-clip: unset !important;
   -webkit-text-fill-color: #fff !important;
-  text-shadow: none !important;
-  scale: 1 !important;
-  transform: none !important;
+  text-shadow: none;
   font-size: inherit !important;
+  transition: opacity 0.3s ease, text-shadow 0.3s ease;
 }
 
-.sl-simple-mode .word.active {
-  opacity: 1 !important;
-  color: #fff !important;
-  font-weight: 700 !important;
+.sl-simple-mode .word.Active {
+  opacity: 1;
+  font-weight: 700;
 }
 
 .sl-simple-mode .letter {
-  display: inline !important;
-  opacity: 0.3 !important;
-  transition: opacity 0.15s ease !important;
-  color: #fff !important;
+  display: inline-block !important;
+  opacity: 0.35;
+  color: #fff;
   background: none !important;
   -webkit-background-clip: unset !important;
   background-clip: unset !important;
   -webkit-text-fill-color: #fff !important;
-  text-shadow: none !important;
-  scale: 1 !important;
-  transform: none !important;
+  text-shadow: none;
   font-size: inherit !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-.sl-simple-mode .letter.active {
-  opacity: 1 !important;
-  color: #fff !important;
+.sl-simple-mode .letter.Active {
+  opacity: 1;
 }
 
 .sl-simple-mode .letterGroup {
-  display: inline !important;
+  display: inline-block !important;
   white-space: normal !important;
 }
 
 .sl-simple-mode .line.Active {
-  opacity: 1 !important;
+  opacity: 1;
 }
 
 .sl-simple-mode .line.Sung,
 .sl-simple-mode .line.NotSung {
-  opacity: 0.5 !important;
+  opacity: 0.5;
 }
 
 .sl-simple-mode .word-group {
-  display: inline !important;
+  display: inline-block !important;
   white-space: normal !important;
 }
 
-.sl-simple-mode .line.past .word {
-  opacity: 0.3;
-}
 
 /* --- Provider Manager --- */
 .sl-btn-small {

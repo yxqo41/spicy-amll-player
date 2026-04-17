@@ -37,24 +37,24 @@
 
       <div class="am-sidebar-section">
         <ul class="am-sidebar-nav">
-          <li class="am-nav-item am-nav-active" data-page="upload">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-            </svg>
-            <span>Upload</span>
-          </li>
-          <li class="am-nav-item" data-page="testdb">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/>
-            </svg>
-            <span>Test Database</span>
-          </li>
-          <li class="am-nav-item" data-page="listen">
+          <li class="am-nav-item am-nav-active" data-page="listen">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path
                 d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
             </svg>
             <span>Listen Now</span>
+          </li>
+          <li class="am-nav-item" data-page="testdb">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/>
+            </svg>
+            <span>Library</span>
+          </li>
+          <li class="am-nav-item" data-page="upload">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+            </svg>
+            <span>Upload</span>
           </li>
           <li class="am-nav-item" data-page="browse">
             <svg viewBox="0 0 24 24" fill="currentColor">
@@ -115,8 +115,39 @@
       </div>
 
       <div class="am-content">
+        <!-- ── Listen Now Page (Main) ── -->
+        <div id="page-listen" class="am-page active">
+          <!-- Hero Section -->
+          <div class="am-hero">
+            <div class="am-hero-icon" style="background: linear-gradient(135deg, #fa243c 0%, #ff2d55 100%);">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+              </svg>
+            </div>
+            <div class="am-hero-text">
+              <h1 class="am-hero-title">Listen Now</h1>
+              <p class="am-hero-subtitle">Top curated tracks from global charts, ready to stream with high-fidelity visuals.</p>
+            </div>
+          </div>
+
+          <div class="trending-section">
+            <div class="section-header">
+              <h2 class="section-title">Trending Now</h2>
+              <span class="section-tag">Global Charts</span>
+            </div>
+            <div class="trending-grid" id="trending-grid">
+              <!-- Skeletons loader injected via JS -->
+              <div class="skeleton-card"></div>
+              <div class="skeleton-card"></div>
+              <div class="skeleton-card"></div>
+              <div class="skeleton-card"></div>
+              <div class="skeleton-card"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- ── Upload Page ── -->
-        <div id="page-upload" class="am-page active">
+        <div id="page-upload" class="am-page">
           <!-- Hero Section -->
           <div class="am-hero">
             <div class="am-hero-icon">
@@ -215,11 +246,11 @@
 
     <!-- ═══ Mobile Bottom Nav ═══ -->
     <nav class="am-mobile-nav">
-      <div class="am-mobile-nav-item am-mobile-nav-active" data-page="upload">
+      <div class="am-mobile-nav-item am-mobile-nav-active" data-page="listen">
         <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
         </svg>
-        <span>Upload</span>
+        <span>Listen Now</span>
       </div>
       <div class="am-mobile-nav-item" data-page="testdb">
         <svg viewBox="0 0 24 24" fill="currentColor">
@@ -227,13 +258,22 @@
         </svg>
         <span>Library</span>
       </div>
-      <div class="am-mobile-nav-item" onclick="alert('Coming soon!')">
+      <div class="am-mobile-nav-item" data-page="upload">
         <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h2v2h-2v-2zm0-10h2v8h-2V6z"/>
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
         </svg>
-        <span>Info</span>
+        <span>Upload</span>
       </div>
     </nav>
+
+    <!-- Global Preparation Overlay -->
+    <div id="prep-overlay" class="prep-overlay">
+      <div class="prep-content">
+        <div class="prep-spinner"></div>
+        <h2 id="prep-status">Preparing Track...</h2>
+        <p id="prep-subtext">Fetching audio and metadata from secure servers</p>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="js/upload.js"></script>

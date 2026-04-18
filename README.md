@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="images/logo.png" width="200" alt="Spicy AMLL Player Logo">
   <h1>Spicy AMLL Player</h1>
   <p><strong>A premium, high-fidelity music experience built for those who love lyrics as much as the beat.</strong></p>
 

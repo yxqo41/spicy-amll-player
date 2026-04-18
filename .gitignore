@@ -66,7 +66,6 @@ git.bat
 .gemini/
 .DS_Store
 Thumbs.db
-testdb\FastChatUI.html
 serve.json
 test.html
 backup
@@ -74,4 +73,3 @@ copyfromhereanimation
 scratch_out.json
 tmp.json
 tmp_utf8.json
-copyfromhereanimation

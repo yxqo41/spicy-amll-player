@@ -1,45 +1,66 @@
-# 🌶️ Spicy AMLL Player
+<div align="center">
+  <img src="images/logo.png" width="200" alt="Spicy AMLL Player Logo">
+  <h1>Spicy AMLL Player</h1>
+  <p><strong>A premium, high-fidelity music experience built for those who love lyrics as much as the beat.</strong></p>
 
-A premium, high-performance web-based lyrics player that replicates the "Spicy AMLL Player WEB" experience with stunning aesthetics and advanced features. Inspired by the Apple Music lyrics interface, this player provides a feature-rich experience for synchronized lyrics with word-level precision.
+  <p>
+    <img src="https://img.shields.io/badge/Aesthetics-Premium-ff4500?style=for-the-badge" alt="Aesthetics">
+    <img src="https://img.shields.io/badge/License-AGPL--3.0-blue?style=for-the-badge" alt="License">
+    <img src="https://img.shields.io/badge/Maintained-Yes-green?style=for-the-badge" alt="Maintained">
+  </p>
 
-![Vibrant UI](https://img.shields.io/badge/Aesthetics-shit-ff4500) ![License](https://img.shields.io/badge/License-AGPL--3.0-blue)
+  <br>
 
-## ✨ Features
-
-- **📺 Apple Music Style UI**: A beautiful, glassmorphism-inspired layout that handles synchronized lyrics with elegance.
-- **✨ Word-Level Animations**: Advanced syllable-level sync with spring-physics based scaling, glowing, and gradient transitions.
-- **🌈 Dynamic Backgrounds**: Live background colors extracted from your album artwork for an immersive experience.
-- **🖼️ Animated Artwork**: Support for animated (video) cover art fetched via Apple Music/Dodson proxy.
-- **⚙️ Advanced Settings**:
-  - **Simple Lyrics Mode**: A clean, word-level opacity/color fade animation for a more minimalist feel.
-  - **Meme Formats**: Playful transformations like **Gibberish** (Wenomechainsama-style) and **Weeb** mode.
-  - **Provider Manager**: Reorder and toggle lyrics sources (Spicy API, Apple Music, Musixmatch, LRCLIB, Netease) in real-time.
-- **💿 Versatile Metadata**: Robust ID3v1, ID3v2, and FLAC/Vorbis metadata parsing including release years.
-- **🛠️ TTML & LRC Support**: Full support for standard LRC files and advanced TTML word-synced formats.
-
-## 🚀 Quick Start
-
-Spicy AMLL Player WEB is a standalone static application. No complex build steps are required.
-
-1.  **Open in Browser**: Navigate to `https://yxqo41.github.io/spicy-amll-player/` or `https://spicy-amll-player.netlify.app`.
-2.  **Play Music**: Drag and drop your audio file (MP3/FLAC) and an optional TTML/LRC file into the upload zone.
-
-## 🛠️ Configuration
-
-The application includes a comprehensive settings menu (accessible via the 3-dots in the player) where you can:
-- Toggle **Simple Mode** for a lightweight animation path.
-- Enable/Disable **Syllable Rendering** (Merge Words).
-- Adjust **Release Year Position** in the metadata view.
-
-## 📜 License
-
-This project is licensed under the **GNU Affero General Public License v3**. See the [LICENSE](LICENSE) file for more details.
-
----
-*Created with Html and css and js basicly by models of antigravity but ideas are mine*
+  <img src="images/preview.gif" width="90%" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" alt="Spicy AMLL Player Preview">
+</div>
 
 ---
 
-# San Francisco Pro Fonts
+## 🎧 The Vision
 
-Obtained from [https://developer.apple.com/fonts/](https://developer.apple.com/fonts/)
+Music is more than just audio; it's an atmosphere. **Spicy AMLL Player** was made with a desire to bring the stunning, glassmorphism-driven aesthetics of Apple Music for free to the web. Every pixel is crafted to make your lyrics breathe, dance, and glow in sync with your favorite tracks.
+
+We didn't just build a player — we built a stage for your music.
+
+## ✨ Key Experiences
+
+### 🌈 Immersive Visuals
+- **Glassmorphism UI**: A deep, semi-transparent interface that adapts to your album art.
+- **Dynamic Backgrounds**: Real-time color extraction that paints your screen with the soul of the track.
+- **Animated Artwork**: Support for Apple Music-style video covers that bring your library to life.
+
+### ✍️ Precision Lyrics
+- **Word-Level Sync**: Experience lyrics that scale, glow, and transition with syllable-level accuracy.
+- **TTML & LRC Support**: Full compatibility with advanced TTML formats and classic LRC files.
+- **Simple Mode**: A minimalist animation path for those who prefer clean, focused transitions.
+
+### 🛠️ Total Control
+- **Provider Manager**: Switch between lyrics sources (Spicy API, Apple Music, Musixmatch, LRCLIB, Netease) on the fly.
+- **Metadata Mastery**: Robust parsing for ID3 and FLAC tags, ensuring every track looks its best.
+- **Meme Modes**: Because life shouldn't be too serious — toggle **Gibberish** or **Weeb** mode for a laugh.
+
+## 🚀 Getting Started
+
+**No installation. No complexity. Just your music.**
+
+1.  **Launch**: Visit the [Official Site](https://spicy-amll-player.netlify.app).
+2.  **Play**: Drag and drop your audio files (MP3/FLAC) and optional lyrics (.ttml) or just play from the Apple Music Catalog!
+3.  **Immerse**: Sit back and watch your music transform.
+
+---
+
+## 📜 Legal & Credits
+
+### San Francisco Pro Fonts
+This project uses San Francisco Pro Fonts, obtained from the [Apple Developer Fonts](https://developer.apple.com/fonts/) portal. All rights belong to Apple Inc.
+
+### Licensing
+Spicy AMLL Player is licensed under the **GNU Affero General Public License v3**. See the [LICENSE](LICENSE) file for more details.
+
+### Acknowledgments
+A premium unofficial remake of the original [Spicy Lyrics](https://github.com/Spikerko/spicy-lyrics).
+
+---
+<div align="center">
+  <sub>made using the models of antigravity and with the collaborators of this project and me lol</sub>
+</div>

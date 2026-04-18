@@ -110,6 +110,7 @@
   background-clip: text;
   position: relative;
   will-change: transform, opacity;
+  white-space: pre-wrap;
 }
 
 /* ── Gradient Variables ── */
@@ -319,10 +320,7 @@
   text-align: end;
 }
 
-#SpicyLyricsPage .LyricsContainer .LyricsContent .line.OppositeAligned .word:not(.PartOfWord, .dot, .LastWordInLine)::after,
-#SpicyLyricsPage .LyricsContainer .LyricsContent .line.OppositeAligned .letterGroup:not(.PartOfWord, .dot, .LastWordInLine)::after {
-  margin-right: 0;
-}
+/* Word spacing for OppositeAligned is inherited from the base ::after rule (margin-inline-end: 0.3ch) */
 
 /* Padding for opposite-aligned layouts */
 #SpicyLyricsPage .LyricsContainer .LyricsContent:has(.OppositeAligned) .line.OppositeAligned:not(.rtl) {

@@ -77,7 +77,7 @@ async function searchSpotifyTrack(songName, artistName, albumName) {
     const token = await getSpotifyAccessToken();
     const query = encodeURIComponent(`track:${songName} artist:${artistName}`);
     const url = `https://api.spotify.com/v1/search?q=${query}&type=track&limit=5`;
-    
+
     if (token) {
       const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -101,7 +101,7 @@ async function searchSpotifyTrack(songName, artistName, albumName) {
 
 async function fetchFromMusixmatch(songName, artistName, albumName, durationMs) {
   const durationSec = durationMs / 1000;
-  
+
   try {
     const params = new URLSearchParams({
       provider: 'musixmatch',
@@ -117,7 +117,7 @@ async function fetchFromMusixmatch(songName, artistName, albumName, durationMs) 
 
     const res = await fetch(`/api/proxy?${params}`);
     if (!res.ok) return null;
-    
+
     const data = await res.json();
     const macroCalls = data?.message?.body?.macro_calls;
     if (!macroCalls) return null;
@@ -126,7 +126,7 @@ async function fetchFromMusixmatch(songName, artistName, albumName, durationMs) 
     const ignoreWordSync = settingsManager.get("ignoreMusixmatchWordSync");
     const richsync = macroCalls["track.richsync.get"]?.message?.body?.richsync?.richsync_body;
     if (richsync && !ignoreWordSync) {
-       // Note: Full RichSync parsing would be integrated here if ported from reference
+      // Note: Full RichSync parsing would be integrated here if ported from reference
     }
 
     // Fallback to subtitle (line sync)
@@ -137,7 +137,7 @@ async function fetchFromMusixmatch(songName, artistName, albumName, durationMs) 
         Type: "Vocal",
         Text: l.text,
         StartTime: l.time.total,
-        EndTime: (i < lines.length - 1) ? lines[i+1].time.total : l.time.total + 4
+        EndTime: (i < lines.length - 1) ? lines[i + 1].time.total : l.time.total + 4
       }));
       return {
         lyricsData: { Type: "Line", StartTime: content[0].StartTime, Content: content },
@@ -160,7 +160,7 @@ async function fetchFromNetease(songName, artistName) {
     const searchUrl = `https://music.163.com/api/search/get?s=${encodeURIComponent(songName + " " + artistName)}&type=1&limit=1`;
     const searchRes = await proxiedFetch(searchUrl);
     if (!searchRes.ok) return null;
-    
+
     const searchData = await searchRes.json();
     const songId = searchData?.result?.songs?.[0]?.id;
     if (!songId) return null;
@@ -284,7 +284,7 @@ async function fetchFromSpicyAPI(songId) {
 
     let lyricsData = result.data;
     if (typeof lyricsData === 'string') {
-        lyricsData = parseTTMLToLyrics(lyricsData);
+      lyricsData = parseTTMLToLyrics(lyricsData);
     }
 
     if (lyricsData?.Type) {
@@ -338,9 +338,9 @@ async function fetchFromAppleMusic(songName, artistName, albumName) {
     }
 
     console.log(`[TTMLRetriever] Apple Music: Found track ID ${trackId}, fetching TTML...`);
-    
+
     // Use the proxy/api to get TTML
-    const apiRes = await proxiedFetch(`https://spicyamllserver.onrender.com/api/getttmlam?song=${trackId}`);
+    const apiRes = await proxiedFetch(`https://yxqo41-spicyamllserver.hf.space/api/getttmlam?song=${trackId}`, { skipProxy: true });
     if (!apiRes.ok) return null;
 
     const data = await apiRes.json();
@@ -350,8 +350,8 @@ async function fetchFromAppleMusic(songName, artistName, albumName) {
     console.log('[TTMLRetriever] Apple Music Extracted TTML:', ttmlCode);
 
     if (!ttmlCode) {
-       console.log('[TTMLRetriever] Apple Music: No TTML found for track ID.');
-       return null;
+      console.log('[TTMLRetriever] Apple Music: No TTML found for track ID.');
+      return null;
     }
 
     let lyricsData = parseTTMLToLyrics(ttmlCode);
@@ -403,7 +403,7 @@ export async function retrieveTTML(songName, artistName, albumName, durationSec 
       } else if (providerId === "lrclib") {
         result = await fetchFromLRCLIB(songName, artistName, albumName, durationSec);
       }
-      
+
       if (result) {
         console.log(`[TTMLRetriever] ✓ Found lyrics via ${providerId}`);
         return result;

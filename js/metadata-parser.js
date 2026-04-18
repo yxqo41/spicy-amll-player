@@ -22,6 +22,17 @@ export async function parseAudioMetadata(buffer, filename) {
   const view = new DataView(buffer);
 
   try {
+    // Try MP4/M4A (ftyp)
+    if (isMP4(view)) {
+      const mp4 = parseMP4(view);
+      if (mp4.title) result.title = mp4.title;
+      if (mp4.artist) result.artist = mp4.artist;
+      if (mp4.album) result.album = mp4.album;
+      if (mp4.year) result.year = mp4.year;
+      if (mp4.artUrl) result.artUrl = mp4.artUrl;
+      return result;
+    }
+
     // Try ID3v2 first (MP3)
     if (hasID3v2(view)) {
       const id3 = parseID3v2(view);
@@ -328,4 +339,102 @@ function parseFLACPicture(view, offset, size, result) {
     const blob = new Blob([pictureData], { type: mime || 'image/jpeg' });
     result.artUrl = URL.createObjectURL(blob);
   } catch { /* ignore */ }
+}
+
+// ── MP4/M4A (iTunes Atoms) ────────────────────────
+
+function isMP4(view) {
+  if (view.byteLength < 8) return false;
+  // Look for "ftyp" at offset 4
+  return (
+    view.getUint8(4) === 0x66 && // f
+    view.getUint8(5) === 0x74 && // t
+    view.getUint8(6) === 0x79 && // y
+    view.getUint8(7) === 0x70    // p
+  );
+}
+
+function parseMP4(view) {
+  const result = { title: '', artist: '', album: '', year: '', artUrl: null };
+  const buffer = view.buffer;
+  
+  // Walker function to find specific atoms
+  function findAtom(start, end, path) {
+    let offset = start;
+    if (path.length === 0) return null;
+    const target = path[0];
+    
+    while (offset + 8 <= end) {
+      const size = view.getUint32(offset);
+      const type = String.fromCharCode(
+        view.getUint8(offset + 4), view.getUint8(offset + 5),
+        view.getUint8(offset + 6), view.getUint8(offset + 7)
+      );
+
+      if (type === target) {
+        if (path.length === 1) {
+          return { offset: offset + 8, size: size - 8 };
+        } else {
+          // Move deeper (skip header)
+          let innerOffset = offset + 8;
+          if (type === 'meta') innerOffset += 4; // meta atom has a 4-byte prefix
+          return findAtom(innerOffset, offset + size, path.slice(1));
+        }
+      }
+      
+      if (size <= 0) break;
+      offset += size;
+    }
+    return null;
+  }
+
+  // Path: moov.udta.meta.ilst
+  const ilst = findAtom(0, view.byteLength, ['moov', 'udta', 'meta', 'ilst']);
+  if (!ilst) return result;
+
+  // Walk through ilst children
+  let offset = ilst.offset;
+  const end = ilst.offset + ilst.size;
+
+  while (offset + 8 < end) {
+    const size = view.getUint32(offset);
+    const type = String.fromCharCode(
+      view.getUint8(offset + 4), view.getUint8(offset + 5),
+      view.getUint8(offset + 6), view.getUint8(offset + 7)
+    );
+
+    const dataAtom = findAtom(offset + 8, offset + size, ['data']);
+    if (dataAtom) {
+      const dataOffset = dataAtom.offset + 8; // skip version/flags
+      const dataSize = dataAtom.size - 8;
+
+      if (type === '\xA9nam') {
+        result.title = readUTF8(buffer, dataOffset, dataSize);
+      } else if (type === '\xA9ART' || type === 'aART') {
+        result.artist = readUTF8(buffer, dataOffset, dataSize);
+      } else if (type === '\xA9alb') {
+        result.album = readUTF8(buffer, dataOffset, dataSize);
+      } else if (type === '\xA9day') {
+        result.year = readUTF8(buffer, dataOffset, dataSize).substring(0, 4);
+      } else if (type === 'covr') {
+        const artData = new Uint8Array(buffer, dataOffset, dataSize);
+        let mime = 'image/jpeg';
+        if (artData[0] === 0x89 && artData[1] === 0x50) mime = 'image/png';
+        const blob = new Blob([artData], { type: mime });
+        result.artUrl = URL.createObjectURL(blob);
+      }
+    }
+    offset += size;
+  }
+
+  return result;
+}
+
+function readUTF8(buffer, offset, length) {
+  try {
+    const bytes = new Uint8Array(buffer, offset, length);
+    return new TextDecoder('utf-8').decode(bytes).replace(/\0/g, '').trim();
+  } catch {
+    return '';
+  }
 }

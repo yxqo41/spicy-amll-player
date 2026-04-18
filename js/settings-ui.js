@@ -1,5 +1,9 @@
 import { settingsManager, LYRICS_SOURCE_PROVIDER_DEFINITIONS } from "./settings-manager.js";
 import { EQ_BANDS, EQ_PRESETS } from "./equalizer-presets.js";
+import { generateTTML } from "./ttml-parser.js";
+import { LyricsObject, convertToSyllable } from "./lyrics-applyer.js";
+import { GeniusService } from "./genius-service.js";
+import { getQueue, getCurrentIndex } from "./router.js";
 
 /**
  * settings-ui.js
@@ -142,6 +146,84 @@ class SettingsUI {
     eqBtn.style.marginTop = "10px";
     eqBtn.onclick = () => this.showMixingBoard();
     this.addRow(container, "Equalizer", eqBtn);
+
+    // --- Developer / Advanced ---
+    this.addGroup(container, "Advanced Utilities");
+
+    const exportTTMLBtn = document.createElement("button");
+    exportTTMLBtn.className = "sl-btn";
+    exportTTMLBtn.textContent = "Export Word-Sync TTML";
+    exportTTMLBtn.style.marginTop = "10px";
+    exportTTMLBtn.style.background = "rgba(48, 209, 88, 0.1)";
+    exportTTMLBtn.style.borderColor = "rgba(48, 209, 88, 0.3)";
+    exportTTMLBtn.onclick = () => this.handleTTMLExport(exportTTMLBtn);
+    
+    this.addRow(container, "Lyrics Tools", exportTTMLBtn);
+  }
+
+  async handleTTMLExport(btn) {
+    const originalText = btn.textContent;
+    btn.textContent = "Processing...";
+    btn.disabled = true;
+
+    try {
+      const data = LyricsObject.RawData;
+      if (!data) {
+        alert("No lyrics loaded to export.");
+        return;
+      }
+
+      // 1. Determine Track Metadata for filename
+      const queue = await getQueue();
+      const index = getCurrentIndex();
+      const track = queue[index] || { name: "Lyrics", artist: "Unknown" };
+      const filename = `${track.name} - ${track.artist}.ttml`.replace(/[<>:"/\\|?*]/g, "");
+
+      let exportData = { ...data };
+
+      // 2. Fetch Genius Songwriters if missing
+      if (!exportData.SongWriters || exportData.SongWriters.length === 0) {
+        const writers = await GeniusService.fetchCredits({ title: track.name, artist: track.artist });
+        if (writers && writers.length > 0) {
+          exportData.SongWriters = writers;
+        }
+      }
+
+      // 3. Convert to Word-Sync if it's currently Line-Sync
+      if (exportData.Type === "Line") {
+        console.log("[Export] Converting Line lyrics to Syllable (guessing durations)...");
+        exportData = convertToSyllable(exportData);
+      }
+
+      // 4. Generate TTML
+      const ttml = generateTTML(exportData);
+
+      // 5. Trigger Download
+      const blob = new Blob([ttml], { type: "application/ttml+xml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      btn.textContent = "✓ Exported!";
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }, 2000);
+
+    } catch (err) {
+      console.error("[Export] Failed:", err);
+      alert("Export failed: " + err.message);
+      btn.textContent = "Error";
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }, 2000);
+    }
   }
 
   addGroup(container, title) {

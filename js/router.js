@@ -6,7 +6,7 @@
 
 // ── IndexedDB Configuration ──
 const DB_NAME = 'SpicyLyricsDB';
-const DB_VERSION = 3; // Incremented for sortOrder index
+const DB_VERSION = 6; // Must exceed browser's existing version
 
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -23,12 +23,22 @@ function openDB() {
         const tx = e.target.transaction;
         const store = tx.objectStore('tracks');
         if (!store.indexNames.contains('sortOrder')) {
-          store.createIndex('sortOrder', 'sortOrder', { unique: false });
+           store.createIndex('sortOrder', 'sortOrder', { unique: false });
         }
       }
 
       if (!db.objectStoreNames.contains('buffers')) {
         db.createObjectStore('buffers');
+      }
+
+      // Add Playlist functionality stores
+      if (!db.objectStoreNames.contains('playlists')) {
+        db.createObjectStore('playlists', { keyPath: 'id', autoIncrement: true });
+      }
+
+      if (!db.objectStoreNames.contains('playlist_tracks')) {
+        const pTrackStore = db.createObjectStore('playlist_tracks', { keyPath: 'id', autoIncrement: true });
+        pTrackStore.createIndex('playlistId', 'playlistId', { unique: false });
       }
     };
     request.onsuccess = (e) => resolve(e.target.result);
@@ -200,3 +210,90 @@ export async function goToUpload() {
   await clearQueue();
   window.location.href = 'index.html';
 }
+
+// ── PLAYLIST FUNCTIONS ──
+export async function getPlaylists() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('playlists', 'readonly');
+    const request = tx.objectStore('playlists').getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function createPlaylist(name) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('playlists', 'readwrite');
+    const request = tx.objectStore('playlists').add({ name, createdAt: Date.now() });
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function deletePlaylist(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(['playlists', 'playlist_tracks'], 'readwrite');
+    tx.objectStore('playlists').delete(id);
+    
+    // delete associated tracks
+    const pTrackStore = tx.objectStore('playlist_tracks');
+    const index = pTrackStore.index('playlistId');
+    const req = index.openCursor(IDBKeyRange.only(id));
+    req.onsuccess = (event) => {
+      const cursor = event.target.result;
+      if (cursor) {
+        cursor.delete();
+        cursor.continue();
+      }
+    };
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function addTrackToPlaylist(playlistId, metadata, buffer) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('playlist_tracks', 'readwrite');
+    const request = tx.objectStore('playlist_tracks').add({
+      playlistId,
+      name: metadata.name,
+      artist: metadata.artist || 'Unknown Artist',
+      artUrl: metadata.artUrl || null,
+      type: metadata.type,
+      ttml: metadata.ttml || null,
+      buffer: buffer, // For simplicity storing binary directly here
+      addedAt: Date.now()
+    });
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function getPlaylistTracks(playlistId) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('playlist_tracks', 'readonly');
+    const index = tx.objectStore('playlist_tracks').index('playlistId');
+    const request = index.getAll(IDBKeyRange.only(playlistId));
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function playPlaylist(playlistId) {
+  const tracks = await getPlaylistTracks(playlistId);
+  if (!tracks.length) return false;
+  
+  await clearQueue();
+  for (const t of tracks) {
+    await addTrackToQueue(t.buffer, t);
+  }
+  setCurrentIndex(0);
+  window.location.href = 'player.html';
+  return true;
+}
+

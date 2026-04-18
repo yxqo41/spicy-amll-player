@@ -113,6 +113,7 @@ export const LyricsObject = {
     Line: { Lines: [] },
     Static: { Lines: [] },
   },
+  RawData: null, // Stores the original parsed data
 };
 
 let currentLineIndex = -1;
@@ -145,6 +146,9 @@ export function clearLyricsArrays() {
  * @returns {HTMLElement} The scroll container element
  */
 export function applySyllableLyrics(data, lyricsContentEl) {
+  const showRomanized = settingsManager.get("showRomanized");
+  const showTranslation = settingsManager.get("showTranslation");
+  LyricsObject.RawData = data;
   clearLyricsArrays();
 
   const container = document.createElement("div");
@@ -184,20 +188,35 @@ export function applySyllableLyrics(data, lyricsContentEl) {
     let currentWordGroup = null;
 
     // Build words/syllables
-    line.Lead.Syllables.forEach((lead, iL, aL) => {
+    let syllablesToRender = line.Lead.Syllables;
+    if (showTranslation && line.TranslatedText) {
+      const words = line.TranslatedText.split(" ");
+      const totalTime = line.Lead.EndTime - line.Lead.StartTime;
+      const wordTime = totalTime / words.length;
+      
+      syllablesToRender = words.map((w, index) => ({
+        Text: w,
+        StartTime: line.Lead.StartTime + (index * wordTime),
+        EndTime: line.Lead.StartTime + ((index + 1) * wordTime),
+        IsPartOfWord: false
+      }));
+    }
+
+    syllablesToRender.forEach((lead, iL, aL) => {
+      const displayText = (!showTranslation && showRomanized && lead.RomanizedText !== undefined) ? lead.RomanizedText : lead.Text;
       const totalDuration = convertTime(lead.EndTime) - convertTime(lead.StartTime);
-      const isEmphasized = isLetterCapable(lead.Text, totalDuration);
+      const isEmphasized = isLetterCapable(displayText, totalDuration);
       
       let word;
       let lettersData = null;
 
       if (isEmphasized) {
         word = document.createElement("div");
-        const letters = lead.Text.split("");
+        const letters = displayText.split("");
         lettersData = applyEmphasis(letters, word, lead, false);
       } else {
         word = document.createElement("span");
-        word.textContent = transformText(lead.Text);
+        word.textContent = transformText(displayText);
         if (!settingsManager.get("simpleLyricsMode")) {
           word.style.setProperty("--gradient-position", "-20%");
           word.style.setProperty("--text-shadow-opacity", "0%");
@@ -215,7 +234,7 @@ export function applySyllableLyrics(data, lyricsContentEl) {
         word.classList.add("word");
       }
 
-      if (isRtl(lead.Text) && !lineElem.classList.contains("rtl")) {
+      if (isRtl(displayText) && !lineElem.classList.contains("rtl")) {
         lineElem.classList.add("rtl");
       }
 
@@ -223,7 +242,7 @@ export function applySyllableLyrics(data, lyricsContentEl) {
       if (LyricsObject.Types.Syllable.Lines[ci]?.Syllables?.Lead) {
         const syllableObj = {
           HTMLElement: word,
-          Text: lead.Text,
+          Text: displayText,
           StartTime: convertTime(lead.StartTime),
           EndTime: convertTime(lead.EndTime),
           TotalTime: totalDuration,
@@ -287,19 +306,20 @@ export function applySyllableLyrics(data, lyricsContentEl) {
         let currentBGWordGroup = null;
 
         bg.Syllables.forEach((bw, bI, bA) => {
+          const displayBgText = (showRomanized && bw.RomanizedText !== undefined) ? bw.RomanizedText : bw.Text;
           const totalDuration = convertTime(bw.EndTime) - convertTime(bw.StartTime);
-          const isEmphasized = isLetterCapable(bw.Text, totalDuration);
+          const isEmphasized = isLetterCapable(displayBgText, totalDuration);
 
           let bwE;
           let lettersData = null;
 
           if (isEmphasized) {
             bwE = document.createElement("div");
-            const letters = bw.Text.split("");
+            const letters = displayBgText.split("");
             lettersData = applyEmphasis(letters, bwE, bw, true);
           } else {
             bwE = document.createElement("span");
-            bwE.textContent = transformText(bw.Text);
+            bwE.textContent = transformText(displayBgText);
             if (!settingsManager.get("simpleLyricsMode")) {
               bwE.style.setProperty("--gradient-position", "0%");
               bwE.style.setProperty("--text-shadow-opacity", "0%");
@@ -316,7 +336,7 @@ export function applySyllableLyrics(data, lyricsContentEl) {
             bwE.classList.add("word");
           }
 
-          if (isRtl(bw.Text) && !bgLine.classList.contains("rtl")) {
+          if (isRtl(displayBgText) && !bgLine.classList.contains("rtl")) {
             bgLine.classList.add("rtl");
           }
 
@@ -324,7 +344,7 @@ export function applySyllableLyrics(data, lyricsContentEl) {
           if (LyricsObject.Types.Syllable.Lines[ci]?.Syllables?.Lead) {
             const syllableObj = {
               HTMLElement: bwE,
-              Text: bw.Text,
+              Text: displayBgText,
               StartTime: convertTime(bw.StartTime),
               EndTime: convertTime(bw.EndTime),
               TotalTime: totalDuration,
@@ -404,53 +424,86 @@ function getTextWeight(text) {
 /**
  * Converts Line-synced lyrics to Syllable-synced by estimating word durations.
  * Distributes line duration proportionally based on character weight.
+ * Preserves original spacing and punctuation into the syllable tokens.
  */
 export function convertToSyllable(data) {
+  const processTextSegment = (text, startTime, endTime) => {
+    const rawWords = text.split(/\s+/).filter(Boolean);
+    if (rawWords.length === 0) return [];
+
+    const totalDuration = (endTime && endTime > startTime) ? endTime - startTime : 1.5;
+    const weights = rawWords.map(w => getTextWeight(w));
+    const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+
+    let currentCursor = startTime;
+    let currentPosInLine = 0;
+
+    return rawWords.map((word, i) => {
+      const weight = weights[i];
+      const wordDuration = (weight / totalWeight) * totalDuration;
+      const start = currentCursor;
+      const end = currentCursor + wordDuration;
+      currentCursor = end;
+
+      // Find the exact text in the line for spacing/punctuation accuracy
+      const foundIdx = text.indexOf(word, currentPosInLine);
+      let capturedText = word;
+      
+      if (foundIdx !== -1) {
+        // Find where the next word starts to capture the "gap" (spaces/punctuation)
+        const nextWord = rawWords[i + 1];
+        let nextIdx = nextWord ? text.indexOf(nextWord, foundIdx + word.length) : text.length;
+        
+        // If we found the next word, capture everything from current word start to next word start
+        if (nextIdx !== -1) {
+          capturedText = text.substring(foundIdx, nextIdx);
+          currentPosInLine = nextIdx;
+        } else {
+          // Last word, capture everything to the end
+          capturedText = text.substring(foundIdx);
+          currentPosInLine = text.length;
+        }
+      }
+
+      return {
+        Text: capturedText.trim(),
+        StartTime: start,
+        EndTime: end,
+        IsPartOfWord: false
+      };
+    });
+  };
+
   const syllableData = {
     ...data,
     Type: "Syllable",
     Content: data.Content.map(line => {
-      const wordsText = line.Text.split(/\s+/).filter(Boolean);
-      if (wordsText.length === 0) return null;
+      const leadSyllables = processTextSegment(line.Text, line.StartTime, line.EndTime);
+      if (leadSyllables.length === 0) return null;
 
-      const totalDuration = (line.EndTime && line.EndTime > line.StartTime)
-        ? line.EndTime - line.StartTime
-        : 1.5; // Fallback duration for lines without EndTime
-
-      const weights = wordsText.map(w => getTextWeight(w));
-      const totalWeight = weights.reduce((sum, w) => sum + w, 0);
-
-      let currentCursor = line.StartTime;
-      let currentPosInLine = 0;
-
-      const syllables = wordsText.map((wordText, i) => {
-        const weight = weights[i];
-        const wordDuration = (weight / totalWeight) * totalDuration;
-
-        const start = currentCursor;
-        const end = currentCursor + wordDuration;
-        currentCursor = end;
-
-        // Try to find the exact text in the line for spacing/punctuation accuracy
-        const foundIdx = line.Text.indexOf(wordText, currentPosInLine);
-        if (foundIdx !== -1) currentPosInLine = foundIdx + wordText.length;
-
-        return {
-          Text: wordText,
-          StartTime: start,
-          EndTime: end,
-          IsPartOfWord: false
-        };
-      });
-
-      return {
+      const res = {
         OppositeAligned: line.OppositeAligned,
         Lead: {
           StartTime: line.StartTime,
           EndTime: line.EndTime,
-          Syllables: syllables
+          Syllables: leadSyllables
         }
       };
+
+      // Handle background vocals if they exist in the line data
+      if (line.Background && Array.from(line.Background).length > 0) {
+        res.Background = line.Background.map(bg => {
+          // If background already has syllables (e.g. from a partial word-sync parse), reconstruct text first
+          const bgText = bg.Text || bg.Syllables?.map(s => s.Text).join("") || "";
+          return {
+            StartTime: bg.StartTime,
+            EndTime: bg.EndTime,
+            Syllables: processTextSegment(bgText, bg.StartTime, bg.EndTime)
+          };
+        });
+      }
+
+      return res;
     }).filter(Boolean)
   };
   return syllableData;
@@ -460,6 +513,9 @@ export function convertToSyllable(data) {
  * Apply Line-synced lyrics to the DOM.
  */
 export function applyLineLyrics(data, lyricsContentEl) {
+  const showRomanized = settingsManager.get("showRomanized");
+  const showTranslation = settingsManager.get("showTranslation");
+  LyricsObject.RawData = data;
   if (settingsManager.get("forceWordSync")) {
     return applySyllableLyrics(convertToSyllable(data), lyricsContentEl);
   }
@@ -492,12 +548,14 @@ export function applyLineLyrics(data, lyricsContentEl) {
     setWordArrayInCurrentLine_LINE();
 
     if (line.OppositeAligned) lineElem.classList.add("OppositeAligned");
-    if (isRtl(line.Text)) lineElem.classList.add("rtl");
+    
+    const displayText = (showTranslation && line.TranslatedText !== undefined) ? line.TranslatedText : (showRomanized && line.RomanizedText !== undefined) ? line.RomanizedText : line.Text;
+    if (isRtl(displayText)) lineElem.classList.add("rtl");
 
     // For line-synced, text is a single word element
     const wordElem = document.createElement("span");
     wordElem.classList.add("word");
-    wordElem.textContent = transformText(line.Text);
+    wordElem.textContent = transformText(displayText);
     lineElem.appendChild(wordElem);
 
     container.appendChild(lineElem);
@@ -533,6 +591,9 @@ export function applyLineLyrics(data, lyricsContentEl) {
  * Apply Static lyrics to the DOM.
  */
 export function applyStaticLyrics(data, lyricsContentEl) {
+  const showRomanized = settingsManager.get("showRomanized");
+  const showTranslation = settingsManager.get("showTranslation");
+  LyricsObject.RawData = data;
   clearLyricsArrays();
 
   const container = document.createElement("div");
@@ -540,14 +601,15 @@ export function applyStaticLyrics(data, lyricsContentEl) {
   container.setAttribute("data-lyrics-type", "Static");
 
   data.Lines.forEach(line => {
+    const displayText = (showTranslation && line.TranslatedText !== undefined) ? line.TranslatedText : (showRomanized && line.RomanizedText !== undefined) ? line.RomanizedText : line.Text;
     const lineElem = document.createElement("div");
     lineElem.classList.add("line", "static");
     lineElem.setAttribute("dir", "auto");
-    if (isRtl(line.Text)) lineElem.classList.add("rtl");
+    if (isRtl(displayText)) lineElem.classList.add("rtl");
 
     const wordElem = document.createElement("span");
     wordElem.classList.add("word");
-    wordElem.textContent = transformText(line.Text);
+    wordElem.textContent = transformText(displayText);
     lineElem.appendChild(wordElem);
 
     LyricsObject.Types.Static.Lines.push({ HTMLElement: lineElem });

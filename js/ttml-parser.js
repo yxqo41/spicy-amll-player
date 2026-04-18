@@ -110,10 +110,10 @@ function readITunesMetadata(root) {
       const parent = text.parentElement?.tagName;
       const textValue = text.textContent?.trim() ?? "";
 
-      if (parent === "translations" && textValue) {
+      if ((parent === "translations" || parent === "translation") && textValue) {
         translations.set(key, textValue);
       }
-      if (parent === "transliterations") {
+      if (parent === "transliterations" || parent === "transliteration") {
         if (textValue) transliterations.set(key, textValue);
         const pieces = Array.from(text.children)
           .filter(c => c.tagName === "span")
@@ -235,7 +235,7 @@ function parseBackground(element, lineStart, lineEnd) {
   };
 }
 
-function parseParagraph(paragraph, div, body, oppositeAgents, transliterations, transliterationPieces) {
+function parseParagraph(paragraph, div, body, oppositeAgents, transliterations, transliterationPieces, translations) {
   const paragraphStart = parseTimestamp(getAttr(paragraph, "begin")) ?? 0;
   const paragraphEnd = parseTimestamp(getAttr(paragraph, "end")) ?? paragraphStart;
   const agentId = getAttr(paragraph, "ttm:agent", "agent") ??
@@ -245,6 +245,7 @@ function parseParagraph(paragraph, div, body, oppositeAgents, transliterations, 
   const lineKey = getAttr(paragraph, "itunes:key");
 
   let leadRomanizedText = lineKey ? transliterations.get(lineKey) : undefined;
+  let leadTranslatedText = lineKey ? translations.get(lineKey) : undefined;
 
   const childNodes = Array.from(paragraph.childNodes).filter(n => !isSkippableWhitespace(n));
   const leadSyllables = [];
@@ -262,7 +263,10 @@ function parseParagraph(paragraph, div, body, oppositeAgents, transliterations, 
     const role = getAttr(node, "ttm:role", "role");
     const text = node.textContent?.trim() ?? "";
 
-    if (role === "x-translation") return;
+    if (role === "x-translation") {
+      if (!leadTranslatedText && text) leadTranslatedText = text;
+      return;
+    }
     if (role === "x-roman") {
       if (!leadRomanizedText && text) leadRomanizedText = text;
       return;
@@ -309,6 +313,7 @@ function parseParagraph(paragraph, div, body, oppositeAgents, transliterations, 
   return {
     leadText,
     leadRomanizedText,
+    leadTranslatedText,
     leadSyllables,
     background,
     startTime: lineStart,
@@ -336,6 +341,7 @@ function buildSyllableLyrics(lines, songwriters) {
       return {
         Type: "Vocal",
         OppositeAligned: line.oppositeAligned,
+        ...(line.leadTranslatedText ? { TranslatedText: line.leadTranslatedText } : {}),
         Lead: {
           StartTime: line.startTime,
           EndTime: line.endTime,
@@ -356,9 +362,11 @@ function buildLineLyrics(lines, songwriters) {
       Type: "Vocal",
       Text: line.leadText,
       ...(line.leadRomanizedText ? { RomanizedText: line.leadRomanizedText } : {}),
+      ...(line.leadTranslatedText ? { TranslatedText: line.leadTranslatedText } : {}),
       StartTime: line.startTime,
       EndTime: line.endTime,
       OppositeAligned: line.oppositeAligned,
+      ...(line.background && line.background.length > 0 ? { Background: line.background } : {}),
     })).filter(line => line.Text),
   };
 }
@@ -370,6 +378,7 @@ function buildStaticLyrics(lines, songwriters) {
     Lines: lines.map(line => ({
       Text: line.leadText,
       ...(line.leadRomanizedText ? { RomanizedText: line.leadRomanizedText } : {}),
+      ...(line.leadTranslatedText ? { TranslatedText: line.leadTranslatedText } : {}),
     })).filter(line => line.Text),
   };
 }
@@ -393,7 +402,7 @@ export default function parseTTMLToLyrics(ttml) {
 
   const songwriters = parseSongwriters(tt);
   const oppositeAgents = parseAgents(tt);
-  const { transliterations, transliterationPieces } = readITunesMetadata(tt);
+  const { translations, transliterations, transliterationPieces } = readITunesMetadata(tt);
 
   const body = Array.from(tt.children).find(c => c.tagName === "body");
   if (!body) throw new Error("Invalid TTML: missing <body>");
@@ -411,7 +420,8 @@ export default function parseTTMLToLyrics(ttml) {
         body,
         oppositeAgents,
         transliterations,
-        transliterationPieces
+        transliterationPieces,
+        translations
       );
       if (parsed) parsedLines.push(parsed);
     }
@@ -427,4 +437,127 @@ export default function parseTTMLToLyrics(ttml) {
   if (hasSyllableTimings) return buildSyllableLyrics(parsedLines, songwriters);
   if (hasLineTimings) return buildLineLyrics(parsedLines, songwriters);
   return buildStaticLyrics(parsedLines, songwriters);
+}
+
+/**
+ * Escapes special XML characters in a string.
+ */
+function escapeXml(unsafe) {
+  return unsafe.replace(/[<>&"']/g, m => {
+    switch (m) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '"': return '&quot;';
+      case "'": return '&apos;';
+      default: return m;
+    }
+  });
+}
+
+/**
+ * Formats a number of seconds into a TTML timestamp (HH:MM:SS.mmm).
+ * @param {number} seconds 
+ * @returns {string}
+ */
+function formatTimestamp(seconds) {
+  if (seconds === null || seconds === undefined) return "00:00:00.000";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  const ms = Math.round((seconds % 1) * 1000);
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+}
+
+/**
+ * Converts structured lyrics data back into a TTML XML string.
+ * @param {object} data - Structured lyrics data
+ * @returns {string} TTML XML string
+ */
+export function generateTTML(data) {
+  let xml = `<?xml version="1.0" encoding="utf-8"?>\n`;
+  xml += `<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata" xmlns:itunes="http://apple.com/itunes/ttml" xmlns:amll="http://apple.com/itunes/amll" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n`;
+
+  // Head section
+  xml += `  <head>\n`;
+  xml += `    <metadata>\n`;
+
+  // Standard Apple Music agents
+  xml += `      <ttm:agent xml:id="v1" type="person" />\n`;
+  xml += `      <ttm:agent xml:id="v2" type="person" />\n`;
+
+  if (data.SongWriters && data.SongWriters.length > 0) {
+    data.SongWriters.forEach(writer => {
+      xml += `      <ttm:agent type="person" xml:id="writer_${writer.replace(/\s+/g, '_')}">\n`;
+      xml += `        <ttm:name type="full">${writer}</ttm:name>\n`;
+      xml += `      </ttm:agent>\n`;
+    });
+  }
+  xml += `    </metadata>\n`;
+  xml += `  </head>\n`;
+
+  // Body section
+  xml += `  <body>\n`;
+  xml += `    <div>\n`;
+
+  if (data.Type === "Syllable") {
+    data.Content.forEach(line => {
+      const begin = formatTimestamp(line.Lead.StartTime);
+      const end = formatTimestamp(line.Lead.EndTime);
+      const agent = line.OppositeAligned ? 'v2' : 'v1';
+      xml += `      <p begin="${begin}" end="${end}" ttm:agent="${agent}">\n`;
+
+      line.Lead.Syllables.forEach(s => {
+        const sBegin = formatTimestamp(s.StartTime);
+        const sEnd = formatTimestamp(s.EndTime);
+        xml += `<span begin="${sBegin}" end="${sEnd}">${escapeXml(s.Text).trim()}</span> `;
+      });
+      xml += `\n`;
+
+      if (line.Background) {
+        line.Background.forEach(bg => {
+          xml += `        <span ttm:role="x-bg">\n`;
+          bg.Syllables.forEach(s => {
+            const sBegin = formatTimestamp(s.StartTime);
+            const sEnd = formatTimestamp(s.EndTime);
+            xml += `<span begin="${sBegin}" end="${sEnd}">${escapeXml(s.Text).trim()}</span> `;
+          });
+          xml += `\n`;
+          xml += `        </span>\n`;
+        });
+      }
+
+      xml += `      </p>\n`;
+    });
+  } else if (data.Type === "Line") {
+    data.Content.forEach(line => {
+      const begin = formatTimestamp(line.StartTime);
+      const end = formatTimestamp(line.EndTime);
+      const agent = line.OppositeAligned ? 'v2' : 'v1';
+      xml += `      <p begin="${begin}" end="${end}" ttm:agent="${agent}">\n`;
+
+      // If it's Line sync, we just put the text.
+      // But if we want it to look like word sync without word sync (as per user's "guessed" request)
+      // we would use Syllable conversion first.
+      xml += `${escapeXml(line.Text)}`;
+
+      if (line.Background) {
+        line.Background.forEach(bg => {
+          xml += ` <span ttm:role="x-bg">(${escapeXml(bg.Syllables.map(s => s.Text).join(""))})</span>`;
+        });
+      }
+
+      xml += `</p>\n`;
+    });
+  } else if (data.Type === "Static") {
+    data.Lines.forEach(line => {
+      xml += `      <p>${escapeXml(line.Text)}</p>\n`;
+    });
+  }
+
+  xml += `    </div>\n`;
+  xml += `  </body>\n`;
+  xml += `</tt>`;
+
+  return xml;
 }

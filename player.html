@@ -144,6 +144,16 @@
       </div>
     </div>
 
+    <!-- Translation Toggle -->
+    <button class="translation-toggle" id="btn-translation" style="display: none;">
+      <span style="font-size: 13px;">文/A</span>
+      <span class="text">Translation: Off</span>
+    </button>
+    <!-- Romanization Toggle -->
+    <button class="romanization-toggle" id="btn-romanization" style="display: none;">
+      <span style="font-size: 13px;">A/あ</span>
+      <span class="text">Romanized: Off</span>
+    </button>
     <!-- Lyrics Source Badge -->
     <div class="lyrics-source-badge" id="lyrics-source-badge"></div>
   </div>
@@ -202,6 +212,8 @@
     const timeTotal = document.getElementById('time-total');
     const volumeSlider = document.getElementById('volume-slider');
     const sourceBadge = document.getElementById('lyrics-source-badge');
+    const btnRomanization = document.getElementById('btn-romanization');
+    const btnTranslation = document.getElementById('btn-translation');
 
     // ── State ──
     settingsManager.apply();
@@ -525,6 +537,44 @@
 
     function applyLyricsToUI(lyrics) {
       if (!lyrics) return;
+
+      // Check if Romanization is available
+      let hasRomanization = false;
+      let hasTranslation = false;
+      if (lyrics.Content) {
+        hasRomanization = lyrics.Content.some(line => {
+          if (line.RomanizedText) return true;
+          if (line.Lead && line.Lead.Syllables) {
+            return line.Lead.Syllables.some(s => s.RomanizedText);
+          }
+          return false;
+        });
+        hasTranslation = lyrics.Content.some(line => line.TranslatedText !== undefined);
+      } else if (lyrics.Lines) {
+        hasRomanization = lyrics.Lines.some(l => l.RomanizedText);
+        hasTranslation = lyrics.Lines.some(l => l.TranslatedText !== undefined);
+      }
+
+      const isRomanized = settingsManager.get("showRomanized");
+      const isTranslated = settingsManager.get("showTranslation");
+
+      if (btnRomanization) {
+        if (hasRomanization) {
+          btnRomanization.style.display = 'flex';
+          updateRomanizationBtnState(isRomanized);
+        } else {
+          btnRomanization.style.display = 'none';
+        }
+      }
+
+      if (btnTranslation) {
+        if (hasTranslation) {
+          btnTranslation.style.display = 'flex';
+          updateTranslationBtnState(isTranslated);
+        } else {
+          btnTranslation.style.display = 'none';
+        }
+      }
       
       let typeToRender = lyrics.Type;
       // Handle Force Word Sync redirection
@@ -697,6 +747,56 @@
           break;
         }
       }
+    };
+
+    function updateRomanizationBtnState(isRomanized) {
+      if (isRomanized) {
+        btnRomanization.classList.add('active');
+        btnRomanization.querySelector('.text').textContent = 'Romanized: On';
+      } else {
+        btnRomanization.classList.remove('active');
+        btnRomanization.querySelector('.text').textContent = 'Romanized: Off';
+      }
+    }
+
+    function updateTranslationBtnState(isTranslated) {
+      if (isTranslated) {
+        btnTranslation.classList.add('active');
+        btnTranslation.querySelector('.text').textContent = 'Translation: On';
+      } else {
+        btnTranslation.classList.remove('active');
+        btnTranslation.querySelector('.text').textContent = 'Translation: Off';
+      }
+    }
+
+    btnRomanization.onclick = () => {
+      const isRomanized = !settingsManager.get("showRomanized");
+      settingsManager.set("showRomanized", isRomanized);
+      
+      // Disable translation if romanization is on
+      if (isRomanized) {
+        settingsManager.set("showTranslation", false);
+        updateTranslationBtnState(false);
+      }
+
+      updateRomanizationBtnState(isRomanized);
+      if (parsedLyrics) applyLyricsToUI(parsedLyrics);
+      queueForceScroll();
+    };
+
+    btnTranslation.onclick = () => {
+      const isTranslated = !settingsManager.get("showTranslation");
+      settingsManager.set("showTranslation", isTranslated);
+      
+      // Disable romanization if translation is on
+      if (isTranslated) {
+        settingsManager.set("showRomanized", false);
+        updateRomanizationBtnState(false);
+      }
+
+      updateTranslationBtnState(isTranslated);
+      if (parsedLyrics) applyLyricsToUI(parsedLyrics);
+      queueForceScroll();
     };
 
     function updatePlayPauseIcon(playing) {

@@ -390,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let trendingCache = null;
   let albumsCache = null;
 
-  // Helper: fetch JSON from iTunes with automatic proxy fallback
+  /*
   async function itunesFetch(url) {
     // Strategy 1: Plain fetch (works in test.html)
     try {
@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     throw new Error('All fetch strategies failed for: ' + url);
-  }
+  }*/ // ehh
 
   async function fetchTrending() {
     if (trendingCache && albumsCache) {
@@ -430,17 +430,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      // Fetch songs first, then albums (sequential to reduce connection pressure)
-      const songsData = await itunesFetch('https://itunes.apple.com/search?term=pop&entity=song&limit=15');
+      const songsRes = await fetch(
+        "https://yxqo41-spicyamllserver.hf.space/api/itunessearch?term=pop&entity=song&limit=15"
+      );
+      if (!songsRes.ok) throw new Error(`holy shit ${songsRes.status}`);
+      const songsData = await songsRes.json();
+
       trendingCache = songsData.results;
       renderListenNow(trendingCache);
 
-      const albumsData = await itunesFetch('https://itunes.apple.com/search?term=2024&entity=album&limit=6');
+      const albumsRes = await fetch(
+        "https://yxqo41-spicyamllserver.hf.space/api/itunessearch?term=2024&entity=album&limit=6"
+      );
+      if (!albumsRes.ok) throw new Error(`holy shit ${albumsRes.status}`);
+      const albumsData = await albumsRes.json();
+
       albumsCache = albumsData.results;
       renderFeaturedAlbums(albumsCache);
+
     } catch (err) {
       console.error("Failed to fetch trending:", err);
-      if (trendingGrid) trendingGrid.innerHTML = `<div class="am-error-msg">Failed to load trending. Try refreshing.</div>`;
+      if (trendingGrid) {
+        trendingGrid.innerHTML = `<div class="am-error-msg">Failed to load trending. Try refreshing.</div>`;
+      }
     }
   }
 
@@ -524,7 +536,9 @@ document.addEventListener('DOMContentLoaded', () => {
     searchGrid.innerHTML = `<div class="am-loading-msg">Searching catalog...</div>`;
 
     try {
-      const data = await itunesFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=30`);
+      // const data = await itunesFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=30`);
+      const res = await fetch(`https://yxqo41-spicyamllserver.hf.space/api/itunessearch?term=${encodeURIComponent(query)}&entity=song&limit=30`);
+      const data = await res.json();
       renderSearchResults(data.results);
     } catch (err) {
       console.error("Search failed:", err);
@@ -986,7 +1000,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     try {
-      const data = await itunesFetch(`https://itunes.apple.com/lookup?id=${collectionId}&entity=song`);
+      // const data = await itunesFetch(`https://itunes.apple.com/lookup?id=${collectionId}&entity=song`);
+      const res = await fetch(`https://yxqo41-spicyamllserver.hf.space/api/ituneslookup?id=${collectionId}&entity=song`);
+      const data = await res.json();
       const tracks = data.results.filter(r => r.wrapperType === 'track');
       
       albumTracksGrid.innerHTML = tracks.map((t, idx) => `
@@ -1030,10 +1046,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
      try {
        // Search for artist top songs & albums
-       const data = await itunesFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(artistName)}&entity=song&limit=4`);
+       // const data = await itunesFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(artistName)}&entity=song&limit=4`);
+       const res = await fetch(`https://yxqo41-spicyamllserver.hf.space/api/itunessearch?term=${encodeURIComponent(artistName)}&entity=song&limit=4`);
+       const data = await res.json();
        const songs = data.results;
-       
-       const albData = await itunesFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(artistName)}&entity=album&limit=1`);
+
+       const albRes = await fetch(`https://yxqo41-spicyamllserver.hf.space/api/itunessearch?term=${encodeURIComponent(artistName)}&entity=album&limit=1`);
+       const albData = await albRes.json();
        const latestAlbum = albData.results[0];
 
        // For the UI we need an artist photo. 

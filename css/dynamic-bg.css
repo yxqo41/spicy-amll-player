@@ -20,6 +20,10 @@
 }
 
 
+.spicy-dynamic-bg.KawarpBackground {
+  filter: saturate(2.5) brightness(0.45);
+}
+
 .spicy-dynamic-bg.LegacyBackground {
   filter: saturate(1.8) brightness(0.7);
 }

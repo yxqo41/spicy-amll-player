@@ -393,7 +393,7 @@ function animateSyllable(position, deltaTime) {
         if (isSimpleMode) {
           if (wordActive) {
             // Subtle glow focus for simple mode
-            setStyleIfChanged(word.HTMLElement, "text-shadow", "0 0 10px rgba(255,255,255,0.4)", 0.1);
+            setStyleIfChanged(word.HTMLElement, "text-shadow", "0 0 10px color-mix(in srgb, rgba(var(--ArtworkGlowColor, 255, 255, 255), 0.4) 40%, rgba(255,255,255,0.4))", 0.1);
             setStyleIfChanged(word.HTMLElement, "opacity", "1", 0.01);
           } else {
             setStyleIfChanged(word.HTMLElement, "text-shadow", "none");
@@ -404,7 +404,7 @@ function animateSyllable(position, deltaTime) {
             word.Letters.forEach((letter, k) => {
               const letterState = getElementState(position, letter.StartTime, letter.EndTime);
               if (letterState === "Active") {
-                setStyleIfChanged(letter.HTMLElement, "text-shadow", "0 0 8px rgba(255,255,255,0.4)", 0.1);
+                setStyleIfChanged(letter.HTMLElement, "text-shadow", "0 0 8px color-mix(in srgb, rgba(var(--ArtworkGlowColor, 255, 255, 255), 0.4) 40%, rgba(255,255,255,0.4))", 0.1);
                 setStyleIfChanged(letter.HTMLElement, "opacity", "1", 0.01);
               } else {
                 setStyleIfChanged(letter.HTMLElement, "text-shadow", "none");
@@ -613,7 +613,7 @@ function animateLine(position, deltaTime) {
       if (wordEl) {
         if (isSimpleMode) {
           // Subtle glow focus for simple mode
-          setStyleIfChanged(wordEl, "text-shadow", "0 0 10px rgba(255,255,255,0.4)", 0.1);
+          setStyleIfChanged(wordEl, "text-shadow", "0 0 10px color-mix(in srgb, rgba(var(--ArtworkGlowColor, 255, 255, 255), 0.4) 40%, rgba(255,255,255,0.4))", 0.1);
           setStyleIfChanged(wordEl, "opacity", "1", 0.01);
         } else {
           wordEl.style.setProperty("--gradient-position", `${gradientPos}%`);

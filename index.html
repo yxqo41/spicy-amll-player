@@ -52,6 +52,12 @@
             </svg>
             <span>Testing DB</span>
           </li>
+          <li class="am-nav-item" data-page="download-ttml">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+            </svg>
+            <span>Download TTML</span>
+          </li>
           <li class="am-nav-item" data-page="upload">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
@@ -351,6 +357,65 @@
                 <button class="am-back-btn" id="playlist-back-btn">Back to Playlists</button>
              </div>
              <div class="playlist-tracks-grid" id="playlist-tracks-grid"></div>
+          </div>
+        </div>
+
+        <!-- ── Download TTML Page ── -->
+        <div id="page-download-ttml" class="am-page">
+          <div class="download-bg-glow"></div>
+          
+          <div class="premium-downloader-container">
+            <div class="glass-card premium-card">
+              <div class="downloader-header">
+                <div class="header-icon-wrapper">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                  </svg>
+                </div>
+                <h1 class="premium-title">TTML Downloader</h1>
+                <p class="premium-subtitle">Enter an Apple Music Song ID to extract high-fidelity synchronized lyrics.</p>
+              </div>
+
+              <div class="premium-input-group">
+                <div class="premium-search-box">
+                  <input type="text" id="ttml-song-id" placeholder="Paste Song ID (e.g. 1738734057)" autocomplete="off">
+                  <button id="fetch-ttml-btn" class="premium-btn primary">
+                    <span class="btn-text">Fetch Lyrics</span>
+                    <div class="btn-loader hidden"></div>
+                  </button>
+                </div>
+              </div>
+
+              <div id="ttml-result-preview" class="premium-result-view hidden">
+                <div class="result-backdrop"></div>
+                <div class="song-identity">
+                  <div class="art-pulse-wrapper">
+                     <img id="ttml-preview-art" src="" alt="Album Art">
+                  </div>
+                  <div class="song-details">
+                    <h2 id="ttml-preview-name">Song Name</h2>
+                    <p id="ttml-preview-artist">Artist Name</p>
+                    <div class="badge">Apple Music Lossless</div>
+                  </div>
+                </div>
+
+                <div class="code-stage">
+                  <div class="stage-header">
+                    <div class="dots"><span></span><span></span><span></span></div>
+                    <span class="stage-label">TTML SOURCE</span>
+                    <button id="download-ttml-file-btn" class="premium-btn secondary" disabled>
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="16"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                      Quick Download
+                    </button>
+                  </div>
+                  <div class="code-viewport">
+                    <pre id="ttml-code-block"></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div id="ttml-status" class="status-indicator"></div>
+            </div>
           </div>
         </div>
       </div>

@@ -5,7 +5,7 @@
  */
 import { robustFetch } from './network-utils.js';
 
-const DODSON_PROXY = 'https://clients.dodoapps.io/playlist-precis/playlist-artwork.php';
+const DODO_PROXY = 'https://clients.dodoapps.io/playlist-precis/playlist-artwork.php';
 
 /**
  * Search iTunes for an album and return the Apple Music collection URL.
@@ -16,12 +16,14 @@ const DODSON_PROXY = 'https://clients.dodoapps.io/playlist-precis/playlist-artwo
 async function searchiTunes(query) {
   try {
     const encoded = encodeURIComponent(query);
-    const res = await robustFetch(`https://itunes.apple.com/search?term=${encoded}&entity=album&limit=5`);
+    // Use Spicy AMLL Server as a proxy for iTunes search to avoid CORS issues on Netlify
+    const res = await fetch(`https://yxqo41-spicyamllserver.hf.space/api/itunessearch?term=${encoded}&entity=album&limit=5`);
     if (!res.ok) return null;
 
     const data = await res.json();
     if (!data.results || data.results.length === 0) return null;
 
+    // Return the collection URL for proxy extraction
     return data.results[0].collectionViewUrl || null;
   } catch (err) {
     console.warn('[AnimatedArt] iTunes search failed:', err);
@@ -40,7 +42,7 @@ async function fetchAnimatedArtUrl(appleMusicUrl) {
     params.append('url', appleMusicUrl);
     params.append('animation', 'true');
 
-    const res = await fetch(DODSON_PROXY, {
+    const res = await fetch(DODO_PROXY, {
       method: 'POST',
       body: params,
     });
@@ -48,9 +50,14 @@ async function fetchAnimatedArtUrl(appleMusicUrl) {
     if (!res.ok) return null;
 
     const data = await res.json();
-    return data.animatedUrl1080 || data.animatedUrl || null;
+    const videoUrl = data.animatedUrl1080 || data.animatedUrl;
+
+    if (videoUrl) {
+      console.log(`[AnimatedArt] Animated artwork obtained: ${videoUrl}`);
+    }
+    return videoUrl || null;
   } catch (err) {
-    console.warn('[AnimatedArt] Dodson proxy request failed:', err);
+    console.warn('[AnimatedArt] Dodo proxy request failed:', err);
     return null;
   }
 }

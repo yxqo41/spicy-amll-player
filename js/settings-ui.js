@@ -53,8 +53,8 @@ class SettingsUI {
 
     // Trigger open animation
     setTimeout(() => {
-        this.overlay.classList.add("active");
-        this.modal.classList.add("active");
+      this.overlay.classList.add("active");
+      this.modal.classList.add("active");
     }, 10);
   }
 
@@ -76,18 +76,20 @@ class SettingsUI {
     this.addGroup(container, "Appearance");
 
     this.addToggle(container, "Custom Font", "customFontEnabled", (val) => {
-        const fontInputRow = container.querySelector(".font-input-row");
-        if (fontInputRow) fontInputRow.style.display = val ? "flex" : "none";
+      const fontInputRow = container.querySelector(".font-input-row");
+      if (fontInputRow) fontInputRow.style.display = val ? "flex" : "none";
     });
 
     this.addInput(container, "Font name / URL", "customFont", "font-input-row", !settingsManager.get("customFontEnabled"));
-    
+
     this.addToggle(container, "Right Align Lyrics", "rightAlignLyrics");
+    this.addToggle(container, "AML Lyrics", "swipeLyrics");
     this.addToggle(container, "Minimal Mode (Fullscreen only)", "minimalLyricsMode");
-    
+
     this.addDropdown(container, "Syllable Rendering", "syllableRendering", ["Default", "Merge Words", "Reduce Splits"]);
     this.addDropdown(container, "Meme Format", "memeFormat", ["Off", "Weeb (・`ω´・)", "Gibberish (Wenomechainsama)"]);
     this.addToggle(container, "Simple Lyrics", "simpleLyricsMode");
+    this.addToggle(container, "AML Stagger Scrolling", "amlAnimation");
     this.addDropdown(container, "Release Year Position", "releaseYearPosition", ["Off", "Before Artist", "After Artist"]);
     this.addToggle(container, "Show Songwriters", "showSongwriters");
     this.addToggle(container, "Force Word Sync", "forceWordSync");
@@ -100,7 +102,7 @@ class SettingsUI {
 
     // --- Video Export ---
     this.addGroup(container, "Video Export (Beta)");
-    
+
     const exportBtn = document.createElement("button");
     exportBtn.className = "sl-btn";
     exportBtn.textContent = "Start Video Render";
@@ -108,38 +110,38 @@ class SettingsUI {
     exportBtn.style.background = "#30d15833";
     exportBtn.style.borderColor = "#30d15866";
     exportBtn.onclick = () => {
-        this.hide();
-        window.dispatchEvent(new CustomEvent("spicy-export-video"));
+      this.hide();
+      window.dispatchEvent(new CustomEvent("spicy-export-video"));
     };
-    
+
     this.addRow(container, "Export Movie", exportBtn);
 
     // --- Lyrics & Providers ---
     this.addGroup(container, "Lyrics Providers");
 
     this.addDropdown(container, "Preferred Language", "language", ["en-US", "zh-CN", "ja-JP", "es-ES", "ko-KR", "fr-FR"]);
-    
+
     const providerBtn = document.createElement("button");
     providerBtn.className = "sl-btn";
     providerBtn.textContent = "Manage Provider Order";
     providerBtn.style.marginTop = "10px";
     providerBtn.onclick = () => this.showProviderManager();
-    
+
     this.addRow(container, "Lyrics Sources", providerBtn);
 
     this.addToggle(container, "Ignore Musixmatch Word Sync", "ignoreMusixmatchWordSync");
     this.addToggle(container, "Prioritize Apple Music Quality", "prioritizeAppleMusicQuality");
-    
+
     this.addInput(container, "Musixmatch Token", "musixmatchToken");
     const tokenRow = container.querySelector(".sl-settings-row:last-child");
     if (tokenRow) {
-        tokenRow.querySelector("input").disabled = true;
-        tokenRow.querySelector("input").style.opacity = "0.6";
+      tokenRow.querySelector("input").disabled = true;
+      tokenRow.querySelector("input").style.opacity = "0.6";
     }
 
     // --- Audio Engine ---
     this.addGroup(container, "Audio Engine");
-    
+
     const eqBtn = document.createElement("button");
     eqBtn.className = "sl-btn";
     eqBtn.textContent = "Open Mixing Board (EQ)";
@@ -157,7 +159,7 @@ class SettingsUI {
     exportTTMLBtn.style.background = "rgba(48, 209, 88, 0.1)";
     exportTTMLBtn.style.borderColor = "rgba(48, 209, 88, 0.3)";
     exportTTMLBtn.onclick = () => this.handleTTMLExport(exportTTMLBtn);
-    
+
     this.addRow(container, "Lyrics Tools", exportTTMLBtn);
   }
 
@@ -237,11 +239,11 @@ class SettingsUI {
     const row = document.createElement("div");
     row.className = `sl-settings-row ${extraClass}`;
     if (hidden) row.style.display = "none";
-    
+
     const lbl = document.createElement("span");
     lbl.className = "sl-settings-label";
     lbl.textContent = label;
-    
+
     row.appendChild(lbl);
     row.appendChild(control);
     container.appendChild(row);
@@ -296,7 +298,7 @@ class SettingsUI {
     pmOverlay.className = "SpicyLyricsSettingsOverlay active";
     pmOverlay.style.zIndex = "10001";
     pmOverlay.onclick = () => pmOverlay.remove();
-    
+
     const pmModal = document.createElement("div");
     pmModal.className = "SpicyLyricsSettingsContainer active";
     pmModal.style.width = "90%";
@@ -474,7 +476,7 @@ class SettingsUI {
       freqLabel.style.fontSize = "9px";
       freqLabel.style.marginTop = "8px";
       freqLabel.style.opacity = "0.6";
-      freqLabel.textContent = freq >= 1000 ? `${freq/1000}k` : freq;
+      freqLabel.textContent = freq >= 1000 ? `${freq / 1000}k` : freq;
 
       slider.oninput = () => {
         valLabel.textContent = slider.value > 0 ? `+${slider.value}` : slider.value;

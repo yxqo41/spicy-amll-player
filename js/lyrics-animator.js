@@ -284,9 +284,11 @@ function animateSyllable(position, deltaTime) {
 
   // Pass 2: Heavy Animations (Windowed Optimization)
   const isSimpleMode = settingsManager.get("simpleLyricsMode");
+  const isAML = settingsManager.get("amlAnimation");
+  const isSwipe = settingsManager.get("swipeLyrics");
   
-  // Trigger staggered targets if active index changed (Simple Mode ONLY)
-  if (isSimpleMode && activeIdx !== -1 && activeIdx !== blurringLastLine) {
+  // Trigger staggered targets if active index changed (Simple Mode OR AML OR Swipe)
+  if ((isSimpleMode || isAML || isSwipe) && activeIdx !== -1 && activeIdx !== blurringLastLine) {
     updateStaggeredTargets(arr, activeIdx);
   }
 
@@ -298,8 +300,8 @@ function animateSyllable(position, deltaTime) {
   for (let index = startIdx; index < endIdx; index++) {
     const line = arr[index];
 
-    // Apply Line-level staggered animations (Simple Mode ONLY)
-    if (isSimpleMode && line.AnimatorStoreLine) {
+    // Apply Line-level staggered animations (Simple Mode OR AML OR Swipe)
+    if ((isSimpleMode || isAML || isSwipe) && line.AnimatorStoreLine) {
       const curY = line.AnimatorStoreLine.Y.Step(deltaTime);
       const curOp = line.AnimatorStoreLine.Opacity.Step(deltaTime);
       const curBlur = line.AnimatorStoreLine.Blur.Step(deltaTime);
@@ -312,9 +314,9 @@ function animateSyllable(position, deltaTime) {
     const lineActive = position >= line.StartTime && position <= line.EndTime;
     const lineSung = position > line.EndTime;
 
-    if (lineActive) {
+    if (lineActive || isSwipe) {
       if (blurringLastLine !== index) {
-        applyBlur(arr, index);
+        if (!isAML && !isSwipe) applyBlur(arr, index);
         blurringLastLine = index;
       }
 
@@ -325,6 +327,13 @@ function animateSyllable(position, deltaTime) {
         const wordActive = position >= word.StartTime && position <= word.EndTime;
         const wordSung = position > word.EndTime;
         const isDot = word.Dot;
+
+        if (isSwipe) {
+          const pct = getProgressPercentage(position, word.StartTime, word.EndTime);
+          const targetGradientPos = -20 + 120 * pct;
+          word.HTMLElement.style.setProperty("--gradient-position", `${targetGradientPos.toFixed(2)}%`);
+          continue;
+        }
 
         if (isDot) {
           // very spicy dot
@@ -553,6 +562,7 @@ function animateLine(position, deltaTime) {
   if (!arr.length) return;
 
   const isSimpleMode = settingsManager.get("simpleLyricsMode");
+  const isAML = settingsManager.get("amlAnimation");
   let activeIdx = -1;
   for (let i = 0; i < arr.length; i++) {
     const line = arr[i];
@@ -569,8 +579,8 @@ function animateLine(position, deltaTime) {
     if (isAct) activeIdx = i;
   }
 
-  // Trigger staggered targets if active index changed (Simple Mode ONLY)
-  if (isSimpleMode && activeIdx !== -1 && activeIdx !== blurringLastLine) {
+  // Trigger staggered targets if active index changed (Simple Mode OR AML)
+  if ((isSimpleMode || isAML) && activeIdx !== -1 && activeIdx !== blurringLastLine) {
     updateStaggeredTargets(arr, activeIdx);
     blurringLastLine = activeIdx;
   }
@@ -583,8 +593,8 @@ function animateLine(position, deltaTime) {
   for (let index = startIdx; index < endIdx; index++) {
     const line = arr[index];
 
-    // Apply Line-level staggered animations (Simple Mode ONLY)
-    if (isSimpleMode && line.AnimatorStoreLine) {
+    // Apply Line-level staggered animations (Simple Mode OR AML)
+    if ((isSimpleMode || isAML) && line.AnimatorStoreLine) {
       const curY = line.AnimatorStoreLine.Y.Step(deltaTime);
       const curOp = line.AnimatorStoreLine.Opacity.Step(deltaTime);
       const curBlur = line.AnimatorStoreLine.Blur.Step(deltaTime);
@@ -598,7 +608,7 @@ function animateLine(position, deltaTime) {
 
     if (lineActive) {
       if (blurringLastLine !== index) {
-        applyBlur(arr, index);
+        if (!isAML) applyBlur(arr, index);
         blurringLastLine = index;
       }
 

@@ -2,6 +2,8 @@ import { addTrackToQueue, clearQueue, setCurrentIndex, getPlaylists, createPlayl
 import { parseAudioMetadata } from './metadata-parser.js';
 import { getAnimatedArtwork } from './animated-art.js';
 import { robustFetch, fetchJson } from './network-utils.js';
+import { TTMLDownloader } from './ttml-downloader.js';
+import isRtl from './is-rtl.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const ttmlZone = document.getElementById('ttml-zone');
@@ -57,6 +59,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const playlistTracksGrid = document.getElementById('playlist-tracks-grid');
   const playlistBackBtn = document.getElementById('playlist-back-btn');
   const createPlaylistBtn = document.getElementById('create-playlist-btn');
+
+  // TTML Downloader Elements
+  const fetchTtmlBtn = document.getElementById('fetch-ttml-btn');
+  const ttmlSongIdInput = document.getElementById('ttml-song-id');
+  const ttmlResultContainer = document.getElementById('ttml-result-preview');
+  const ttmlPreviewName = document.getElementById('ttml-preview-name');
+  const ttmlPreviewArtist = document.getElementById('ttml-preview-artist');
+  const ttmlPreviewArt = document.getElementById('ttml-preview-art');
+  const ttmlCodeBlock = document.getElementById('ttml-code-block');
+  const ttmlStatus = document.getElementById('ttml-status');
+  const downloadTtmlBtn = document.getElementById('download-ttml-file-btn');
+
+  let currentFetchedTTML = null;
+  let currentFetchedSong = null;
 
   let contextMenuTrack = null;
 
@@ -383,8 +399,90 @@ document.addEventListener('DOMContentLoaded', () => {
       if (pageId === 'playlists') renderPlaylistsPage();
       if (pageId === 'songs') renderFavoritesPage();
       if (pageId === 'recent') renderRecentPage();
+      if (pageId === 'download-ttml') {
+        if (ttmlSongIdInput) ttmlSongIdInput.value = '';
+        if (ttmlResultContainer) ttmlResultContainer.classList.add('hidden');
+        if (ttmlStatus) {
+           ttmlStatus.textContent = '';
+           ttmlStatus.className = 'status-indicator';
+        }
+      }
     });
   });
+
+  // ── TTML Downloader Logic (V2) ──
+  if (fetchTtmlBtn) {
+    const btnText = fetchTtmlBtn.querySelector('.btn-text');
+    const btnLoader = fetchTtmlBtn.querySelector('.btn-loader');
+
+    fetchTtmlBtn.onclick = async () => {
+      const songId = ttmlSongIdInput.value.trim();
+      if (!songId) {
+        ttmlStatus.textContent = 'Please enter a valid Song ID.';
+        ttmlStatus.className = 'status-indicator error';
+        return;
+      }
+
+      // Start Loading State
+      fetchTtmlBtn.disabled = true;
+      if (btnText) btnText.textContent = 'Searching...';
+      if (btnLoader) btnLoader.classList.remove('hidden');
+      
+      ttmlStatus.textContent = '';
+      ttmlStatus.className = 'status-indicator';
+      ttmlResultContainer.classList.add('hidden');
+      downloadTtmlBtn.disabled = true;
+
+      try {
+        // 1. Fetch Metadata
+        const metadata = await TTMLDownloader.fetchMetadata(songId);
+        currentFetchedSong = metadata;
+        
+        ttmlPreviewName.textContent = metadata.name;
+        if (isRtl(metadata.name)) ttmlPreviewName.classList.add('rtl');
+        else ttmlPreviewName.classList.remove('rtl');
+
+        ttmlPreviewArtist.textContent = metadata.artist;
+        if (isRtl(metadata.artist)) ttmlPreviewArtist.classList.add('rtl');
+        else ttmlPreviewArtist.classList.remove('rtl');
+
+        ttmlPreviewArt.src = metadata.artUrl;
+        
+        if (btnText) btnText.textContent = 'Extracting TTML...';
+
+        // 2. Fetch TTML
+        const ttml = await TTMLDownloader.fetchTTML(songId);
+        if (!ttml) throw new Error('No TTML content available for this ID.');
+        
+        currentFetchedTTML = ttml;
+        ttmlCodeBlock.textContent = ttml;
+        
+        // 3. Success State
+        ttmlResultContainer.classList.remove('hidden');
+        downloadTtmlBtn.disabled = false;
+        ttmlStatus.textContent = 'Lyrics successfully extracted!';
+        ttmlStatus.className = 'status-indicator success';
+        
+      } catch (err) {
+        console.error('[Downloader] Error:', err);
+        ttmlStatus.textContent = err.message;
+        ttmlStatus.className = 'status-indicator error';
+      } finally {
+        fetchTtmlBtn.disabled = false;
+        if (btnText) btnText.textContent = 'Fetch Lyrics';
+        if (btnLoader) btnLoader.classList.add('hidden');
+      }
+    };
+  }
+
+  if (downloadTtmlBtn) {
+    downloadTtmlBtn.onclick = () => {
+      if (!currentFetchedTTML || !currentFetchedSong) return;
+      
+      const filename = `${currentFetchedSong.name} - ${currentFetchedSong.artist}.ttml`;
+      TTMLDownloader.download(filename, currentFetchedTTML);
+    };
+  }
 
   // ── Listen Now / Trending Logic ──
   let trendingCache = null;
@@ -528,6 +626,15 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Handle /songid command
+    if (query.startsWith('/songid ')) {
+      const id = query.replace('/songid ', '').trim();
+      if (id && /^\d+$/.test(id)) {
+        loadTrackById(id);
+        return;
+      }
+    }
+
     listenInitialContent.style.display = 'none';
     albumViewContainer.classList.add('hidden');
     artistViewContainer.classList.add('hidden');
@@ -608,7 +715,8 @@ document.addEventListener('DOMContentLoaded', () => {
         album: song.collectionName,
         artUrl: song.artworkUrl100.replace('100x100', '600x600'),
         type: isMP4Buffer(audioBuffer) ? 'audio/mp4' : 'audio/mpeg',
-        ttml: '__AUTO_FETCH__'
+        ttml: '__AUTO_FETCH__',
+        amTrackId: song.trackId
       };
 
       // Enrich with parser data if possible (e.g. if the file has better internal tags)
@@ -631,6 +739,32 @@ document.addEventListener('DOMContentLoaded', () => {
       const serverUrl = `https://yxqo41-spicyamllserver.hf.space/api/downloadam?song=${song.trackId}`;
       const msg = `Failed to load track. This often happens if the server is 'sleeping'.\n\nTry clicking OK, then opening this link once to wake it up:\n${serverUrl}\n\nError: ${err.message}`;
       alert(msg);
+    }
+  }
+
+  async function loadTrackById(id) {
+    if (!prepOverlay) return;
+    
+    prepOverlay.classList.add('active');
+    prepStatus.textContent = "Fetching metadata...";
+    
+    try {
+      // Use search as a fallback if lookup isn't explicitly known
+      const res = await fetch(`https://yxqo41-spicyamllserver.hf.space/api/itunessearch?term=${id}&limit=1`);
+      if (!res.ok) throw new Error("Catalog server unreachable");
+      const data = await res.json();
+      
+      if (data.results && data.results.length > 0) {
+        // Try to find exact ID match in case of fuzzy search
+        const song = data.results.find(s => s.trackId == id) || data.results[0];
+        loadRemoteTrack(song);
+      } else {
+        throw new Error("Track ID not found in catalog");
+      }
+    } catch (err) {
+      console.error("[ID Loader] Failed:", err);
+      prepOverlay.classList.remove('active');
+      alert(`Could not load track ${id}: ${err.message}`);
     }
   }
 
@@ -876,7 +1010,8 @@ document.addEventListener('DOMContentLoaded', () => {
          artist: track.artistName,
          artUrl: track.artworkUrl100.replace('100x100', '600x600'),
          type: isMP4Buffer(audioBuffer) ? 'audio/mp4' : 'audio/mpeg',
-         ttml: '__AUTO_FETCH__'
+         ttml: '__AUTO_FETCH__',
+         amTrackId: track.trackId
        }, audioBuffer);
        prepOverlay.classList.remove('active');
      } catch (err) {
@@ -1188,6 +1323,18 @@ document.addEventListener('DOMContentLoaded', () => {
      var minutes = Math.floor(millis / 60000);
      var seconds = ((millis % 60000) / 1000).toFixed(0);
      return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+  }
+
+  // ── URL ID Detection (Quick Init) ──
+  const pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html' && p !== 'player.html');
+  const queryParams = new URLSearchParams(window.location.search);
+  const hashId = window.location.hash.replace('#', '').trim();
+  const potentialId = pathParts[0] || queryParams.get('id') || (hashId && /^\d+$/.test(hashId) ? hashId : null);
+
+  if (potentialId && /^\d+$/.test(potentialId)) {
+     console.log("[AutoInit] Detected potential song ID in URL:", potentialId);
+     // Use a small delay to ensure all UI elements are ready
+     setTimeout(() => loadTrackById(potentialId), 500);
   }
 
 });

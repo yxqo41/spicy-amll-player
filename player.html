@@ -181,6 +181,8 @@
     import { MediaSessionManager } from './js/media-session.js';
 
 
+    import isRtl from './js/is-rtl.js';
+
     // ── Elements ──
     const lyricsContent = document.getElementById('lyrics-content');
     const lyricsNotice = document.getElementById('lyrics-notice');
@@ -392,7 +394,7 @@
               showNotice("Failed to parse local lyrics");
             }
           } else {
-            autoFetchLyrics(songMetadata);
+            autoFetchLyrics(songMetadata, track.amTrackId);
           }
 
           if (settingsManager.get('showSongwriters')) {
@@ -439,11 +441,18 @@
       if (metadata.title) {
         songNameEl.querySelector('span').textContent = metadata.title;
         document.title = `Spicy AMLL Player — ${metadata.title}`;
+        
+        if (isRtl(metadata.title)) songNameEl.classList.add('rtl');
+        else songNameEl.classList.remove('rtl');
       }
       if (metadata.artist) {
         const yearStr = (metadata.year && settingsManager.get("releaseYearPosition") !== "Off") ? metadata.year : "";
         const yearPos = settingsManager.get("releaseYearPosition");
-        artistsEl.textContent = yearStr ? (yearPos === "Before Artist" ? `${yearStr} • ${metadata.artist}` : `${metadata.artist} • ${yearStr}`) : metadata.artist;
+        const artistText = yearStr ? (yearPos === "Before Artist" ? `${yearStr} • ${metadata.artist}` : `${metadata.artist} • ${yearStr}`) : metadata.artist;
+        artistsEl.textContent = artistText;
+
+        if (isRtl(metadata.artist)) artistsEl.classList.add('rtl');
+        else artistsEl.classList.remove('rtl');
       }
       
       if (metadata.artUrl) {
@@ -466,12 +475,16 @@
       mediaSessionManager.updateMetadata(metadata.title, metadata.artist, metadata.album, metadata.artUrl);
     }
 
-    async function autoFetchLyrics(metadata) {
+    async function autoFetchLyrics(metadata, amTrackId = null) {
       showNotice('🔍 Searching for lyrics...');
       try {
         const durationSec = player.duration / 1000 || 0;
-        const result = await retrieveTTML(metadata.title, metadata.artist, metadata.album, durationSec);
+        const result = await retrieveTTML(metadata.title, metadata.artist, metadata.album, durationSec, amTrackId);
         if (result && result.lyricsData) {
+          // Attach maker metadata for the credits renderer
+          result.lyricsData.makerHandle = result.makerHandle;
+          result.lyricsData.makerId = result.makerId;
+          
           parsedLyrics = cleanLyricsData(result.lyricsData);
           applyLyricsToUI(parsedLyrics);
           if (sourceBadge) {

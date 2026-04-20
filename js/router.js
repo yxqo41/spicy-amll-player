@@ -65,6 +65,7 @@ export async function addTrackToQueue(buffer, metadata) {
       artUrl: metadata.artUrl || null,
       type: metadata.type,
       ttml: metadata.ttml || null,
+      amTrackId: metadata.amTrackId || null,
       sortOrder: nextOrder,
       addedAt: Date.now()
     });
@@ -265,6 +266,7 @@ export async function addTrackToPlaylist(playlistId, metadata, buffer) {
       artUrl: metadata.artUrl || null,
       type: metadata.type,
       ttml: metadata.ttml || null,
+      amTrackId: metadata.amTrackId || null,
       buffer: buffer, // For simplicity storing binary directly here
       addedAt: Date.now()
     });

@@ -288,6 +288,7 @@
   direction: rtl !important;
   unicode-bidi: isolate !important;
   transform-origin: center center !important;
+  font-weight: 1000 !important;
 }
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl.OppositeAligned {
@@ -298,6 +299,7 @@
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl .letter {
   --gradient-degrees: -90deg !important;
   transform-origin: center center;
+  font-weight: 1000 !important;
 }
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.rtl :is(.word, .letterGroup).PartOfWord {
@@ -494,17 +496,51 @@
    ═══════════════════════════════════════════════ */
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .Credits {
-  --font-size: calc(var(--DefaultLyricsSize) * 0.42);
+  --font-size: calc(var(--DefaultLyricsSize) * 0.4);
   font-weight: 500 !important;
   font-size: var(--font-size) !important;
-  opacity: 0.45;
-  margin: 4cqw 0 0 !important;
-  scale: 1;
-  color: white;
+  margin: 8cqw 0 0 !important;
+  color: rgba(255, 255, 255, 0.7);
   text-align: center;
   width: 100%;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 2cqw;
+  padding-top: 4cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5cqw;
+}
+
+#SpicyLyricsPage .LyricsContainer .LyricsContent .CreditLine {
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+#SpicyLyricsPage .LyricsContainer .LyricsContent .CreditNotice {
+  opacity: 0.4;
+  font-size: 0.85em;
+  margin-top: 1cqw;
+  font-weight: 400 !important;
+}
+
+#SpicyLyricsPage .LyricsContainer .LyricsContent .MakerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4cqw;
+}
+
+#SpicyLyricsPage .LyricsContainer .LyricsContent .maker-link {
+  color: #fff;
+  text-decoration: none;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.9;
+  cursor: pointer;
+}
+
+#SpicyLyricsPage .LyricsContainer .LyricsContent .maker-link:hover {
+  opacity: 1;
+  border-bottom-color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .SongInfo {

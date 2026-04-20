@@ -11,8 +11,8 @@
 @font-face {
   font-family: 'SF Pro';
   src: url('../fonts/sfpro.woff2') format('woff2'),
-       url('../fonts/sfpro.ttf') format('truetype');
-  font-weight: 100 900;
+    url('../fonts/sfpro.ttf') format('truetype');
+  font-weight: 100 1200;
   font-style: normal;
   font-display: swap;
 }
@@ -20,8 +20,8 @@
 @font-face {
   font-family: 'SF Arabic';
   src: url('../fonts/sfarabic.woff2') format('woff2'),
-       url('../fonts/sfarabic.ttf') format('truetype');
-  font-weight: 100 900;
+    url('../fonts/sfarabic.ttf') format('truetype');
+  font-weight: 100 1200;
   font-style: normal;
   font-display: swap;
 }

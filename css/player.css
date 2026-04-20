@@ -19,7 +19,7 @@
   user-select: none;
   -webkit-user-drag: none;
   opacity: 1;
-  font-family: Inter, "Noto Sans Georgian", "Vazirmatn", sans-serif;
+  font-family: var(--spicy-font-family);
   --ArtworkGlowColor: 255, 255, 255;
 }
 
@@ -151,6 +151,10 @@
   text-overflow: ellipsis;
 }
 
+#SpicyLyricsPage .ContentBox .NowBar .Header .Metadata .SongName.rtl {
+  font-weight: 1000 !important;
+}
+
 #SpicyLyricsPage .ContentBox .NowBar .Header .Metadata .Artists {
   font-weight: 500;
   font-size: 1rem;
@@ -158,6 +162,10 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+#SpicyLyricsPage .ContentBox .NowBar .Header .Metadata .Artists.rtl {
+  font-weight: 1000 !important;
 }
 
 .queue-button,

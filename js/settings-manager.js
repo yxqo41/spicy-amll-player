@@ -48,6 +48,7 @@ class SettingsManager {
       settingsOnTop: true,
       lyricsRenderer: "Spicy",
       simpleLyricsMode: false,
+      amlAnimation: false,
       minimalLyricsMode: false,
       syllableRendering: "Default", // Default, Merge Words
       staticBackground: false,
@@ -55,6 +56,7 @@ class SettingsManager {
       hide_npv_bg: false,
       coverArtAnimation: true,
       rightAlignLyrics: false,
+      swipeLyrics: false,
       customFontEnabled: false,
       customFont: "",
       lyricsSourceOrder: [...DEFAULT_LYRICS_SOURCE_ORDER],

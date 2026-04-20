@@ -393,12 +393,7 @@ export function applySyllableLyrics(data, lyricsContentEl) {
   });
 
   // Credits
-  if (data.SongWriters && data.SongWriters.length > 0) {
-    const credits = document.createElement("div");
-    credits.classList.add("Credits");
-    credits.textContent = "Written by: " + data.SongWriters.join(", ");
-    container.appendChild(credits);
-  }
+  renderCredits(data, container);
 
   // Add spacer for centering
   const spacer = document.createElement("div");
@@ -569,12 +564,8 @@ export function applyLineLyrics(data, lyricsContentEl) {
     }
   });
 
-  if (data.SongWriters && data.SongWriters.length > 0) {
-    const credits = document.createElement("div");
-    credits.classList.add("Credits");
-    credits.textContent = "Written by: " + data.SongWriters.join(", ");
-    container.appendChild(credits);
-  }
+  // Credits
+  renderCredits(data, container);
 
   // Add spacer for centering
   const spacer = document.createElement("div");
@@ -616,12 +607,8 @@ export function applyStaticLyrics(data, lyricsContentEl) {
     container.appendChild(lineElem);
   });
 
-  if (data.SongWriters && data.SongWriters.length > 0) {
-    const credits = document.createElement("div");
-    credits.classList.add("Credits");
-    credits.textContent = "Written by: " + data.SongWriters.join(", ");
-    container.appendChild(credits);
-  }
+  // Credits
+  renderCredits(data, container);
 
   // Add spacer for centering
   const spacer = document.createElement("div");
@@ -631,6 +618,54 @@ export function applyStaticLyrics(data, lyricsContentEl) {
   lyricsContentEl.innerHTML = "";
   lyricsContentEl.appendChild(container);
   return container;
+}
+
+/**
+ * Renders credits for songwriters and TTML makers.
+ */
+function renderCredits(data, container) {
+  const hasSongWriters = data.SongWriters && data.SongWriters.length > 0;
+  const hasMaker = data.makerHandle && data.makerId;
+
+  if (!hasSongWriters && !hasMaker) return;
+
+  const creditsContainer = document.createElement("div");
+  creditsContainer.classList.add("Credits");
+
+  if (hasSongWriters) {
+    const songwriters = document.createElement("div");
+    songwriters.classList.add("CreditLine", "Songwriters");
+    songwriters.textContent = "Written by: " + data.SongWriters.join(", ");
+    creditsContainer.appendChild(songwriters);
+  }
+
+  if (hasMaker) {
+    const makerSection = document.createElement("div");
+    makerSection.classList.add("MakerSection");
+
+    const communityHeader = document.createElement("div");
+    communityHeader.classList.add("CreditNotice");
+    communityHeader.textContent = "These lyrics have been provided by our community";
+    makerSection.appendChild(communityHeader);
+
+    const makerCredits = document.createElement("div");
+    makerCredits.classList.add("CreditLine", "TTMLMaker");
+    
+    const label = document.createTextNode("Made and Uploaded by ");
+    const link = document.createElement("a");
+    link.href = `https://discord.com/users/${data.makerId}`;
+    link.target = "_blank";
+    link.classList.add("maker-link");
+    link.textContent = data.makerHandle;
+    
+    makerCredits.appendChild(label);
+    makerCredits.appendChild(link);
+    makerSection.appendChild(makerCredits);
+    
+    creditsContainer.appendChild(makerSection);
+  }
+
+  container.appendChild(creditsContainer);
 }
 
 /**

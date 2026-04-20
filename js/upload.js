@@ -488,6 +488,25 @@ document.addEventListener('DOMContentLoaded', () => {
   let trendingCache = null;
   let albumsCache = null;
 
+  // ── iTunes Search to Apple Music API Mapper ──
+  function mapSearchAmToItunes(item) {
+    if (!item || !item.attributes) return item;
+    const attr = item.attributes;
+    const artUrl = attr.artwork?.url ? attr.artwork.url.replace(/{w}/g, '100').replace(/{h}/g, '100') : '';
+    return {
+      wrapperType: item.type === 'songs' ? 'track' : 'collection',
+      trackId: item.id,
+      collectionId: item.id,
+      trackName: attr.name,
+      artistName: attr.artistName,
+      collectionName: attr.albumName || attr.name,
+      artworkUrl100: artUrl,
+      releaseDate: attr.releaseDate,
+      trackCount: attr.trackCount || 0,
+      url: attr.url
+    };
+  }
+
   /*
   async function itunesFetch(url) {
     // Strategy 1: Plain fetch (works in test.html)
@@ -529,21 +548,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const songsRes = await fetch(
-        "https://yxqo41-spicyamllserver.hf.space/api/itunessearch?term=pop&entity=song&limit=15"
+        "https://yxqo41-spicyamllserver.hf.space/api/searcham?term=pop&types=songs&limit=15"
       );
       if (!songsRes.ok) throw new Error(`holy shit ${songsRes.status}`);
       const songsData = await songsRes.json();
 
-      trendingCache = songsData.results;
+      trendingCache = songsData.results?.songs?.data?.map(mapSearchAmToItunes) || [];
       renderListenNow(trendingCache);
 
       const albumsRes = await fetch(
-        "https://yxqo41-spicyamllserver.hf.space/api/itunessearch?term=2024&entity=album&limit=6"
+        "https://yxqo41-spicyamllserver.hf.space/api/searcham?term=2024&types=albums&limit=6"
       );
       if (!albumsRes.ok) throw new Error(`holy shit ${albumsRes.status}`);
       const albumsData = await albumsRes.json();
 
-      albumsCache = albumsData.results;
+      albumsCache = albumsData.results?.albums?.data?.map(mapSearchAmToItunes) || [];
       renderFeaturedAlbums(albumsCache);
 
     } catch (err) {
@@ -643,10 +662,10 @@ document.addEventListener('DOMContentLoaded', () => {
     searchGrid.innerHTML = `<div class="am-loading-msg">Searching catalog...</div>`;
 
     try {
-      // const data = await itunesFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=30`);
-      const res = await fetch(`https://yxqo41-spicyamllserver.hf.space/api/itunessearch?term=${encodeURIComponent(query)}&entity=song&limit=30`);
+      // const data = await itunesFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=25`);
+      const res = await fetch(`https://yxqo41-spicyamllserver.hf.space/api/searcham?term=${encodeURIComponent(query)}&types=songs&limit=25`);
       const data = await res.json();
-      renderSearchResults(data.results);
+      renderSearchResults(data.results?.songs?.data?.map(mapSearchAmToItunes) || []);
     } catch (err) {
       console.error("Search failed:", err);
       searchGrid.innerHTML = `<div class="am-error-msg">Search failed. Check your connection.</div>`;
@@ -750,13 +769,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
     try {
       // Use search as a fallback if lookup isn't explicitly known
-      const res = await fetch(`https://yxqo41-spicyamllserver.hf.space/api/itunessearch?term=${id}&limit=1`);
+      const res = await fetch(`https://yxqo41-spicyamllserver.hf.space/api/searcham?term=${id}&types=songs&limit=1`);
       if (!res.ok) throw new Error("Catalog server unreachable");
       const data = await res.json();
       
-      if (data.results && data.results.length > 0) {
+      const mappedResults = data.results?.songs?.data?.map(mapSearchAmToItunes) || [];
+      if (mappedResults && mappedResults.length > 0) {
         // Try to find exact ID match in case of fuzzy search
-        const song = data.results.find(s => s.trackId == id) || data.results[0];
+        const song = mappedResults.find(s => s.trackId == id) || mappedResults[0];
         loadRemoteTrack(song);
       } else {
         throw new Error("Track ID not found in catalog");

@@ -17,14 +17,15 @@ async function searchiTunes(query) {
   try {
     const encoded = encodeURIComponent(query);
     // Use Spicy AMLL Server as a proxy for iTunes search to avoid CORS issues on Netlify
-    const res = await fetch(`https://yxqo41-spicyamllserver.hf.space/api/itunessearch?term=${encoded}&entity=album&limit=5`);
+    const res = await fetch(`https://yxqo41-spicyamllserver.hf.space/api/searcham?term=${encoded}&types=albums&limit=5`);
     if (!res.ok) return null;
 
     const data = await res.json();
-    if (!data.results || data.results.length === 0) return null;
+    const albums = data.results?.albums?.data;
+    if (!albums || albums.length === 0) return null;
 
     // Return the collection URL for proxy extraction
-    return data.results[0].collectionViewUrl || null;
+    return albums[0].attributes?.url || null;
   } catch (err) {
     console.warn('[AnimatedArt] iTunes search failed:', err);
     return null;

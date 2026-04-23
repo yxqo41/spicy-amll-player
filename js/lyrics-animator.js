@@ -37,7 +37,7 @@ const DotAnimations = {
   GlowFrequency: 1,
   OpacityDamping: 0.5,
   OpacityFrequency: 1,
-  
+
   ScaleRange: [
     { Time: 0, Value: 0.75 },
     { Time: 0.7, Value: 1.05 },
@@ -54,7 +54,7 @@ const DotAnimations = {
     { Time: 1, Value: 1 },
   ],
   OpacityRange: [
-    { Time: 0, Value: 0.35 }, 
+    { Time: 0, Value: 0.35 },
     { Time: 0.6, Value: 1 },
     { Time: 1, Value: 1 },
   ],
@@ -77,7 +77,7 @@ const YOffsetDamping = 0.4, YOffsetFrequency = 1.25;
 const ScaleDamping = 0.6, ScaleFrequency = 0.7;
 const GlowDamping = 0.5, GlowFrequency = 1;
 const BlurMultiplier = 2.5;
-const LetterGlowMultiplier_Opacity = 230;
+const LetterGlowMultiplier_Opacity = 140;
 
 const SimpleLyricsMode_LetterEffectsStrengthConfig = {
   LongerThan: 1500,
@@ -286,7 +286,7 @@ function animateSyllable(position, deltaTime) {
   const isSimpleMode = settingsManager.get("simpleLyricsMode");
   const isAML = settingsManager.get("amlAnimation");
   const isSwipe = settingsManager.get("swipeLyrics");
-  
+
   // Trigger staggered targets if active index changed (Simple Mode OR AML OR Swipe)
   if ((isSimpleMode || isAML || isSwipe) && activeIdx !== -1 && activeIdx !== blurringLastLine) {
     updateStaggeredTargets(arr, activeIdx);
@@ -393,7 +393,7 @@ function animateSyllable(position, deltaTime) {
           setStyleIfChanged(
             word.HTMLElement,
             "--text-shadow-opacity",
-            `${curGlow * 90}%`,
+            `${curGlow * 20}%`,
             1
           );
           continue;
@@ -402,18 +402,18 @@ function animateSyllable(position, deltaTime) {
         if (isSimpleMode) {
           if (wordActive) {
             // Subtle glow focus for simple mode
-            setStyleIfChanged(word.HTMLElement, "text-shadow", "0 0 10px color-mix(in srgb, rgba(var(--ArtworkGlowColor, 255, 255, 255), 0.4) 40%, rgba(255,255,255,0.4))", 0.1);
+            setStyleIfChanged(word.HTMLElement, "text-shadow", "0 0 10px color-mix(in srgb, rgba(var(--ArtworkGlowColor, 255, 255, 255), 0.264) 40%, rgba(255,255,255,0.264))", 0.1);
             setStyleIfChanged(word.HTMLElement, "opacity", "1", 0.01);
           } else {
             setStyleIfChanged(word.HTMLElement, "text-shadow", "none");
             setStyleIfChanged(word.HTMLElement, "opacity", "0.5", 0.01);
           }
-          
+
           if (word.LetterGroup && word.Letters) {
             word.Letters.forEach((letter, k) => {
               const letterState = getElementState(position, letter.StartTime, letter.EndTime);
               if (letterState === "Active") {
-                setStyleIfChanged(letter.HTMLElement, "text-shadow", "0 0 8px color-mix(in srgb, rgba(var(--ArtworkGlowColor, 255, 255, 255), 0.4) 40%, rgba(255,255,255,0.4))", 0.1);
+                setStyleIfChanged(letter.HTMLElement, "text-shadow", "0 0 8px color-mix(in srgb, rgba(var(--ArtworkGlowColor, 255, 255, 255), 0.264) 40%, rgba(255,255,255,0.264))", 0.1);
                 setStyleIfChanged(letter.HTMLElement, "opacity", "1", 0.01);
               } else {
                 setStyleIfChanged(letter.HTMLElement, "text-shadow", "none");
@@ -465,7 +465,7 @@ function animateSyllable(position, deltaTime) {
         setStyleIfChanged(word.HTMLElement, "scale", `${curScale.toFixed(4)}`);
         setStyleIfChanged(word.HTMLElement, "transform",
           `translate3d(0, calc(var(--DefaultLyricsSize) * ${curYOffset.toFixed(4)}), 0)`);
-        
+
         if (!word.LetterGroup) {
           word.HTMLElement.style.setProperty("--gradient-position", `${targetGradientPos.toFixed(2)}%`);
           setStyleIfChanged(word.HTMLElement, "--text-shadow-blur-radius",
@@ -500,7 +500,7 @@ function animateSyllable(position, deltaTime) {
             }
 
             const lstate = getElementState(position, letter.StartTime, letter.EndTime);
-            
+
             let falloffY = 0;
             let falloffGlow = 0;
             if (activeLetterIndex !== -1) {
@@ -542,7 +542,7 @@ function animateSyllable(position, deltaTime) {
             setStyleIfChanged(letter.HTMLElement, "scale", `${cs.toFixed(4)}`);
             setStyleIfChanged(letter.HTMLElement, "transform",
               `translate3d(0, calc(var(--DefaultLyricsSize) * ${(cy * 2.5).toFixed(4)}), 0)`);
-            
+
             letter.HTMLElement.style.setProperty("--gradient-position", `${tgp.toFixed(2)}%`);
 
             setStyleIfChanged(letter.HTMLElement, "--text-shadow-blur-radius",
@@ -623,7 +623,7 @@ function animateLine(position, deltaTime) {
       if (wordEl) {
         if (isSimpleMode) {
           // Subtle glow focus for simple mode
-          setStyleIfChanged(wordEl, "text-shadow", "0 0 10px color-mix(in srgb, rgba(var(--ArtworkGlowColor, 255, 255, 255), 0.4) 40%, rgba(255,255,255,0.4))", 0.1);
+          setStyleIfChanged(wordEl, "text-shadow", "0 0 10px color-mix(in srgb, rgba(var(--ArtworkGlowColor, 255, 255, 255), 0.264) 40%, rgba(255,255,255,0.264))", 0.1);
           setStyleIfChanged(wordEl, "opacity", "1", 0.01);
         } else {
           wordEl.style.setProperty("--gradient-position", `${gradientPos}%`);
@@ -636,7 +636,7 @@ function animateLine(position, deltaTime) {
       if (line.DotLine && line.Syllables?.Lead) {
         for (let i = 0; i < line.Syllables.Lead.length; i++) {
           const dot = line.Syllables.Lead[i];
-          
+
           if (!dot.AnimatorStore) {
             dot.AnimatorStore = createDotSprings();
             dot.AnimatorStore.Scale.SetGoal(DotScaleSpline.at(0), true);
@@ -696,7 +696,7 @@ function animateLine(position, deltaTime) {
           setStyleIfChanged(
             dot.HTMLElement,
             "--text-shadow-opacity",
-            `${currentGlow * 90}%`,
+            `${currentGlow * 20}%`,
             1
           );
         }

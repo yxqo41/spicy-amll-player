@@ -158,7 +158,7 @@
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.NotSung,
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.NotSung .word,
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.NotSung .letter {
-  text-shadow: 0 0 var(--BlurAmount, 0) rgba(var(--gradient-color), var(--gradient-color), var(--gradient-color), calc(var(--gradient-alpha-end) * 0.83));
+  text-shadow: 0 0 var(--BlurAmount, 0) rgba(var(--gradient-color), var(--gradient-color), var(--gradient-color), calc(var(--gradient-alpha-end) * 0.55));
 }
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.NotSung {
@@ -169,7 +169,7 @@
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.NotSung .word,
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.NotSung .letter {
   --text-shadow-blur-radius: 4px !important;
-  --text-shadow-opacity: 0% !important;
+  --text-shadow-opacity: -30% !important;
   --gradient-position: -20% !important;
 }
 
@@ -178,7 +178,7 @@
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.Sung .word,
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.Sung .letter,
 #SpicyLyricsPage .LyricsContainer .LyricsContent .SpicyLyricsScrollContainer[data-lyrics-type="Static"] .line {
-  text-shadow: 0 0 var(--BlurAmount, 0) color-mix(in srgb, rgba(var(--ArtworkGlowColor, 255, 255, 255), calc(var(--gradient-alpha) * 0.83)) 40%, rgba(255, 255, 255, calc(var(--gradient-alpha) * 0.83)));
+  text-shadow: 0 0 var(--BlurAmount, 0) color-mix(in srgb, rgba(var(--ArtworkGlowColor, 255, 255, 255), calc(var(--gradient-alpha) * 0.55)) 40%, rgba(255, 255, 255, calc(var(--gradient-alpha) * 0.55)));
 }
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.Sung {
@@ -216,7 +216,7 @@
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line .letter,
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line .letterGroup {
   --text-shadow-blur-radius: 4px;
-  --text-shadow-opacity: 0%;
+  --text-shadow-opacity: -30%;
 }
 
 #SpicyLyricsPage .LyricsContainer .LyricsContent .line.Active,

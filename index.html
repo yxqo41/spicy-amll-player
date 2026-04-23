@@ -58,6 +58,12 @@
             </svg>
             <span>Download TTML</span>
           </li>
+          <li class="am-nav-item" data-page="download-song">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10 10-4.49 10-10S17.51 2 12 2zm-1 14.5v-5h-2.5L12 7.5l3.5 4H13v5h-2z"/>
+            </svg>
+            <span>Download Song</span>
+          </li>
           <li class="am-nav-item" data-page="upload">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
@@ -418,6 +424,43 @@
             </div>
           </div>
         </div>
+
+        <!-- ── Download Song Page ── -->
+        <div id="page-download-song" class="am-page">
+          <div class="download-bg-glow"></div>
+          
+          <div class="premium-downloader-container">
+            <div class="glass-card premium-card">
+              <div class="downloader-header">
+                <div class="header-icon-wrapper" style="background: linear-gradient(135deg, #FF2D55 0%, #fa243c 100%);">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10 10-4.49 10-10S17.51 2 12 2zm-1 14.5v-5h-2.5L12 7.5l3.5 4H13v5h-2z"/>
+                  </svg>
+                </div>
+                <h1 class="premium-title">Audio Downloader</h1>
+                <p class="premium-subtitle">Enter an Apple Music Song ID or Search Term to download the audio track.</p>
+              </div>
+
+              <div class="premium-input-group">
+                <div class="premium-search-box">
+                  <input type="text" id="dl-song-input" placeholder="Paste Song ID or Search Term" autocomplete="off">
+                  <select id="dl-song-format" class="premium-btn format-select" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); color: white; border: 1px solid rgba(255, 255, 255, 0.2); padding: 0 15px; border-radius: 8px; margin-right: 10px; cursor: pointer; outline: none; font-family: inherit;">
+                    <option value="m4a">M4A (Original)</option>
+                    <option value="mp3">MP3</option>
+                    <option value="flac">FLAC</option>
+                  </select>
+                  <button id="fetch-song-btn" class="premium-btn primary">
+                    <span class="btn-text">Download</span>
+                    <div class="btn-loader hidden"></div>
+                  </button>
+                </div>
+                <div id="dl-search-results" class="dl-search-results hidden"></div>
+              </div>
+
+              <div id="dl-song-status" class="status-indicator"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
@@ -485,6 +528,7 @@
   </div>
 
   <script type="module" src="js/upload.js"></script>
+  <script type="module" src="js/song-downloader.js"></script>
 </body>
 
 </html>

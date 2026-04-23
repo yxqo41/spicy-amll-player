@@ -407,6 +407,15 @@ document.addEventListener('DOMContentLoaded', () => {
            ttmlStatus.className = 'status-indicator';
         }
       }
+      if (pageId === 'download-song') {
+        const dlSongInput = document.getElementById('dl-song-input');
+        const dlSongStatus = document.getElementById('dl-song-status');
+        if (dlSongInput) dlSongInput.value = '';
+        if (dlSongStatus) {
+           dlSongStatus.textContent = '';
+           dlSongStatus.className = 'status-indicator';
+        }
+      }
     });
   });
 

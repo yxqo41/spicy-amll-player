@@ -8,6 +8,22 @@ import { showToast } from './toast.js';
 import { escapeHTML } from './security-utils.js';
 import { t } from './i18n.js';
 import { parseAudioMetadata } from './metadata-parser.js';
+import {
+  initPlayerButton,
+  setPlayerIcon,
+} from 'https://nurislamaibekuly.github.io/aeroui/src/components/player-button/player-button.js';
+import {
+  initSkipLabel,
+  playSkip,
+} from 'https://nurislamaibekuly.github.io/aeroui/src/components/skip-label/skip-label.js';
+import {
+  initElasticSlider,
+  setElasticValue,
+  getElasticValue,
+} from 'https://nurislamaibekuly.github.io/aeroui/src/components/elastic-slider/elastic-slider.js';
+import {
+  setProgress as setAeroProgress,
+} from 'https://nurislamaibekuly.github.io/aeroui/src/components/progress/progress.js';
 
 function generateArtistInitial(name) {
   const letter = (name || '?').trim().charAt(0).toUpperCase();
@@ -63,14 +79,18 @@ export class PreviewPlayer {
 
   _initDOM() {
     let el = document.getElementById('am-preview-mini-player');
+    // Migrate stale cached DOM (pre-AeroUI progress, or bottom-label layout) —
+    // force rebuild so the side-label elastic + aero-progress structure exists.
+    if (el && (!el.querySelector('#am-preview-elastic') || !el.querySelector('#am-preview-progress-aero') || el.querySelector('#am-preview-elastic .aero-elastic-labels'))) {
+      el.remove();
+      el = null;
+    }
     if (!el) {
       el = document.createElement('div');
       el.id = 'am-preview-mini-player';
       el.className = 'am-preview-mini-player hidden';
       el.innerHTML = `
-        <div class="am-preview-progress-container" id="am-preview-progress-wrap">
-          <div class="am-preview-progress-bar" id="am-preview-progress-bar"></div>
-        </div>
+        <div class="aero-progress am-preview-progress-aero" id="am-preview-progress-aero" data-aero-progress="0"></div>
         <div class="am-preview-inner">
           <!-- Left: Artwork & Info -->
           <div class="am-preview-info-col" id="am-preview-info-col" style="cursor: pointer;">
@@ -84,21 +104,22 @@ export class PreviewPlayer {
           <!-- Center: Controls & Timeline -->
           <div class="am-preview-controls-col">
             <div class="am-preview-btn-row">
-              <button class="am-preview-btn" id="am-preview-prev-btn" title="Previous Preview" aria-label="Previous">
-                <img src="icons/rewind.png" alt="Prev">
+              <button class="am-preview-btn aero-player" id="am-preview-prev-btn" title="Previous Preview" aria-label="Previous">
+                <span class="aero-skip" data-direction="backward"></span>
               </button>
-              <button class="am-preview-btn am-preview-play-btn" id="am-preview-play-btn" title="Play / Pause" aria-label="Play / Pause">
-                <div class="aero-spinner am-preview-spinner" id="am-preview-spinner" style="display: none; width: 16px; height: 16px;"></div>
-                <img src="icons/paused.png" id="am-preview-play-icon" alt="Play">
+              <button class="am-preview-btn am-preview-play-btn aero-player" id="am-preview-play-btn" title="Play / Pause" aria-label="Play">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 6.8 4 17.2Q4 21 7.31 19.14L18.26 12.98Q20 12 18.26 11.02L7.31 4.86Q4 3 4 6.8Z"/></svg>
               </button>
-              <button class="am-preview-btn" id="am-preview-next-btn" title="Next Preview" aria-label="Next">
-                <img src="icons/forward.png" alt="Next">
+              <button class="am-preview-btn aero-player" id="am-preview-next-btn" title="Next Preview" aria-label="Next">
+                <span class="aero-skip" data-direction="forward"></span>
               </button>
             </div>
-            <div class="am-preview-timeline">
-              <span class="am-preview-time" id="am-preview-curr-time">0:00</span>
-              <input type="range" class="am-preview-seek-slider" id="am-preview-seek" min="0" max="100" value="0" step="0.1">
-              <span class="am-preview-time" id="am-preview-dur-time">0:30</span>
+            <div class="am-preview-timeline am-preview-elastic">
+              <div class="aero-elastic" id="am-preview-elastic" data-min="0" data-max="30000" data-value="0" data-step="100" data-labels="side" data-stretch="0" style="--elastic-stretch: 0px;">
+                <span class="aero-elastic-label progress-time am-preview-time" id="am-preview-curr-time">0:00</span>
+                <div class="aero-elastic-track"><div class="aero-elastic-fill"></div></div>
+                <span class="aero-elastic-label progress-time am-preview-time" id="am-preview-dur-time">0:30</span>
+              </div>
             </div>
           </div>
 
@@ -128,19 +149,47 @@ export class PreviewPlayer {
     this.subEl = el.querySelector('#am-preview-sub');
     this.badgeEl = el.querySelector('#am-preview-badge');
     this.lyricsBtn = el.querySelector('#am-preview-lyrics-btn');
-    this.playIcon = el.querySelector('#am-preview-play-icon');
-    this.spinnerEl = el.querySelector('#am-preview-spinner');
     this.playBtn = el.querySelector('#am-preview-play-btn');
     this.prevBtn = el.querySelector('#am-preview-prev-btn');
     this.nextBtn = el.querySelector('#am-preview-next-btn');
+    this.prevSkip = el.querySelector('#am-preview-prev-btn .aero-skip');
+    this.nextSkip = el.querySelector('#am-preview-next-btn .aero-skip');
+    // Legacy refs (kept null — play icon is now AeroUI vector via setPlayerIcon)
+    this.playIcon = null;
+    this.spinnerEl = null;
     this.volBtn = el.querySelector('#am-preview-vol-btn');
     this.volIcon = el.querySelector('#am-preview-vol-icon');
     this.closeBtn = el.querySelector('#am-preview-close-btn');
     this.currTimeEl = el.querySelector('#am-preview-curr-time');
     this.durTimeEl = el.querySelector('#am-preview-dur-time');
+    this.progressElastic = el.querySelector('#am-preview-elastic');
+    this.progressAero = el.querySelector('#am-preview-progress-aero');
+    // Legacy refs (pre-AeroUI template — null on fresh DOM, kept for safety)
     this.seekSlider = el.querySelector('#am-preview-seek');
     this.progressBar = el.querySelector('#am-preview-progress-bar');
     this.progressWrap = el.querySelector('#am-preview-progress-wrap');
+    // Scrub state (mirrors player.html isDraggingProgress/dragPosition)
+    this.isScrubbing = false;
+    this.scrubPositionMs = 0;
+
+    // ── AeroUI: same player-button + skip-label as player.html ──
+    if (this.playBtn) {
+      initPlayerButton(this.playBtn);
+      setPlayerIcon(this.playBtn, this.isPlaying ? 'pause' : 'play');
+    }
+    if (this.prevBtn) {
+      initPlayerButton(this.prevBtn);
+      if (this.prevSkip) initSkipLabel(this.prevSkip);
+    }
+    if (this.nextBtn) {
+      initPlayerButton(this.nextBtn);
+      if (this.nextSkip) initSkipLabel(this.nextSkip);
+    }
+
+    // ── AeroUI elastic progress (same component as player.html) ──
+    if (this.progressElastic) {
+      initElasticSlider(this.progressElastic);
+    }
 
     // Smooth Sliding Drawer Transition to player.html
     const triggerZoomToPlayer = async (e) => {
@@ -213,11 +262,7 @@ export class PreviewPlayer {
             this.isPlaying = isPlaying;
             this._updatePlayButton(isPlaying);
             if (duration && duration > 0) {
-              const pct = (position / duration) * 100;
-              if (this.progressBar) this.progressBar.style.width = `${Math.min(100, Math.max(0, pct))}%`;
-              if (this.seekSlider) this.seekSlider.value = pct;
-              if (this.currTimeEl) this.currTimeEl.textContent = this._formatTime(position / 1000);
-              if (this.durTimeEl) this.durTimeEl.textContent = this._formatTime(duration / 1000);
+              this._setProgressUI(position, duration);
               if (this.container) {
                 this.container.setAttribute('data-position', String(position));
                 this.container.setAttribute('data-duration', String(duration));
@@ -303,24 +348,28 @@ export class PreviewPlayer {
       this.lyricsBtn.onclick = triggerZoomToPlayer;
     }
 
-    // Attach DOM Events with event listeners
+    // Attach DOM Events — AeroUI player-button owns the press gesture and
+    // suppresses native click, so `pressend` is the single source of truth
+    // (same as player.html) — do NOT also bind onclick (double-fire).
     if (this.playBtn) {
-      this.playBtn.onclick = (e) => {
+      this.playBtn.addEventListener('pressend', (e) => {
         e.stopPropagation();
         this.togglePlay();
-      };
+      });
     }
     if (this.prevBtn) {
-      this.prevBtn.onclick = (e) => {
+      this.prevBtn.addEventListener('pressend', (e) => {
         e.stopPropagation();
+        if (this.prevSkip) playSkip(this.prevSkip);
         this.prev();
-      };
+      });
     }
     if (this.nextBtn) {
-      this.nextBtn.onclick = (e) => {
+      this.nextBtn.addEventListener('pressend', (e) => {
         e.stopPropagation();
+        if (this.nextSkip) playSkip(this.nextSkip);
         this.next();
-      };
+      });
     }
     if (this.volBtn) {
       this.volBtn.onclick = (e) => {
@@ -346,18 +395,48 @@ export class PreviewPlayer {
       }
     });
 
+    // ── Scrub: AeroUI elastic slider (same as player.html) ──
+    // input (live preview) -> scrub state + time labels, change (release) -> seek.
+    if (this.progressElastic && !this._progressWired) {
+      this._progressWired = true;
+      this.progressElastic.addEventListener('input', (e) => {
+        const v = e.detail?.value ?? getElasticValue(this.progressElastic);
+        const durMs = parseFloat(this.container?.getAttribute('data-duration') || '0') || 30000;
+        this.isScrubbing = true;
+        this.scrubPositionMs = Math.max(0, Math.min(v, durMs));
+        if (this.currTimeEl) this.currTimeEl.textContent = this._formatTime(this.scrubPositionMs / 1000);
+        if (this.durTimeEl && durMs > 0) this.durTimeEl.textContent = this._formatTime(durMs / 1000);
+      });
+      this.progressElastic.addEventListener('change', (e) => {
+        const v = e.detail?.value ?? getElasticValue(this.progressElastic);
+        const durMs = parseFloat(this.container?.getAttribute('data-duration') || '0') || 0;
+        this.isScrubbing = false;
+        this.scrubPositionMs = Math.max(0, durMs > 0 ? Math.min(v, durMs) : v);
+        this._seekTo(this.scrubPositionMs);
+      });
+    }
+
+    // Top AeroUI progress strip doubles as click-to-seek (old thin bar behavior)
+    if (this.progressAero && !this._progressAeroWired) {
+      this._progressAeroWired = true;
+      this.progressAero.style.cursor = 'pointer';
+      this.progressAero.addEventListener('click', (e) => {
+        const rect = this.progressAero.getBoundingClientRect();
+        if (!rect.width) return;
+        const pos = (e.clientX - rect.left) / rect.width;
+        const durMs = parseFloat(this.container?.getAttribute('data-duration') || '0');
+        const targetDur = durMs > 0 ? durMs : (this.audio.duration * 1000 || 30000);
+        this._seekTo(Math.max(0, Math.min(pos * targetDur, targetDur)));
+      });
+    }
+
+    // Legacy fallback: pre-AeroUI template with <input range> + thin div bar
     if (this.seekSlider) {
       this.seekSlider.oninput = (e) => {
         const val = parseFloat(e.target.value);
         const durMs = parseFloat(this.container?.getAttribute('data-duration') || '0');
-        const drawerIframe = document.getElementById('player-drawer-iframe');
-        if (drawerIframe?.contentWindow && durMs > 0) {
-          const seekTimeMs = (val / 100) * durMs;
-          drawerIframe.contentWindow.postMessage({ action: 'seek', time: seekTimeMs }, '*');
-        } else if (this.audio.duration) {
-          const seekTime = (val / 100) * this.audio.duration;
-          this.audio.currentTime = seekTime;
-        }
+        const seekTimeMs = durMs > 0 ? (val / 100) * durMs : val;
+        this._seekTo(seekTimeMs);
       };
     }
 
@@ -366,13 +445,8 @@ export class PreviewPlayer {
         const rect = this.progressWrap.getBoundingClientRect();
         const pos = (e.clientX - rect.left) / rect.width;
         const durMs = parseFloat(this.container?.getAttribute('data-duration') || '0');
-        const drawerIframe = document.getElementById('player-drawer-iframe');
-        if (drawerIframe?.contentWindow && durMs > 0) {
-          const seekTimeMs = Math.max(0, Math.min(pos * durMs, durMs));
-          drawerIframe.contentWindow.postMessage({ action: 'seek', time: seekTimeMs }, '*');
-        } else if (this.audio.duration) {
-          this.audio.currentTime = Math.max(0, Math.min(pos * this.audio.duration, this.audio.duration));
-        }
+        const targetDur = durMs > 0 ? durMs : (this.audio.duration * 1000 || 30000);
+        this._seekTo(Math.max(0, Math.min(pos * targetDur, targetDur)));
       };
     }
 
@@ -443,6 +517,10 @@ export class PreviewPlayer {
         const durMs = Math.round(dur * 1000);
         if (this.container) this.container.setAttribute('data-duration', durMs.toString());
         if (this.durTimeEl) this.durTimeEl.textContent = this._formatTime(dur);
+        if (this.progressElastic) {
+          this.progressElastic.dataset.max = String(Math.max(1, durMs));
+          this.progressElastic.dataset.step = '100';
+        }
       }
     };
     this.audio.addEventListener('loadedmetadata', onDurationAvailable);
@@ -458,16 +536,14 @@ export class PreviewPlayer {
     });
 
     this.audio.addEventListener('timeupdate', () => {
+      // Don't fight the user while scrubbing (same as player.html)
+      if (this.isScrubbing) return;
       const cur = this.audio.currentTime || 0;
       const dur = (this.audio.duration && !Number.isNaN(this.audio.duration) && Number.isFinite(this.audio.duration) && this.audio.duration > 0)
         ? this.audio.duration
         : (parseFloat(this.container?.getAttribute('data-duration') || '0') / 1000 || 30);
-      const percent = dur > 0 ? (cur / dur) * 100 : 0;
 
-      if (this.progressBar) this.progressBar.style.width = `${percent}%`;
-      if (this.seekSlider) this.seekSlider.value = percent;
-      if (this.currTimeEl) this.currTimeEl.textContent = this._formatTime(cur);
-      if (this.durTimeEl) this.durTimeEl.textContent = this._formatTime(dur);
+      this._setProgressUI(cur * 1000, dur * 1000);
 
       if (this.container) {
         this.container.setAttribute('data-position', (cur * 1000).toString());
@@ -485,17 +561,33 @@ export class PreviewPlayer {
   }
 
   _setBuffering(isBuffering) {
-    if (!this.spinnerEl) this.spinnerEl = document.getElementById('am-preview-spinner');
-    if (!this.playIcon) this.playIcon = document.getElementById('am-preview-play-icon');
-
-    if (this.spinnerEl && this.playIcon) {
-      if (isBuffering) {
-        this.spinnerEl.style.display = 'block';
-        this.playIcon.style.display = 'none';
-      } else {
-        this.spinnerEl.style.display = 'none';
-        this.playIcon.style.display = 'block';
+    const btn = this.playBtn || document.getElementById('am-preview-play-btn');
+    if (!btn) return;
+    // Same pattern as player.html: spinner is a sibling of the AeroUI label
+    // so setPlayerIcon() swaps don't delete it.
+    let spinner = btn.querySelector('.aero-spinner');
+    const iconEl =
+      btn.querySelector('.aero-player-label') ||
+      btn.querySelector('svg, .aero-player-icon, [data-icon]');
+    if (isBuffering) {
+      if (!spinner) {
+        spinner = document.createElement('div');
+        spinner.className = 'aero-spinner';
+        spinner.style.cssText = 'width: 18px; height: 18px; border-width: 2.5px;';
+        btn.appendChild(spinner);
       }
+      spinner.style.display = 'block';
+      if (iconEl) iconEl.style.display = 'none';
+    } else {
+      if (spinner) spinner.style.display = 'none';
+      if (iconEl) iconEl.style.display = '';
+    }
+    // Legacy fallback: old cached DOM with <img id="am-preview-play-icon">
+    const legacySpinner = document.getElementById('am-preview-spinner');
+    const legacyIcon = document.getElementById('am-preview-play-icon');
+    if (legacySpinner && legacyIcon) {
+      legacySpinner.style.display = isBuffering ? 'block' : 'none';
+      legacyIcon.style.display = isBuffering ? 'none' : 'block';
     }
   }
 
@@ -546,10 +638,19 @@ export class PreviewPlayer {
   }
 
   _updatePlayButton(isPlaying) {
-    if (!this.playIcon) this.playIcon = document.getElementById('am-preview-play-icon');
-    if (this.playIcon) {
-      this.playIcon.src = isPlaying ? 'icons/play.png' : 'icons/paused.png';
-      this.playIcon.alt = isPlaying ? 'Pause' : 'Play';
+    const btn = this.playBtn || document.getElementById('am-preview-play-btn');
+    if (btn) {
+      try {
+        setPlayerIcon(btn, isPlaying ? 'pause' : 'play');
+      } catch (_) {
+        // AeroUI not loaded yet — legacy img fallback below covers it
+      }
+      // Legacy fallback: old cached DOM still using PNG icons
+      const legacyIcon = document.getElementById('am-preview-play-icon');
+      if (legacyIcon) {
+        legacyIcon.src = isPlaying ? 'icons/play.png' : 'icons/paused.png';
+        legacyIcon.alt = isPlaying ? 'Pause' : 'Play';
+      }
     }
     if (this.container) {
       if (isPlaying) this.container.classList.add('playing');
@@ -562,6 +663,51 @@ export class PreviewPlayer {
     const m = Math.floor(s / 60);
     const rem = s % 60;
     return `${m}:${rem < 10 ? '0' : ''}${rem}`;
+  }
+
+  /** Seek the full player (iframe) or local preview audio to positionMs. */
+  _seekTo(positionMs) {
+    const drawerIframe = document.getElementById('player-drawer-iframe');
+    const durMs = parseFloat(this.container?.getAttribute('data-duration') || '0');
+    if (drawerIframe?.contentWindow && durMs > 0) {
+      drawerIframe.contentWindow.postMessage({ action: 'seek', time: positionMs }, '*');
+    } else if (this.audio.duration && Number.isFinite(this.audio.duration)) {
+      this.audio.currentTime = Math.max(0, Math.min(positionMs / 1000, this.audio.duration));
+    }
+    // Optimistically reflect the seek target so the UI feels instant
+    const targetDur = durMs > 0 ? durMs : (this.audio.duration * 1000 || positionMs);
+    if (targetDur > 0) this._setProgressUI(positionMs, targetDur);
+  }
+
+  /** Single place that paints position/duration to AeroUI + legacy progress. */
+  _setProgressUI(positionMs, durationMs) {
+    const pos = Math.max(0, positionMs || 0);
+    const dur = Math.max(0, durationMs || 0);
+    const pct = dur > 0 ? Math.min(100, Math.max(0, (pos / dur) * 100)) : 0;
+
+    // AeroUI elastic scrubber (interactive timeline, like player.html)
+    if (this.progressElastic) {
+      if (dur > 0 && String(Math.round(dur)) !== this.progressElastic.dataset.max) {
+        this.progressElastic.dataset.max = String(Math.max(1, Math.round(dur)));
+      }
+      if (!this.isScrubbing) {
+        try {
+          setElasticValue(this.progressElastic, pos);
+        } catch (_) {}
+      }
+    }
+    // AeroUI top progress strip (display)
+    if (this.progressAero) {
+      try {
+        setAeroProgress(this.progressAero, pct);
+      } catch (_) {}
+    }
+    // Legacy fallbacks (pre-AeroUI cached DOM)
+    if (this.progressBar) this.progressBar.style.width = `${pct}%`;
+    if (this.seekSlider) this.seekSlider.value = pct;
+
+    if (this.currTimeEl && !this.isScrubbing) this.currTimeEl.textContent = this._formatTime(pos / 1000);
+    if (this.durTimeEl && dur > 0) this.durTimeEl.textContent = this._formatTime(dur / 1000);
   }
 
   /**
@@ -681,6 +827,10 @@ export class PreviewPlayer {
 
     this.isPlaying = !!autoPlay;
     this._updatePlayButton(!!autoPlay);
+    // Reset AeroUI progress to 0 with the new track duration
+    this.isScrubbing = false;
+    this.scrubPositionMs = 0;
+    this._setProgressUI(0, track.durationMs || 30000);
 
     // Pass track to player.html in iframe so audio plays via the full audio graph
     (async () => {

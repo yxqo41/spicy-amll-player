@@ -2248,7 +2248,9 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-width: 200px;
+  max-width: 460px;
 }
 
 .am-preview-btn-row {
@@ -2299,6 +2301,88 @@
 .am-preview-play-btn img {
   width: 16px;
   height: 16px;
+}
+
+/* ── Mini-player transport: AeroUI player-button + skip-label (same as player.html) ──
+   Frame is an invisible touch target; only the vector icon shows. */
+.am-preview-btn.aero-player {
+  --player-size: 36px;
+  --player-icon: 18px;
+  --player-label: #fff;
+  padding: 0;
+  background: transparent;
+  border: none;
+  /* AeroUI spring owns transform — don't fight it with CSS hover scale */
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.am-preview-btn.aero-player:hover {
+  transform: none;
+  opacity: 1;
+}
+
+.am-preview-btn.am-preview-play-btn.aero-player {
+  --player-size: 38px;
+  --player-icon: 18px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.am-preview-btn.am-preview-play-btn.aero-player:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.am-preview-btn.aero-player .aero-skip {
+  --skip-size: 22px;
+  color: #fff;
+}
+
+.am-preview-btn.aero-player .aero-spinner {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Mini-player progress: AeroUI top strip + elastic scrubber (same as player.html) ── */
+.am-preview-progress-aero.aero-progress {
+  height: 3px;
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.am-preview-progress-aero .aero-progress-fill {
+  background: linear-gradient(90deg, #ffffff, #d1d1d6);
+  border-radius: 0 2px 2px 0;
+  transition: width 0.1s linear;
+}
+
+.am-preview-timeline.am-preview-elastic {
+  width: 100%;
+  min-width: 0;
+}
+
+.am-preview-timeline .aero-elastic {
+  --elastic-inactive-h: 6px;
+  --elastic-active-h: 10px;
+  --elastic-growth: 0px;
+  --elastic-stretch: 0px;
+  --elastic-narrow: 0px;
+  --elastic-track: rgba(255, 255, 255, 0.15);
+  --elastic-fill-idle: rgba(255, 255, 255, 0.4);
+  --elastic-fill-active: rgba(255, 255, 255, 0.4);
+  width: 100%;
+  gap: 8px;
+}
+
+.am-preview-timeline .aero-elastic-hit {
+  min-height: 28px;
+}
+
+.am-preview-timeline .aero-elastic-label.progress-time {
+  transform: none;
+}
+
+.am-preview-timeline .aero-elastic--active {
+  --elastic-fill-active: #fff;
 }
 
 .am-preview-timeline {
@@ -2433,18 +2517,22 @@
   z-index: 99999;
   background: #000;
   transform: translateY(100%);
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+  /* Slide OUT (closing) = expo in-out. Pure slide — no fade. Visibility flips
+     discretely after the slide completes so the animation isn't cut off. */
+  transition: transform 0.5s cubic-bezier(0.87, 0, 0.13, 1), visibility 0s linear 0.7s;
   will-change: transform;
   overflow: hidden;
   box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.9);
   pointer-events: none;
-  opacity: 0;
+  visibility: hidden;
 }
 
 .player-drawer.open {
   transform: translateY(0);
   pointer-events: auto;
-  opacity: 1;
+  visibility: visible;
+  /* Slide IN (opening) = expo out. Pure slide — no fade. */
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s;
 }
 
 .player-drawer-iframe {

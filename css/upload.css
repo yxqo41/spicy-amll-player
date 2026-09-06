@@ -819,7 +819,63 @@
 .am-page.active {
   display: block;
   animation: amFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}/* .am-mobile-nav-item rules removed */
+}
+
+.am-preview-player-bar.visible {
+  display: block;
+}
+
+/* ══════════════════════════════════════════════════
+   INDEX.HTML THEMES & ACCENTS
+   ══════════════════════════════════════════════════ */
+/* OLED Black Theme: Pure blacks and crisp borders */
+[data-theme="oled-black"],
+[data-theme="oled-black"] .am-layout,
+[data-theme="oled-black"] .am-main-content,
+[data-theme="oled-black"] body {
+  background-color: #000000 !important;
+}
+
+[data-theme="oled-black"] .am-sidebar {
+  background: #050505 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="oled-black"] .am-preview-player-bar {
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95) !important;
+}
+
+/* Aero Glass / Tint Theme: Frosted transparency & vibrancy */
+[data-theme="aero-glass-tint"] .am-sidebar {
+  background: rgba(18, 18, 22, 0.65) !important;
+  backdrop-filter: blur(35px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(35px) saturate(190%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="aero-glass-tint"] .am-preview-player-bar {
+  background: rgba(22, 22, 28, 0.7) !important;
+  backdrop-filter: blur(40px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Dynamic Vibrant Theme: High saturation & glowing accents */
+[data-theme="dynamic-vibrant"] .am-sidebar-item.active,
+[data-theme="dynamic-vibrant"] .am-nav-item.active {
+  background: linear-gradient(135deg, rgba(250, 88, 106, 0.35) 0%, rgba(225, 45, 75, 0.15) 100%) !important;
+  border-left: 3px solid #fa586a !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dynamic-vibrant"] .am-preview-player-bar {
+  box-shadow: 0 10px 40px rgba(250, 88, 106, 0.25) !important;
+  border-color: rgba(250, 88, 106, 0.4) !important;
+}
+
+/* .am-mobile-nav-item rules removed */
 
 .testdb-grid {
   display: grid;

@@ -809,6 +809,8 @@ export class PreviewPlayer {
       this.container.setAttribute('data-position', '0');
       if (track.durationMs && track.durationMs > 0) {
         this.container.setAttribute('data-duration', String(track.durationMs));
+        if (this.durTimeEl) this.durTimeEl.textContent = this._formatTime(track.durationMs / 1000);
+        if (this.currTimeEl) this.currTimeEl.textContent = '0:00';
       }
     }
 

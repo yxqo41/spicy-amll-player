@@ -32,7 +32,44 @@ export const PRESET_AVATARS = [
   'icons/account_avatar.png',
   'favicon.svg',
   'icon.png'
+];const THEME_OPTIONS = [
+  { value: 'aero-dark', label: 'Aero Dark' },
+  { value: 'aero-glass-tint', label: 'Aero Glass / Tint' },
+  { value: 'oled-black', label: 'OLED Black' },
+  { value: 'dynamic-vibrant', label: 'Dynamic Vibrant' }
 ];
+
+const AUDIO_QUALITY_OPTIONS = [
+  { value: 'alac', label: 'Lossless (ALAC)' },
+  { value: 'dolby', label: 'Dolby Atmos / Spatial' },
+  { value: 'aac', label: 'High Quality (AAC 256k)' }
+];
+
+function themeDropdownHTML(id, selectedTheme) {
+  const current = THEME_OPTIONS.find(t => t.value === selectedTheme) || THEME_OPTIONS[0];
+  return `
+    <div class="aero-dropdown" id="${id}">
+      <button class="am-macos-select" data-aero-dropdown="" data-selected="${current.value}">${current.label}</button>
+      <div class="aero-menu">
+        ${THEME_OPTIONS.map(opt => `
+          <button class="aero-menu-item" data-value="${opt.value}">${opt.label}</button>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+function audioQualityDropdownHTML(id, selectedQuality) {
+  const current = AUDIO_QUALITY_OPTIONS.find(q => q.value === selectedQuality) || AUDIO_QUALITY_OPTIONS[0];
+  return `
+    <div class="aero-dropdown" id="${id}">
+      <button class="am-macos-select" data-aero-dropdown="" data-selected="${current.value}">${current.label}</button>
+      <div class="aero-menu">
+        ${AUDIO_QUALITY_OPTIONS.map(opt => `
+          <button class="aero-menu-item" data-value="${opt.value}">${opt.label}</button>
+        `).join('')}
+      </div>
+    </div>`;
+}
 
 export function getUserProfile() {
   try {
@@ -42,17 +79,27 @@ export function getUserProfile() {
       return {
         name: p.name || DEFAULT_NAME,
         pfp: p.pfp || DEFAULT_PFP,
-        lang: p.lang || getCurrentLang()
+        lang: p.lang || getCurrentLang(),
+        theme: p.theme || 'aero-dark',
+        audioQuality: p.audioQuality || 'alac'
       };
     }
   } catch (e) {
-    console.error('[Profile] Failed to read profile:', e);
+    console.error('[Profile] Failed to read profile from localStorage:', e);
   }
   return {
     name: DEFAULT_NAME,
     pfp: DEFAULT_PFP,
-    lang: getCurrentLang()
+    lang: getCurrentLang(),
+    theme: 'aero-dark',
+    audioQuality: 'alac'
   };
+}
+
+export function applyMainTheme(theme) {
+  const targetTheme = theme || 'aero-dark';
+  document.documentElement.setAttribute('data-theme', targetTheme);
+  document.body.setAttribute('data-theme', targetTheme);
 }
 
 export function saveUserProfile(profile) {
@@ -63,6 +110,12 @@ export function saveUserProfile(profile) {
     if (profile.lang && profile.lang !== getCurrentLang()) {
       setLanguage(profile.lang);
     }
+    if (merged.theme) {
+      applyMainTheme(merged.theme);
+    }
+    if (merged.audioQuality) {
+      document.documentElement.setAttribute('data-audio-quality', merged.audioQuality);
+    }
     updateProfileUI();
     window.dispatchEvent(new CustomEvent('lyricsflow-profile-updated', { detail: merged }));
   } catch (e) {
@@ -72,6 +125,12 @@ export function saveUserProfile(profile) {
 
 export function updateProfileUI() {
   const profile = getUserProfile();
+  if (profile.theme) {
+    applyMainTheme(profile.theme);
+  }
+  if (profile.audioQuality) {
+    document.documentElement.setAttribute('data-audio-quality', profile.audioQuality);
+  }
   // Update header profile button avatar
   const avatarImgs = document.querySelectorAll('.user-profile-avatar-img');
   avatarImgs.forEach(img => {
@@ -355,6 +414,8 @@ export function openProfileSettingsModal() {
   let tempName = profile.name;
   let tempPfp = profile.pfp;
   let tempLang = profile.lang;
+  let tempTheme = profile.theme || 'aero-dark';
+  let tempQuality = profile.audioQuality || 'alac';
 
   const overlay = document.createElement('div');
   overlay.className = 'am-macos-modal-overlay';
@@ -403,6 +464,18 @@ export function openProfileSettingsModal() {
         ${langDropdownHTML('prof-modal-lang-select', tempLang)}
       </div>
 
+      <!-- Appearance Theme Selector (Main UI) -->
+      <div class="am-setup-field" style="margin-top: 14px;">
+        <label class="am-setup-label">Appearance Theme</label>
+        ${themeDropdownHTML('prof-modal-theme-select', tempTheme)}
+      </div>
+
+      <!-- Audio Quality Selector -->
+      <div class="am-setup-field" style="margin-top: 14px;">
+        <label class="am-setup-label">Audio Streaming Quality</label>
+        ${audioQualityDropdownHTML('prof-modal-quality-select', tempQuality)}
+      </div>
+
       <!-- Actions -->
       <div class="am-macos-actions" style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 18px;">
         <button id="prof-modal-player-settings-btn" class="am-macos-btn secondary" style="display: flex; align-items: center; gap: 6px;">
@@ -417,7 +490,7 @@ export function openProfileSettingsModal() {
   overlay.appendChild(modalBox);
   document.body.appendChild(overlay);
 
-  // Init language dropdown
+  // Init dropdowns
   const langDrop = modalBox.querySelector('#prof-modal-lang-select');
   if (langDrop) {
     initDropdowns(langDrop.parentElement);
@@ -428,6 +501,31 @@ export function openProfileSettingsModal() {
       setLanguage(tempLang);
       langDrop.querySelector('[data-aero-dropdown]').textContent = item.textContent;
       langDrop.querySelector('[data-aero-dropdown]').setAttribute('data-selected', tempLang);
+    });
+  }
+
+  const themeDrop = modalBox.querySelector('#prof-modal-theme-select');
+  if (themeDrop) {
+    initDropdowns(themeDrop.parentElement);
+    themeDrop.addEventListener('click', (e) => {
+      const item = e.target.closest('.aero-menu-item');
+      if (!item) return;
+      tempTheme = item.dataset.value;
+      applyMainTheme(tempTheme);
+      themeDrop.querySelector('[data-aero-dropdown]').textContent = item.textContent;
+      themeDrop.querySelector('[data-aero-dropdown]').setAttribute('data-selected', tempTheme);
+    });
+  }
+
+  const qualityDrop = modalBox.querySelector('#prof-modal-quality-select');
+  if (qualityDrop) {
+    initDropdowns(qualityDrop.parentElement);
+    qualityDrop.addEventListener('click', (e) => {
+      const item = e.target.closest('.aero-menu-item');
+      if (!item) return;
+      tempQuality = item.dataset.value;
+      qualityDrop.querySelector('[data-aero-dropdown]').textContent = item.textContent;
+      qualityDrop.querySelector('[data-aero-dropdown]').setAttribute('data-selected', tempQuality);
     });
   }
 
@@ -482,16 +580,15 @@ export function openProfileSettingsModal() {
   }
 
   // Save changes
-  const langSelect = modalBox.querySelector('#prof-modal-lang-select');
   const saveBtn = modalBox.querySelector('#prof-modal-save-btn');
-
   saveBtn.addEventListener('click', () => {
     const newName = nameInput ? (nameInput.value.trim() || DEFAULT_NAME) : DEFAULT_NAME;
-    const newLang = langSelect.value;
     saveUserProfile({
       name: newName,
       pfp: tempPfp,
-      lang: newLang
+      lang: tempLang,
+      theme: tempTheme,
+      audioQuality: tempQuality
     });
     overlay.remove();
   });

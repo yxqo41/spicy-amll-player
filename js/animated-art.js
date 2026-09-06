@@ -228,9 +228,8 @@ export function applyAnimatedArt(mediaBoxEl, videoUrl) {
     })();
   }
 
-  // Hide the static background image and fade in video when first frame is decoded
+  // Retain the static background image and fade in video when first frame is decoded
   video.addEventListener('loadeddata', () => {
-    mediaBoxEl.style.backgroundImage = 'none';
     video.classList.add('loaded');
   });
 

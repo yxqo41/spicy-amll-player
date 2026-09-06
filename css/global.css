@@ -231,3 +231,62 @@ input {
 :root {
   --aero-primary: #ffffff;
 }
+
+/* ── Global AeroUI Dropdown Overlay Standards ── */
+.aero-dropdown {
+  position: relative !important;
+  display: inline-block !important;
+}
+
+.aero-dropdown .aero-menu {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  right: 0 !important;
+  z-index: 9999999 !important;
+  min-width: 170px !important;
+  background: rgba(30, 30, 32, 0.95) !important;
+  backdrop-filter: blur(25px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  padding: 6px !important;
+  display: none;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.aero-dropdown .aero-menu.is-open,
+.aero-dropdown .aero-menu.is-active,
+.aero-dropdown.is-open .aero-menu,
+.aero-dropdown.is-active .aero-menu {
+  display: flex !important;
+}
+
+.aero-dropdown .aero-menu-item {
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  padding: 8px 12px !important;
+  font-size: 0.88rem !important;
+  font-weight: 500 !important;
+  text-align: left !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: background 0.15s ease, color 0.15s ease !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.aero-dropdown .aero-menu-item:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+}
+
+.aero-dropdown .aero-menu-item[aria-current="true"] {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}

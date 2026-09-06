@@ -525,6 +525,32 @@
         }, { passive: true });
       }
 
+      // Mobile cover pull-down swipe gesture to slide down & close the player drawer
+      const mediaBoxEl = document.getElementById('media-box');
+      if (mediaBoxEl) {
+        let coverTouchStartY = 0;
+        let coverTouchStartX = 0;
+        mediaBoxEl.addEventListener('touchstart', (e) => {
+          if (window.innerWidth <= 768 && e.touches.length === 1) {
+            coverTouchStartY = e.touches[0].clientY;
+            coverTouchStartX = e.touches[0].clientX;
+          }
+        }, { passive: true });
+
+        mediaBoxEl.addEventListener('touchend', (e) => {
+          if (window.innerWidth <= 768 && e.changedTouches.length === 1) {
+            const deltaY = e.changedTouches[0].clientY - coverTouchStartY;
+            const deltaX = Math.abs(e.changedTouches[0].clientX - coverTouchStartX);
+            // Swipe down predominantly (more vertical than horizontal, > 45px distance)
+            if (deltaY > 45 && deltaY > deltaX * 1.3) {
+              if (isIframe) {
+                window.parent.postMessage({ action: 'closePlayerDrawer' }, '*');
+              }
+            }
+          }
+        }, { passive: true });
+      }
+
       // Wire Artists text click: Slide down and trigger AeroUI dialog in parent
       const artistsEl = document.getElementById('artists');
       if (artistsEl) {
@@ -1333,6 +1359,17 @@
       if (progressElastic) {
         progressElastic.dataset.max = String(Math.max(1, Math.round(duration)));
         setElasticValue(progressElastic, 0);
+      }
+      // Broadcast duration immediately to parent window so mini-player time syncs instantly
+      if (window.parent && window.parent !== window) {
+        const parentTargetOrigin = (window.location.origin && window.location.origin !== 'null') ? window.location.origin : '*';
+        window.parent.postMessage({
+          type: 'player-state',
+          isPlaying: player.isPlaying,
+          position: player.getPosition ? player.getPosition() : 0,
+          duration: duration,
+          songMetadata: songMetadata
+        }, parentTargetOrigin);
       }
     };
 

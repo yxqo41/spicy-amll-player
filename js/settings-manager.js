@@ -85,6 +85,8 @@ class SettingsManager {
       showRomanized: false,
       showSongwriters: true,
       hideLyricsProvider: false,
+      themePreset: "Aero Dark", // Aero Dark, Aero Glass / Tint, OLED Black, Dynamic Vibrant
+      audioQuality: "Lossless (ALAC)", // Lossless (ALAC), Dolby Atmos / Spatial, High Quality (AAC 256k)
       dolbyAtmos: false,
       airPodsIcon: false,
       bluetoothDeviceName: "AirPods Pro",
@@ -223,6 +225,18 @@ class SettingsManager {
       root.classList.add("lf-hw-accel");
     } else {
       root.classList.remove("lf-hw-accel");
+    }
+
+    // Theme Preset
+    if (this.settings.themePreset) {
+      const themeSlug = this.settings.themePreset.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      root.setAttribute("data-theme", themeSlug);
+      document.body.setAttribute("data-theme", themeSlug);
+    }
+
+    // Audio Quality Badge Indicator Hook
+    if (this.settings.audioQuality) {
+      root.setAttribute("data-audio-quality", this.settings.audioQuality);
     }
 
     // Background Visibility

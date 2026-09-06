@@ -149,9 +149,11 @@
 /* Content Area Styling */
 .LyricsflowSettingsContent {
   flex: 1;
-  padding: 24px 28px;
+  padding: 24px 28px 120px 28px;
   overflow-y: auto;
+  overflow-x: visible;
   scrollbar-width: none;
+  position: relative;
 }
 
 .LyricsflowSettingsContent::-webkit-scrollbar {
@@ -160,6 +162,7 @@
 
 .LyricsflowSettingsPanel {
   animation: slFadeIn 0.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  overflow: visible;
 }
 
 @keyframes slFadeIn {
@@ -178,8 +181,8 @@
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: rgba(255, 255, 255, 0.38);
-  margin: 18px 0 8px 4px;
-  font-weight: 600;
+  font-weight: 700;
+  margin: 28px 0 10px 4px;
 }
 
 .lf-settings-group:first-of-type {
@@ -191,7 +194,8 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 14px;
   margin-bottom: 20px;
-  overflow: visible;
+  overflow: visible !important;
+  position: relative;
 }
 
 .lf-settings-row {
@@ -201,6 +205,8 @@
   padding: 14px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   gap: 20px;
+  overflow: visible !important;
+  position: relative;
 }
 
 .lf-settings-row:last-child {

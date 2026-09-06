@@ -44,8 +44,23 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="apple-touch-icon" href="/icon.png">
 </head>
-
 <body>
+  <!-- Early Theme Restoration -->
+  <script>
+    (function() {
+      try {
+        const raw = localStorage.getItem('lyricsflow_user_profile');
+        if (raw) {
+          const p = JSON.parse(raw);
+          if (p && p.theme) {
+            document.documentElement.setAttribute('data-theme', p.theme);
+            if (p.audioQuality) document.documentElement.setAttribute('data-audio-quality', p.audioQuality);
+          }
+        }
+      } catch (_) {}
+    })();
+  </script>
+
   <!-- Update Cache Detector -->
   <script>
     (function() {

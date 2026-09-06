@@ -342,6 +342,11 @@ class SettingsUI {
 
     this.addGroup(container, "Audio Engine Settings");
     const audioCard = this.createCard(container);
+    this.addDropdown(audioCard, "Audio Quality", "Preferred streaming audio fidelity format.", "audioQuality", [
+      "Lossless (ALAC)",
+      "Dolby Atmos / Spatial",
+      "High Quality (AAC 256k)"
+    ]);
     this.addSlider(audioCard, "Crossfade duration", "Blend tracks smoothly at transition points.", "crossfadeDuration", 0, 10, 0.5, (v) => {
       return v === 0 ? "Off" : `${v}s`;
     });
